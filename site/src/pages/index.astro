@@ -1,0 +1,189 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import GraphCard from '../components/GraphCard.astro';
+
+const entries = (await getCollection('graficos')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const categories = [...new Set(entries.map((e) => e.data.category))].sort();
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Base title="Acervo de Gráficos">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="kicker">Acervo de Gráficos</p>
+      <h1>Um catálogo de gráficos em R, um de cada vez.</h1>
+      <p class="intro">
+        Um gráfico novo em R, de tempos em tempos, organizados por categoria conforme vão sendo feitos.
+      </p>
+    </div>
+  </header>
+
+  <main class="content">
+    <nav class="filters" aria-label="Filtrar por categoria">
+      <button type="button" class="filter is-active" data-filter="all">Todos<span>{entries.length}</span></button>
+      {categories.map((category) => (
+        <button type="button" class="filter" data-filter={category}>
+          {category}
+          <span>{entries.filter((e) => e.data.category === category).length}</span>
+        </button>
+      ))}
+    </nav>
+
+    {entries.length > 0 ? (
+      <div class="grid" id="grid">
+        {entries.map((entry) => {
+          const [category, slug] = entry.id.split('/');
+          return (
+            <GraphCard
+              href={`${base}/graficos/${category}/${slug}/`}
+              title={entry.data.title}
+              category={entry.data.category}
+              date={entry.data.date}
+              interactive={entry.data.interactive}
+              thumbnail={`${base}/graficos/${category}/${slug}/output.png`}
+            />
+          );
+        })}
+      </div>
+    ) : (
+      <p class="empty">Nenhum gráfico ainda — o primeiro está a caminho.</p>
+    )}
+
+    {entries.length < 6 && (
+      <p class="coming-soon">
+        {entries.length} gráfico{entries.length === 1 ? '' : 's'} até agora — novos chegam aos poucos, quase todo dia.
+      </p>
+    )}
+  </main>
+</Base>
+
+<style>
+  .masthead {
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-2xl) var(--space-md) var(--space-xl);
+  }
+
+  .masthead-inner {
+    max-width: var(--content-width);
+    margin-inline: auto;
+  }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent-text);
+    margin-bottom: var(--space-sm);
+  }
+
+  h1 {
+    font-size: var(--text-display);
+    max-width: 20ch;
+    letter-spacing: -0.02em;
+  }
+
+  .intro {
+    margin-top: var(--space-md);
+    max-width: var(--measure);
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    line-height: var(--leading-snug);
+  }
+
+  .content {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-md) var(--space-3xl);
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-lg);
+    position: sticky;
+    top: 0;
+    background: oklch(1 0 0 / 0.92);
+    backdrop-filter: blur(6px);
+    padding-block: var(--space-sm);
+    z-index: var(--z-sticky);
+  }
+
+  .filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.5em 0.9em;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .filter span {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  .filter:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-ink);
+  }
+
+  .filter.is-active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-ink);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-lg) var(--space-md);
+  }
+
+  .grid :global(.card[hidden]) {
+    display: none;
+  }
+
+  .empty,
+  .coming-soon {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    margin-top: var(--space-lg);
+  }
+
+  @media (max-width: 40rem) {
+    .masthead {
+      padding: var(--space-xl) var(--space-sm) var(--space-lg);
+    }
+  }
+</style>
+
+<script>
+  const grid = document.getElementById('grid');
+  const filters = document.querySelectorAll<HTMLButtonElement>('.filter');
+
+  filters.forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.filter;
+      filters.forEach((b) => b.classList.toggle('is-active', b === button));
+      grid?.querySelectorAll<HTMLElement>('.card').forEach((card) => {
+        const show = target === 'all' || card.dataset.category === target;
+        card.hidden = !show;
+      });
+    });
+  });
+</script>

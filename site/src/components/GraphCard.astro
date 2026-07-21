@@ -1,0 +1,136 @@
+---
+import { formatDate } from '../lib/format';
+
+interface Props {
+  href: string;
+  title: string;
+  category: string;
+  date: Date;
+  interactive: boolean;
+  thumbnail: string;
+}
+
+const { href, title, category, date, interactive, thumbnail } = Astro.props;
+---
+
+<a class="card" href={href} data-category={category}>
+  <div class="card-media">
+    <img src={thumbnail} alt="" loading="lazy" decoding="async" />
+    {interactive && <span class="card-badge">interativo</span>}
+    <div class="card-overlay">
+      <span class="card-date">{formatDate(date)}</span>
+      <span class="card-cta">Ver gráfico →</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <span class="card-category">{category}</span>
+    <h3 class="card-title">{title}</h3>
+  </div>
+</a>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--color-ink);
+    border-radius: var(--radius-md);
+    outline-offset: 4px;
+  }
+
+  .card-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-base) var(--ease-out-expo);
+  }
+
+  .card:hover .card-media img,
+  .card:focus-visible .card-media img {
+    transform: scale(1.04);
+  }
+
+  .card-badge {
+    position: absolute;
+    top: var(--space-2xs);
+    right: var(--space-2xs);
+    background: var(--color-primary);
+    color: var(--color-primary-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    padding: 0.2em 0.55em;
+    border-radius: var(--radius-sm);
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: var(--space-sm);
+    background: linear-gradient(to top, oklch(0.16 0.014 235 / 0.78), transparent);
+    color: oklch(1 0 0);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity var(--duration-base) var(--ease-out-expo),
+      transform var(--duration-base) var(--ease-out-expo);
+  }
+
+  .card:hover .card-overlay,
+  .card:focus-visible .card-overlay {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .card-date {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .card-cta {
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .card-body {
+    padding-top: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+
+  .card-category {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent-text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .card-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-media img,
+    .card-overlay {
+      transition: none;
+    }
+    .card:hover .card-media img {
+      transform: none;
+    }
+  }
+</style>

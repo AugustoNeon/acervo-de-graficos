@@ -1,0 +1,34 @@
+# Product
+
+## Register
+
+product
+
+## Users
+
+Por enquanto, só o próprio Augusto — uma ferramenta pessoal de consulta pra navegar e comparar os gráficos R que ele vai adicionando ao longo do tempo. Está sendo construída sabendo que vai virar um portfólio compartilhável no futuro, então a qualidade visual não deve ser tratada como descartável mesmo enquanto o uso é só interno.
+
+## Product Purpose
+
+Servir de galeria/catálogo navegável dos gráficos R replicados do R Graph Gallery, organizados por categoria (mesma lógica de navegação do site original). Sucesso = Augusto consegue abrir o site, achar rápido um gráfico específico ou uma categoria, e ver/interagir com o resultado sem fricção.
+
+## Brand Personality
+
+Editorial / tipográfico: tipografia grande como protagonista, layout com respiro tipo revista de dados, fundo claro/neutro, decoração mínima — os gráficos são o elemento visual mais forte da página, não a UI ao redor deles.
+
+## Anti-references
+
+O r-graph-gallery.com original: sidebar de categorias à esquerda, fundo branco genérico, grid de cards padrão, estética de tutorial/documentação técnica. O site precisa ser claramente diferente na execução visual — a organização por categoria é reaproveitada (é útil pra navegação), mas o visual é autoral.
+
+## Design Principles
+
+- **Cada gráfico muda paleta de cores E, quando possível, os valores/dados** em relação ao exemplo original do R Graph Gallery — nunca sai idêntico visualmente, mesmo copiando a técnica/estrutura do código. Isso vale tanto pro gráfico em si quanto pro site ao redor (ver Anti-references).
+- **Interatividade real é prioridade #1**: ao adicionar cada gráfico novo, priorizar ativamente gerar um widget HTML interativo direto do R (`plotly::ggplotly()`, `networkD3`, `chorddiag`, `visNetwork`, etc.) quando existir um pacote adequado pro tipo de gráfico — mesmo que dê mais trabalho por gráfico. Quando não houver equivalente interativo razoável, cai para imagem estática com interação leve de vitrine (hover/zoom/lightbox) via CSS/JS da própria galeria.
+- Construir para o portfólio que isso vai virar, não só pra ferramenta de consulta de hoje — decisões de design não são descartáveis.
+- Categorias espelham a navegação do R Graph Gallery original, mas a execução visual é autoral, não um clone.
+- **O site nunca cita/linka o R Graph Gallery publicamente** — nem no texto, nem como fonte visível. A referência à fonte original fica só como metadado interno (frontmatter `source` de cada README, para uso nosso), nunca renderizada nas páginas do site.
+- Cada gráfico é uma entrada na galeria que leva pra uma página de detalhe própria (título, categoria, data, observações técnicas de quem fez).
+
+## Accessibility & Inclusion
+
+Sem requisito formal específico — boas práticas razoáveis (contraste legível, navegação básica por teclado) bastam; não é prioridade do projeto.

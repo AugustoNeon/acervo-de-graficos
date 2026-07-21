@@ -1,0 +1,12 @@
+# R
+Rplots.pdf
+.Rhistory
+.RData
+.Ruserdata
+
+# Node (site/ tem seu próprio .gitignore mais específico; isto é rede de segurança)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

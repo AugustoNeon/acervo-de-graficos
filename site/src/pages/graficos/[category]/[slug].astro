@@ -1,0 +1,226 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { formatDate } from '../../../lib/format';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('graficos');
+  return entries.map((entry) => {
+    const [category, slug] = entry.id.split('/');
+    return { params: { category, slug }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+const assetBase = `${base}/graficos/${entry.id}/`;
+---
+
+<Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title}>
+  <div class="page">
+    <a class="back" href={`${base}/`}>← Todos os gráficos</a>
+
+    <header class="head">
+      <span class="category">{entry.data.category}</span>
+      <h1>{entry.data.title}</h1>
+      <div class="meta">
+        <span>{formatDate(entry.data.date)}</span>
+      </div>
+    </header>
+
+    <figure class="visual">
+      {entry.data.interactive ? (
+        <div class="widget-frame">
+          <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
+        </div>
+      ) : (
+        <>
+          <button type="button" class="zoom-trigger" data-zoom-src={`${assetBase}output.png`}>
+            <img src={`${assetBase}output.png`} alt={entry.data.title} loading="eager" decoding="async" />
+          </button>
+          <figcaption>Clique na imagem pra ver em tamanho real</figcaption>
+        </>
+      )}
+    </figure>
+
+    <section class="notes">
+      <Content />
+    </section>
+  </div>
+
+  <dialog id="lightbox">
+    <button type="button" class="lightbox-close" aria-label="Fechar">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+  </dialog>
+</Base>
+
+<style>
+  .page {
+    max-width: 52rem;
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-md) var(--space-3xl);
+  }
+
+  .back {
+    display: inline-block;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    margin-bottom: var(--space-lg);
+  }
+
+  .back:hover {
+    color: var(--color-primary);
+  }
+
+  .head {
+    margin-bottom: var(--space-lg);
+  }
+
+  .category {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent-text);
+    margin-bottom: var(--space-sm);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    letter-spacing: -0.02em;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .visual {
+    margin: 0 0 var(--space-xl);
+  }
+
+  .zoom-trigger {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .zoom-trigger img {
+    width: 100%;
+    transition: transform var(--duration-base) var(--ease-out-expo);
+  }
+
+  .zoom-trigger:hover img {
+    transform: scale(1.015);
+  }
+
+  figcaption {
+    margin-top: var(--space-2xs);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+
+  .widget-frame {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .widget-frame iframe {
+    width: 100%;
+    height: 32rem;
+    border: none;
+  }
+
+  .notes {
+    max-width: var(--measure);
+    color: var(--color-ink);
+  }
+
+  .notes :global(h2) {
+    font-size: var(--text-lg);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-xs);
+  }
+
+  .notes :global(ul) {
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .notes :global(li) {
+    line-height: var(--leading-body);
+  }
+
+  .notes :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-surface);
+    padding: 0.1em 0.35em;
+    border-radius: 0.25em;
+  }
+
+  .notes :global(a) {
+    color: var(--color-primary);
+  }
+
+  dialog {
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    max-width: min(90vw, 60rem);
+    z-index: var(--z-modal);
+  }
+
+  dialog::backdrop {
+    background: oklch(0.16 0.014 235 / 0.85);
+  }
+
+  dialog img {
+    width: 100%;
+    display: block;
+    border-radius: var(--radius-md);
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    color: oklch(1 0 0);
+    font-size: var(--text-lg);
+  }
+</style>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement | null;
+
+  document.querySelectorAll<HTMLButtonElement>('.zoom-trigger').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      if (!dialog || !lightboxImg) return;
+      lightboxImg.src = trigger.dataset.zoomSrc ?? '';
+      dialog.showModal();
+    });
+  });
+
+  dialog?.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  document.querySelector('.lightbox-close')?.addEventListener('click', () => dialog?.close());
+</script>
