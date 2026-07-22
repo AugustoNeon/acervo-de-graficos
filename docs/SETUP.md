@@ -42,6 +42,9 @@ Adicionados em 2026-07-22 (gráfico de streamgraph):
 - `webshot2` + `chromote` (CRAN) — tiram screenshot de um `widget.html` pra gerar `output.png` em gráficos que só existem como htmlwidget (sem equivalente `ggplot2`). Usa o Chrome já instalado na máquina (`C:\Program Files\Google\Chrome\Application\chrome.exe`) via CDP, não precisa de PhantomJS.
 - `streamgraph` (só GitHub, não está no CRAN): `remotes::install_github("hrbrmstr/streamgraph")`.
 
+Adicionado em 2026-07-22 (gráfico de rede interativa):
+- `networkD3` (CRAN) — `simpleNetwork()`/`forceNetwork()`, redes interativas D3. Mesmo padrão do streamgraph pra thumbnail: sem equivalente `ggplot2`, `output.png` via `webshot2` sobre o `widget.html`.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
