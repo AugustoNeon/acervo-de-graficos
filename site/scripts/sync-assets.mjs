@@ -2,7 +2,7 @@
 // public/graficos/<categoria>/<slug>/ antes de dev/build. graficos/ continua
 // sendo a unica fonte de verdade dos arquivos; public/graficos e derivado
 // (ver .gitignore) e pode ser regenerado a qualquer momento rodando este script.
-import { existsSync, mkdirSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, cpSync, readdirSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +11,9 @@ const graficosDir = join(siteRoot, '..', 'graficos');
 const publicDir = join(siteRoot, 'public', 'graficos');
 
 const ASSET_FILES = ['output.png', 'widget.html'];
+// pasta de dependencias de um widget.html nao-selfcontained (htmlwidgets::saveWidget
+// com selfcontained=FALSE) -- precisa ir junto ou o iframe do widget quebra
+const ASSET_DIRS = ['widget_files'];
 
 rmSync(publicDir, { recursive: true, force: true });
 
@@ -27,6 +30,13 @@ for (const category of readdirSync(graficosDir, { withFileTypes: true })) {
       if (existsSync(src)) {
         mkdirSync(destDir, { recursive: true });
         copyFileSync(src, join(destDir, file));
+        count++;
+      }
+    }
+    for (const dir of ASSET_DIRS) {
+      const src = join(slugPath, dir);
+      if (existsSync(src)) {
+        cpSync(src, join(destDir, dir), { recursive: true });
         count++;
       }
     }

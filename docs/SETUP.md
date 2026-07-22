@@ -38,6 +38,12 @@ Comando usado:
 install.packages(c("tidyverse","ggraph","igraph","RColorBrewer"), repos="https://cloud.r-project.org")
 ```
 
+Adicionados em 2026-07-22 (gráfico de streamgraph):
+- `webshot2` + `chromote` (CRAN) — tiram screenshot de um `widget.html` pra gerar `output.png` em gráficos que só existem como htmlwidget (sem equivalente `ggplot2`). Usa o Chrome já instalado na máquina (`C:\Program Files\Google\Chrome\Application\chrome.exe`) via CDP, não precisa de PhantomJS.
+- `streamgraph` (só GitHub, não está no CRAN): `remotes::install_github("hrbrmstr/streamgraph")`.
+
+> Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
+
 ### Instalando pacotes adicionais
 
 Gráficos diferentes no R Graph Gallery podem pedir pacotes extras (ex: `treemapify`, `ggalluvial`, `circlize`, `sf` para mapas, `networkD3`, `viridis`, `patchwork`). Antes de rodar um script novo, olhe os `library(...)` no topo e instale o que faltar:
