@@ -45,6 +45,9 @@ Adicionados em 2026-07-22 (gráfico de streamgraph):
 Adicionado em 2026-07-22 (gráfico de rede interativa):
 - `networkD3` (CRAN) — `simpleNetwork()`/`forceNetwork()`, redes interativas D3. Mesmo padrão do streamgraph pra thumbnail: sem equivalente `ggplot2`, `output.png` via `webshot2` sobre o `widget.html`.
 
+Adicionados em 2026-07-22 (gráfico de heatmap):
+- `heatmaply` + `plotly` + `hrbrthemes` (CRAN) — `heatmaply()` gera heatmap interativo (via plotly) com clustering hierárquico. Traz `dendextend`/`seriation`/`webshot` (antigo) como dependências transitivas.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais

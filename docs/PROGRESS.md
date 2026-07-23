@@ -6,6 +6,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 | Data       | Categoria | Gráfico | Pasta | Fonte |
 |------------|-----------|---------|-------|-------|
+| 2026-07-22 | correlation | Heatmap com clustering hierárquico (heatmaply) | [graficos/correlation/heatmap-clustering-heatmaply](../graficos/correlation/heatmap-clustering-heatmaply) | [data-to-viz.com/graph/heatmap](https://www.data-to-viz.com/graph/heatmap.html) |
 | 2026-07-22 | flow      | Sankey diagram simplificado (networkD3) | [graficos/flow/sankey-networkd3-simplificado](../graficos/flow/sankey-networkd3-simplificado) | [r-graph-gallery.com/323](https://r-graph-gallery.com/323-sankey-diagram-with-the-networkd3-library.html) |
 | 2026-07-22 | network   | Rede interativa com networkD3 (simpleNetwork) | [graficos/network/rede-interativa-networkd3](../graficos/network/rede-interativa-networkd3) | [r-graph-gallery.com/network-interactive](https://r-graph-gallery.com/network-interactive.html) |
 | 2026-07-22 | evolution | Streamgraph interativo com legenda/dropdown | [graficos/evolution/streamgraph-legenda-interativo](../graficos/evolution/streamgraph-legenda-interativo) | [r-graph-gallery.com/156](https://r-graph-gallery.com/156-interactive-streamgraph-with-legend.html) |
@@ -13,6 +14,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 ## Histórico do projeto
 
+- **2026-07-22**: quinto gráfico adicionado (heatmap com clustering hierárquico via `heatmaply`, categoria nova `correlation`). Primeira fonte fora do R Graph Gallery (data-to-viz.com, do mesmo autor); matriz ficticia gerada do zero em vez do CSV real externo do exemplo original.
 - **2026-07-22**: quarto gráfico adicionado (sankey diagram com `networkD3::sankeyNetwork()`, categoria nova `flow`). Pedido do usuário: dataset real do exemplo original (~68 nós) fica poluído, então usamos um fluxo fictício bem menor (8 nós). Detectado um comportamento não-óbvio do binding JS do pacote (`color(d.group.replace(/ .*/, ""))`, em `sankeyNetwork.js`) que colore nós pela primeira palavra do nome, não pelo nome inteiro — ver README do gráfico e [`AGENTS.md`](../AGENTS.md) "Lições aprendidas".
 - **2026-07-22**: terceiro gráfico adicionado (rede interativa com `networkD3::simpleNetwork()`, categoria `network`). Reaproveitado o padrão de thumbnail via `webshot2` (mesmo widget-sem-equivalente-ggplot2 do streamgraph). Página original tinha duas variações de código (básica/customizada); passou a valer a regra em [`WORKFLOW.md`](WORKFLOW.md) de perguntar ao usuário qual usar antes de seguir.
 - **2026-07-22**: segundo gráfico adicionado (streamgraph interativo, categoria nova `evolution`). Pacote `streamgraph` só existe no GitHub (`hrbrmstr/streamgraph`, não está no CRAN); instalado `webshot2`+`chromote` pra gerar thumbnail estático de widgets que não têm equivalente em `ggplot2` (usa o Chrome já instalado na máquina). `pandoc` não está instalado, então `saveWidget()` precisa de `selfcontained = FALSE` — ver [`SETUP.md`](SETUP.md) e [`AGENTS.md`](../AGENTS.md) "Lições aprendidas".
