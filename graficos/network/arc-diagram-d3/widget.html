@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Arc diagram interativo</title>
+<script src="widget_files/d3.v7.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; }
+  #chart-container { width: 100%; }
+  .arc { fill: none; stroke-width: 2px; transition: opacity 0.15s, stroke-width 0.15s; }
+  .node-label { font-size: 12px; fill: #333; text-anchor: middle; transition: opacity 0.15s, font-weight 0.15s; }
+  .node-circle { stroke: #ffffff; stroke-width: 1.5px; cursor: pointer; transition: r 0.15s; }
+  .legend-item text { font-size: 13px; fill: #333; }
+  #tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(30, 30, 30, 0.92);
+    color: #fff;
+    padding: 4px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: sans-serif;
+    opacity: 0;
+    transition: opacity 0.1s;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="chart-container"></div>
+<div id="tooltip"></div>
+<script>
+// Arc diagram feito a mao em D3.js puro -- nao existe pacote R com versao
+// interativa pronta pra esse tipo de grafico (ver README.md da pasta).
+// Mesmos dados ficticios do script.R (14 nos em 3 grupos), pra ficar
+// comparavel com a versao estatica.
+const nodes = [
+  {name: "A1", group: "Grupo 1"}, {name: "A2", group: "Grupo 1"}, {name: "A3", group: "Grupo 1"},
+  {name: "A4", group: "Grupo 1"}, {name: "A5", group: "Grupo 1"},
+  {name: "B1", group: "Grupo 2"}, {name: "B2", group: "Grupo 2"}, {name: "B3", group: "Grupo 2"},
+  {name: "B4", group: "Grupo 2"}, {name: "B5", group: "Grupo 2"},
+  {name: "C1", group: "Grupo 3"}, {name: "C2", group: "Grupo 3"}, {name: "C3", group: "Grupo 3"},
+  {name: "C4", group: "Grupo 3"}
+];
+
+const links = [
+  ["A1","A2"], ["A2","A3"], ["A3","A4"], ["A4","A5"], ["A1","A5"],
+  ["B1","B2"], ["B2","B3"], ["B3","B4"], ["B4","B5"], ["B1","B3"],
+  ["C1","C2"], ["C2","C3"], ["C3","C4"],
+  ["A5","B1"], ["B5","C1"], ["A1","C4"], ["A3","B4"]
+].map(([source, target]) => ({source, target}));
+
+const groupColor = {"Grupo 1": "#e07a5f", "Grupo 2": "#3d5a80", "Grupo 3": "#8dbf6d"};
+
+const margin = {top: 30, right: 40, bottom: 50, left: 40};
+const width = 900;
+const height = 420;
+
+const svg = d3.select("#chart-container").append("svg")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("width", "100%")
+  .style("display", "block");
+
+const x = d3.scalePoint()
+  .domain(nodes.map(d => d.name))
+  .range([margin.left, width - margin.right])
+  .padding(0.5);
+
+const baseline = height - margin.bottom;
+
+function arcPath(d) {
+  const x1 = x(d.source), x2 = x(d.target);
+  const r = Math.abs(x2 - x1) / 2;
+  const sweep = x1 < x2 ? 1 : 0;
+  return `M ${x1} ${baseline} A ${r} ${r} 0 0 ${sweep} ${x2} ${baseline}`;
+}
+
+const nodeByName = new Map(nodes.map(d => [d.name, d]));
+const neighbors = new Map(nodes.map(d => [d.name, new Set()]));
+links.forEach(l => {
+  neighbors.get(l.source).add(l.target);
+  neighbors.get(l.target).add(l.source);
+});
+
+const tooltip = d3.select("#tooltip");
+
+function showTooltip(html, event) {
+  tooltip.html(html)
+    .style("left", (event.pageX + 12) + "px")
+    .style("top", (event.pageY - 10) + "px")
+    .style("opacity", 1);
+}
+function hideTooltip() {
+  tooltip.style("opacity", 0);
+}
+
+const arcs = svg.append("g").selectAll("path")
+  .data(links)
+  .join("path")
+    .attr("class", "arc")
+    .attr("d", arcPath)
+    .attr("stroke", d => groupColor[nodeByName.get(d.source).group])
+    .attr("opacity", 0.55)
+    .on("mouseover", function(event, d) {
+      arcs.attr("opacity", o => o === d ? 1 : 0.06);
+      d3.select(this).attr("stroke-width", 3.5);
+      showTooltip(`${d.source} &rarr; ${d.target}`, event);
+    })
+    .on("mousemove", (event) => showTooltip(tooltip.html(), event))
+    .on("mouseout", function() {
+      arcs.attr("opacity", 0.55);
+      d3.select(this).attr("stroke-width", 2);
+      hideTooltip();
+    });
+
+const nodeG = svg.append("g").selectAll("g")
+  .data(nodes)
+  .join("g")
+    .attr("transform", d => `translate(${x(d.name)}, ${baseline})`);
+
+nodeG.append("circle")
+    .attr("class", "node-circle")
+    .attr("r", 7)
+    .attr("fill", d => groupColor[d.group]);
+
+nodeG.append("text")
+    .attr("class", "node-label")
+    .attr("y", 22)
+    .text(d => d.name);
+
+nodeG
+  .on("mouseover", function(event, d) {
+    const connected = neighbors.get(d.name);
+    arcs.attr("opacity", l => (l.source === d.name || l.target === d.name) ? 1 : 0.06);
+    nodeG.select("text").attr("opacity", n => n.name === d.name || connected.has(n.name) ? 1 : 0.3);
+    d3.select(this).select("circle").attr("r", 10);
+    showTooltip(`<b>${d.name}</b><br>${d.group}<br>${connected.size} conexão(ões)`, event);
+  })
+  .on("mousemove", (event) => showTooltip(tooltip.html(), event))
+  .on("mouseout", function() {
+    arcs.attr("opacity", 0.55);
+    nodeG.select("text").attr("opacity", 1);
+    d3.select(this).select("circle").attr("r", 7);
+    hideTooltip();
+  });
+
+// Legenda dos grupos
+const legend = svg.append("g").attr("transform", `translate(${margin.left}, 12)`);
+const legendItems = legend.selectAll(".legend-item")
+  .data(Object.entries(groupColor))
+  .join("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(${i * 130}, 0)`);
+
+legendItems.append("circle").attr("r", 6).attr("fill", d => d[1]);
+legendItems.append("text").attr("x", 12).attr("y", 4).text(d => d[0]);
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 | Data       | Categoria | Gráfico | Pasta | Fonte |
 |------------|-----------|---------|-------|-------|
+| 2026-07-23 | network   | Arc diagram (versão interativa em D3.js puro) | [graficos/network/arc-diagram-d3](../graficos/network/arc-diagram-d3) | [data-to-viz.com/graph/arc](https://www.data-to-viz.com/graph/arc.html) |
 | 2026-07-23 | distribution | Superfície 3D de densidade (plotly + MASS::kde2d) | [graficos/distribution/superficie-3d-densidade](../graficos/distribution/superficie-3d-densidade) | [data-to-viz.com/graph/density2d](https://www.data-to-viz.com/graph/density2d.html) |
 | 2026-07-23 | distribution | Densidade 2D (stat_density_2d) | [graficos/distribution/densidade-2d-contorno](../graficos/distribution/densidade-2d-contorno) | [data-to-viz.com/graph/density2d](https://www.data-to-viz.com/graph/density2d.html) |
 | 2026-07-22 | correlation | Heatmap com clustering hierárquico (heatmaply) | [graficos/correlation/heatmap-clustering-heatmaply](../graficos/correlation/heatmap-clustering-heatmaply) | [data-to-viz.com/graph/heatmap](https://www.data-to-viz.com/graph/heatmap.html) |
@@ -16,6 +17,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 ## Histórico do projeto
 
+- **2026-07-23**: oitavo gráfico adicionado (arc diagram, categoria `network`). Primeiro gráfico do projeto com `widget.html` escrito à mão em D3.js puro em vez de gerado por um pacote R — não existe pacote R com arc diagram interativo pronto. `output.png` continua vindo do `ggraph` normalmente, mesmos dados fictícios nas duas versões. Ver "Decisões fechadas" em [`AGENTS.md`](../AGENTS.md).
 - **2026-07-23**: sexto e sétimo gráficos adicionados (densidade 2D estática + superfície 3D interativa, categoria `distribution`, mesmo dataset fictício de 4 clusters gaussianos pra ficarem comparáveis). Página original tinha 3 variações (incluindo um scatterplot só ilustrativo, não replicado); usuário pediu as duas versões de densidade como gráficos separados.
 - **2026-07-22**: quinto gráfico adicionado (heatmap com clustering hierárquico via `heatmaply`, categoria nova `correlation`). Primeira fonte fora do R Graph Gallery (data-to-viz.com, do mesmo autor); matriz ficticia gerada do zero em vez do CSV real externo do exemplo original.
 - **2026-07-22**: quarto gráfico adicionado (sankey diagram com `networkD3::sankeyNetwork()`, categoria nova `flow`). Pedido do usuário: dataset real do exemplo original (~68 nós) fica poluído, então usamos um fluxo fictício bem menor (8 nós). Detectado um comportamento não-óbvio do binding JS do pacote (`color(d.group.replace(/ .*/, ""))`, em `sankeyNetwork.js`) que colore nós pela primeira palavra do nome, não pelo nome inteiro — ver README do gráfico e [`AGENTS.md`](../AGENTS.md) "Lições aprendidas".
