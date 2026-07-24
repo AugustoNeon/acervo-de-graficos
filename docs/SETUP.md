@@ -48,6 +48,13 @@ Adicionado em 2026-07-22 (gráfico de rede interativa):
 Adicionados em 2026-07-22 (gráfico de heatmap):
 - `heatmaply` + `plotly` + `hrbrthemes` (CRAN) — `heatmaply()` gera heatmap interativo (via plotly) com clustering hierárquico. Traz `dendextend`/`seriation`/`webshot` (antigo) como dependências transitivas.
 
+Adicionados em 2026-07-24 (gráficos de rede vindos de data-to-viz.com/graph/network.html):
+- `patchwork` (CRAN) — combina múltiplos plots `ggplot`/`ggraph` num único `output.png` (grid de painéis lado a lado), usado nos gráficos de comparação (layouts, tipos básicos de rede).
+- `visNetwork` (CRAN) — rede interativa via `vis.js`, com suporte nativo a setas (grafo direcionado) e espessura de linha por peso (`value=`), além de nós arrastáveis com física ligada. Mesmo padrão de thumbnail via `webshot2` quando não há equivalente `ggplot2` direto.
+
+Adicionado em 2026-07-24 (gráfico de linha interativo com CSS via ggiraph):
+- `ggiraph` (CRAN) — extensão do `ggplot2` com `geom_*_interactive()` (drop-in dos `geom_*` normais, aceitam `tooltip`/`data_id`/`onclick`) e `girafe()`/`girafe_options()` pra customizar hover/tooltip/seleção/zoom via CSS puro. Traz `gdtools`/`fontquiver`/`fontBitstreamVera`/`fontLiberation` como dependências transitivas (fontes pro SVG). Mesmo objeto `ggplot` funciona pro `output.png` (via `ggsave()` normal, as aes de interatividade são ignoradas) e pro `widget.html` (via `girafe()`), sem precisar duplicar o plot.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
