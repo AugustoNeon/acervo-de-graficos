@@ -7,13 +7,26 @@
 <script src="widget_files/data.js"></script>
 <style>
   html, body { margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; }
+  #wrapper { display: flex; flex-direction: column; }
+  #topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+  }
+  #legend { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; }
+  .legend-swatch { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  #hint { font-size: 12px; color: #888; white-space: nowrap; }
   #chart-container { width: 100%; cursor: grab; }
   #chart-container:active { cursor: grabbing; }
   .arc { fill: none; stroke-width: 1.4px; transition: opacity 0.15s, stroke-width 0.15s; }
+  .arc.pinned { stroke-width: 3px; }
   .node-label { font-size: 9px; fill: #333; text-anchor: middle; transition: opacity 0.15s, font-weight 0.15s; }
   .node-circle { stroke: #ffffff; stroke-width: 1px; cursor: pointer; transition: r 0.15s; }
-  .legend-item text { font-size: 12px; fill: #333; }
-  .hint { font-size: 11px; fill: #888; }
   #tooltip {
     position: absolute;
     pointer-events: none;
@@ -30,7 +43,13 @@
 </style>
 </head>
 <body>
-<div id="chart-container"></div>
+<div id="wrapper">
+  <div id="topbar">
+    <div id="legend"></div>
+    <div id="hint">arraste p/ mover · scroll p/ zoom · clique num arco pra fixar · duplo-clique reseta</div>
+  </div>
+  <div id="chart-container"></div>
+</div>
 <div id="tooltip"></div>
 <script>
 // Arc diagram feito a mao em D3.js puro -- nao existe pacote R com versao
@@ -38,7 +57,20 @@
 // nodes / links / groupColor vem de widget_files/data.js, gerado pelo
 // script.R -- fonte unica de verdade entre a versao estatica e esta.
 
-const margin = {top: 40, right: 40, bottom: 30, left: 40};
+// Legenda e dica ficam em HTML normal (fora do SVG) -- dentro do SVG elas
+// encolhiam junto com o viewBox largo (rede grande = viewBox grande = texto
+// minusculo depois de reescalado pra caber na tela), o que deixava ilegivel.
+const legendDiv = d3.select("#legend");
+const gruposUnicos = [...new Set(nodes.map(d => d.group))];
+const legendItems = legendDiv.selectAll(".legend-item")
+  .data(gruposUnicos)
+  .join("div")
+    .attr("class", "legend-item");
+legendItems.append("span").attr("class", "legend-swatch")
+  .style("background", d => groupColor[d]);
+legendItems.append("span").text(d => d);
+
+const margin = {top: 20, right: 20, bottom: 30, left: 20};
 const width = Math.max(900, nodes.length * 42);
 
 const x = d3.scalePoint()
@@ -57,7 +89,7 @@ const svg = d3.select("#chart-container").append("svg")
   .attr("width", "100%")
   .style("display", "block");
 
-// camada que sofre pan/zoom -- legenda e dica ficam fora, fixas na tela
+// camada que sofre pan/zoom
 const zoomLayer = svg.append("g");
 
 function arcPath(d) {
@@ -73,9 +105,9 @@ links.forEach(l => {
   neighbors.get(l.source).add(l.target);
   neighbors.get(l.target).add(l.source);
 });
+function linkKey(d) { return d.source + "->" + d.target; }
 
 const tooltip = d3.select("#tooltip");
-
 function showTooltip(html, event) {
   tooltip.html(html)
     .style("left", (event.pageX + 12) + "px")
@@ -86,6 +118,27 @@ function hideTooltip() {
   tooltip.style("opacity", 0);
 }
 
+// arcos clicados ficam "fixados" (destacados mesmo sem hover) ate serem
+// clicados de novo ou o duplo-clique resetar tudo
+const pinned = new Set();
+
+// hoverPredicate(d) -> true se o arco deve ficar em destaque agora; null
+// significa "sem hover, mostra so o que estiver fixado"
+function refreshArcs(hoverPredicate) {
+  arcs
+    .classed("pinned", d => pinned.has(linkKey(d)))
+    .attr("opacity", d => {
+      if (pinned.has(linkKey(d))) return 1;
+      if (hoverPredicate) return hoverPredicate(d) ? 1 : 0.04;
+      return 0.35;
+    })
+    .attr("stroke-width", d => {
+      if (pinned.has(linkKey(d))) return 3;
+      if (hoverPredicate && hoverPredicate(d)) return 3;
+      return 1.4;
+    });
+}
+
 const arcs = zoomLayer.append("g").selectAll("path")
   .data(links)
   .join("path")
@@ -94,15 +147,18 @@ const arcs = zoomLayer.append("g").selectAll("path")
     .attr("stroke", d => groupColor[nodeByName.get(d.source).group])
     .attr("opacity", 0.35)
     .on("mouseover", function(event, d) {
-      arcs.attr("opacity", o => o === d ? 1 : 0.04);
-      d3.select(this).attr("stroke-width", 3);
-      showTooltip(`${d.source} &rarr; ${d.target}`, event);
+      refreshArcs(l => l === d);
+      showTooltip(`${d.source} &rarr; ${d.target}${pinned.has(linkKey(d)) ? " (fixado)" : ""}`, event);
     })
-    .on("mousemove", (event) => showTooltip(tooltip.html(), event))
+    .on("mousemove", (event, d) => showTooltip(`${d.source} &rarr; ${d.target}${pinned.has(linkKey(d)) ? " (fixado)" : ""}`, event))
     .on("mouseout", function() {
-      arcs.attr("opacity", 0.35);
-      d3.select(this).attr("stroke-width", 1.4);
+      refreshArcs(null);
       hideTooltip();
+    })
+    .on("click", function(event, d) {
+      const key = linkKey(d);
+      if (pinned.has(key)) pinned.delete(key); else pinned.add(key);
+      refreshArcs(l => l === d);
     });
 
 const nodeG = zoomLayer.append("g").selectAll("g")
@@ -123,20 +179,20 @@ nodeG.append("text")
 nodeG
   .on("mouseover", function(event, d) {
     const connected = neighbors.get(d.name);
-    arcs.attr("opacity", l => (l.source === d.name || l.target === d.name) ? 1 : 0.04);
+    refreshArcs(l => l.source === d.name || l.target === d.name);
     nodeG.select("text").attr("opacity", n => n.name === d.name || connected.has(n.name) ? 1 : 0.25);
     d3.select(this).select("circle").attr("r", 8);
     showTooltip(`<b>${d.name}</b><br>${d.group}<br>${connected.size} conexão(ões)`, event);
   })
   .on("mousemove", (event) => showTooltip(tooltip.html(), event))
   .on("mouseout", function() {
-    arcs.attr("opacity", 0.35);
+    refreshArcs(null);
     nodeG.select("text").attr("opacity", 1);
     d3.select(this).select("circle").attr("r", 5);
     hideTooltip();
   });
 
-// Pan (arrastar) e zoom (scroll / pinça) -- a rede ficou grande demais pra
+// Pan (arrastar) e zoom (scroll / pinça) -- a rede fica larga demais pra
 // caber inteira e legivel ao mesmo tempo, entao dá pra navegar por ela
 const zoom = d3.zoom()
   .scaleExtent([0.4, 10])
@@ -144,26 +200,11 @@ const zoom = d3.zoom()
     zoomLayer.attr("transform", event.transform);
   });
 svg.call(zoom).on("dblclick.zoom", null);
-svg.on("dblclick", () => svg.call(zoom.transform, d3.zoomIdentity));
-
-// Legenda dos grupos (fixa, fora da camada de zoom)
-const gruposUnicos = [...new Set(nodes.map(d => d.group))];
-const legend = svg.append("g").attr("transform", `translate(${margin.left}, 16)`);
-const legendItems = legend.selectAll(".legend-item")
-  .data(gruposUnicos)
-  .join("g")
-    .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(${i * 120}, 0)`);
-
-legendItems.append("circle").attr("r", 5).attr("fill", d => groupColor[d]);
-legendItems.append("text").attr("x", 10).attr("y", 4).text(d => d);
-
-svg.append("text")
-  .attr("class", "hint")
-  .attr("x", width - margin.right)
-  .attr("y", 16)
-  .attr("text-anchor", "end")
-  .text("arraste p/ mover · scroll p/ zoom · duplo-clique reseta");
+svg.on("dblclick", () => {
+  svg.call(zoom.transform, d3.zoomIdentity);
+  pinned.clear();
+  refreshArcs(null);
+});
 </script>
 </body>
 </html>

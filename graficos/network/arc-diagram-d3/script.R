@@ -4,14 +4,14 @@ library(igraph)
 library(ggraph)
 library(jsonlite)
 
-# Dados ficticios: 72 nos em 6 grupos (12 por grupo), ordenados por grupo
+# Dados ficticios: 50 nos em 5 grupos (10 por grupo), ordenados por grupo
 # (pra evitar o erro comum que o proprio tutorial original alerta -- ordem
-# aleatoria deixa o arc diagram ilegivel). Rede bem maior que a versao
-# anterior (14 nos/17 links) a pedido do usuario -- ver AGENTS.md
-# "Decisoes fechadas"
+# aleatoria deixa o arc diagram ilegivel). Reduzido de 6 grupos/12 por grupo
+# pra 5 grupos/10 por grupo a pedido do usuario (72 nos tinha ficado grande
+# demais/visualmente poluido) -- ver AGENTS.md "Decisoes fechadas"
 set.seed(2027)
-n_grupos <- 6
-n_por_grupo <- 12
+n_grupos <- 5
+n_por_grupo <- 10
 letras_grupo <- LETTERS[1:n_grupos]
 labels_grupo <- paste("Grupo", 1:n_grupos)
 names(labels_grupo) <- letras_grupo
@@ -55,7 +55,7 @@ for (g in letras_grupo) {
 
 # pontes entre grupos: 70% priorizando grupos vizinhos (arcos menores),
 # 30% entre grupos quaisquer (alguns arcos bem longos, de propósito)
-alvo_pontes <- 25
+alvo_pontes <- 16
 pontes <- 0
 tentativas <- 0
 while (pontes < alvo_pontes && tentativas < 1000) {
@@ -82,13 +82,13 @@ mygraph <- graph_from_data_frame(links, vertices = nodes)
 # uma unica cor solida "#69b3a2" pra tudo)
 cores_grupo <- c(
   "Grupo 1" = "#e07a5f", "Grupo 2" = "#3d5a80", "Grupo 3" = "#8dbf6d",
-  "Grupo 4" = "#f2cc8f", "Grupo 5" = "#81b29a", "Grupo 6" = "#9b5de5"
+  "Grupo 4" = "#f2cc8f", "Grupo 5" = "#81b29a"
 )
 
 p <- ggraph(mygraph, layout = "linear") +
   geom_edge_arc(aes(colour = node1.group), alpha = 0.35, width = 0.5) +
-  geom_node_point(aes(colour = group), size = 2.2) +
-  geom_node_text(aes(label = name, colour = group), angle = 90, hjust = 1, size = 2, nudge_y = -0.08) +
+  geom_node_point(aes(colour = group), size = 2.4) +
+  geom_node_text(aes(label = name, colour = group), angle = 90, hjust = 1, size = 2.2, nudge_y = -0.08) +
   scale_edge_colour_manual(values = cores_grupo) +
   scale_colour_manual(values = cores_grupo) +
   theme_void() +
@@ -97,7 +97,7 @@ p <- ggraph(mygraph, layout = "linear") +
     plot.margin = unit(c(2, 1, 3, 1), "cm")
   )
 
-ggsave("output.png", plot = p, width = 22, height = 8, dpi = 150)
+ggsave("output.png", plot = p, width = 16, height = 7, dpi = 150)
 
 # Exporta os mesmos dados pro widget.html interativo (D3.js) consumir via
 # widget_files/data.js -- fonte unica de verdade, sem duplicar dado a mao
