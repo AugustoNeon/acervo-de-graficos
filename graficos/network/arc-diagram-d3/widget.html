@@ -4,13 +4,16 @@
 <meta charset="utf-8" />
 <title>Arc diagram interativo</title>
 <script src="widget_files/d3.v7.min.js"></script>
+<script src="widget_files/data.js"></script>
 <style>
   html, body { margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; }
-  #chart-container { width: 100%; }
-  .arc { fill: none; stroke-width: 2px; transition: opacity 0.15s, stroke-width 0.15s; }
-  .node-label { font-size: 12px; fill: #333; text-anchor: middle; transition: opacity 0.15s, font-weight 0.15s; }
-  .node-circle { stroke: #ffffff; stroke-width: 1.5px; cursor: pointer; transition: r 0.15s; }
-  .legend-item text { font-size: 13px; fill: #333; }
+  #chart-container { width: 100%; cursor: grab; }
+  #chart-container:active { cursor: grabbing; }
+  .arc { fill: none; stroke-width: 1.4px; transition: opacity 0.15s, stroke-width 0.15s; }
+  .node-label { font-size: 9px; fill: #333; text-anchor: middle; transition: opacity 0.15s, font-weight 0.15s; }
+  .node-circle { stroke: #ffffff; stroke-width: 1px; cursor: pointer; transition: r 0.15s; }
+  .legend-item text { font-size: 12px; fill: #333; }
+  .hint { font-size: 11px; fill: #888; }
   #tooltip {
     position: absolute;
     pointer-events: none;
@@ -32,41 +35,30 @@
 <script>
 // Arc diagram feito a mao em D3.js puro -- nao existe pacote R com versao
 // interativa pronta pra esse tipo de grafico (ver README.md da pasta).
-// Mesmos dados ficticios do script.R (14 nos em 3 grupos), pra ficar
-// comparavel com a versao estatica.
-const nodes = [
-  {name: "A1", group: "Grupo 1"}, {name: "A2", group: "Grupo 1"}, {name: "A3", group: "Grupo 1"},
-  {name: "A4", group: "Grupo 1"}, {name: "A5", group: "Grupo 1"},
-  {name: "B1", group: "Grupo 2"}, {name: "B2", group: "Grupo 2"}, {name: "B3", group: "Grupo 2"},
-  {name: "B4", group: "Grupo 2"}, {name: "B5", group: "Grupo 2"},
-  {name: "C1", group: "Grupo 3"}, {name: "C2", group: "Grupo 3"}, {name: "C3", group: "Grupo 3"},
-  {name: "C4", group: "Grupo 3"}
-];
+// nodes / links / groupColor vem de widget_files/data.js, gerado pelo
+// script.R -- fonte unica de verdade entre a versao estatica e esta.
 
-const links = [
-  ["A1","A2"], ["A2","A3"], ["A3","A4"], ["A4","A5"], ["A1","A5"],
-  ["B1","B2"], ["B2","B3"], ["B3","B4"], ["B4","B5"], ["B1","B3"],
-  ["C1","C2"], ["C2","C3"], ["C3","C4"],
-  ["A5","B1"], ["B5","C1"], ["A1","C4"], ["A3","B4"]
-].map(([source, target]) => ({source, target}));
-
-const groupColor = {"Grupo 1": "#e07a5f", "Grupo 2": "#3d5a80", "Grupo 3": "#8dbf6d"};
-
-const margin = {top: 30, right: 40, bottom: 50, left: 40};
-const width = 900;
-const height = 420;
-
-const svg = d3.select("#chart-container").append("svg")
-  .attr("viewBox", `0 0 ${width} ${height}`)
-  .attr("width", "100%")
-  .style("display", "block");
+const margin = {top: 40, right: 40, bottom: 30, left: 40};
+const width = Math.max(900, nodes.length * 42);
 
 const x = d3.scalePoint()
   .domain(nodes.map(d => d.name))
   .range([margin.left, width - margin.right])
   .padding(0.5);
 
-const baseline = height - margin.bottom;
+// altura dinamica: precisa caber o maior arco (a ponte mais longa)
+const maxArcR = d3.max(links, d => Math.abs(x(d.target) - x(d.source)) / 2) || 100;
+const bottomSpace = 40;
+const height = maxArcR + margin.top + bottomSpace;
+const baseline = height - bottomSpace;
+
+const svg = d3.select("#chart-container").append("svg")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("width", "100%")
+  .style("display", "block");
+
+// camada que sofre pan/zoom -- legenda e dica ficam fora, fixas na tela
+const zoomLayer = svg.append("g");
 
 function arcPath(d) {
   const x1 = x(d.source), x2 = x(d.target);
@@ -94,66 +86,84 @@ function hideTooltip() {
   tooltip.style("opacity", 0);
 }
 
-const arcs = svg.append("g").selectAll("path")
+const arcs = zoomLayer.append("g").selectAll("path")
   .data(links)
   .join("path")
     .attr("class", "arc")
     .attr("d", arcPath)
     .attr("stroke", d => groupColor[nodeByName.get(d.source).group])
-    .attr("opacity", 0.55)
+    .attr("opacity", 0.35)
     .on("mouseover", function(event, d) {
-      arcs.attr("opacity", o => o === d ? 1 : 0.06);
-      d3.select(this).attr("stroke-width", 3.5);
+      arcs.attr("opacity", o => o === d ? 1 : 0.04);
+      d3.select(this).attr("stroke-width", 3);
       showTooltip(`${d.source} &rarr; ${d.target}`, event);
     })
     .on("mousemove", (event) => showTooltip(tooltip.html(), event))
     .on("mouseout", function() {
-      arcs.attr("opacity", 0.55);
-      d3.select(this).attr("stroke-width", 2);
+      arcs.attr("opacity", 0.35);
+      d3.select(this).attr("stroke-width", 1.4);
       hideTooltip();
     });
 
-const nodeG = svg.append("g").selectAll("g")
+const nodeG = zoomLayer.append("g").selectAll("g")
   .data(nodes)
   .join("g")
     .attr("transform", d => `translate(${x(d.name)}, ${baseline})`);
 
 nodeG.append("circle")
     .attr("class", "node-circle")
-    .attr("r", 7)
+    .attr("r", 5)
     .attr("fill", d => groupColor[d.group]);
 
 nodeG.append("text")
     .attr("class", "node-label")
-    .attr("y", 22)
+    .attr("y", 16)
     .text(d => d.name);
 
 nodeG
   .on("mouseover", function(event, d) {
     const connected = neighbors.get(d.name);
-    arcs.attr("opacity", l => (l.source === d.name || l.target === d.name) ? 1 : 0.06);
-    nodeG.select("text").attr("opacity", n => n.name === d.name || connected.has(n.name) ? 1 : 0.3);
-    d3.select(this).select("circle").attr("r", 10);
+    arcs.attr("opacity", l => (l.source === d.name || l.target === d.name) ? 1 : 0.04);
+    nodeG.select("text").attr("opacity", n => n.name === d.name || connected.has(n.name) ? 1 : 0.25);
+    d3.select(this).select("circle").attr("r", 8);
     showTooltip(`<b>${d.name}</b><br>${d.group}<br>${connected.size} conexão(ões)`, event);
   })
   .on("mousemove", (event) => showTooltip(tooltip.html(), event))
   .on("mouseout", function() {
-    arcs.attr("opacity", 0.55);
+    arcs.attr("opacity", 0.35);
     nodeG.select("text").attr("opacity", 1);
-    d3.select(this).select("circle").attr("r", 7);
+    d3.select(this).select("circle").attr("r", 5);
     hideTooltip();
   });
 
-// Legenda dos grupos
-const legend = svg.append("g").attr("transform", `translate(${margin.left}, 12)`);
+// Pan (arrastar) e zoom (scroll / pinça) -- a rede ficou grande demais pra
+// caber inteira e legivel ao mesmo tempo, entao dá pra navegar por ela
+const zoom = d3.zoom()
+  .scaleExtent([0.4, 10])
+  .on("zoom", (event) => {
+    zoomLayer.attr("transform", event.transform);
+  });
+svg.call(zoom).on("dblclick.zoom", null);
+svg.on("dblclick", () => svg.call(zoom.transform, d3.zoomIdentity));
+
+// Legenda dos grupos (fixa, fora da camada de zoom)
+const gruposUnicos = [...new Set(nodes.map(d => d.group))];
+const legend = svg.append("g").attr("transform", `translate(${margin.left}, 16)`);
 const legendItems = legend.selectAll(".legend-item")
-  .data(Object.entries(groupColor))
+  .data(gruposUnicos)
   .join("g")
     .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(${i * 130}, 0)`);
+    .attr("transform", (d, i) => `translate(${i * 120}, 0)`);
 
-legendItems.append("circle").attr("r", 6).attr("fill", d => d[1]);
-legendItems.append("text").attr("x", 12).attr("y", 4).text(d => d[0]);
+legendItems.append("circle").attr("r", 5).attr("fill", d => groupColor[d]);
+legendItems.append("text").attr("x", 10).attr("y", 4).text(d => d);
+
+svg.append("text")
+  .attr("class", "hint")
+  .attr("x", width - margin.right)
+  .attr("y", 16)
+  .attr("text-anchor", "end")
+  .text("arraste p/ mover · scroll p/ zoom · duplo-clique reseta");
 </script>
 </body>
 </html>
