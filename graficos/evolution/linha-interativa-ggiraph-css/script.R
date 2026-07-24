@@ -2,6 +2,7 @@
 library(ggplot2)
 library(ggiraph)
 library(tidyverse)
+library(htmltools)
 
 # Dados ficticios: indice de sentimento economico (fake) de 6 paises da
 # America do Sul ao longo de 24 meses, gerado via passeio aleatorio --
@@ -48,28 +49,107 @@ plot <- dados |>
 
 ggsave("output.png", plot = plot, width = 9, height = 6, dpi = 150)
 
-# --- Versão interativa (girafe): combina as técnicas de CSS do tutorial
-# original num único gráfico -- hover destaca a linha e apaga as outras
-# (declutter de spaghetti chart), tooltip estilizado, clique seleciona,
-# zoom e botão de salvar como PNG ---
-interactive_plot <- girafe(ggobj = plot, width_svg = 9, height_svg = 6)
+# --- Versão interativa (girafe): em vez de fixar UM tratamento de CSS,
+# geramos as 4 variações de interatividade da página original (mesmo
+# `plot`/dados nas 4) e colocamos as 4 no mesmo widget.html, com uma barra
+# de botões acima que troca qual delas fica visível -- ver AGENTS.md
+# "Decisões fechadas" (pedido do usuário: um gráfico só, com um seletor de
+# estilo, em vez de uma pasta por variação) ---
 
-hover_css <- "stroke:#1d3557; stroke-width:3px; r:6px; transition: all 0.25s ease;"
-hover_inv_css <- "opacity:0.15; filter:grayscale(80%); transition: all 0.25s ease;"
-tooltip_css <- "background-color:#1d3557; color:#f1faee; padding:8px 10px; border-radius:6px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.35);"
-selected_css <- "stroke:#e63946; stroke-width:3px;"
+# 1) "Hover simples": preenche de amarelo no hover + clique seleciona em
+# vermelho (secao "Change CSS" da pagina original)
+estilo_1 <- girafe_options(
+  girafe(ggobj = plot, width_svg = 9, height_svg = 6),
+  opts_hover(css = "fill:#ffe7a6;stroke:black;cursor:pointer;"),
+  opts_selection(type = "single", css = "fill:#e63946;stroke:black;"),
+  opts_toolbar(saveaspng = FALSE)
+)
 
-interactive_plot <- girafe_options(
-  interactive_plot,
-  opts_hover(css = hover_css),
-  opts_hover_inv(css = hover_inv_css),
-  opts_tooltip(css = tooltip_css, use_fill = TRUE),
-  opts_selection(type = "single", css = selected_css),
-  opts_zoom(min = 1, max = 4),
-  opts_toolbar(saveaspng = TRUE, position = "topright"),
+# 2) "Destacar + apagar outras": hover destaca uma linha e esmaece/dessatura
+# as demais -- util pra despoluir um spaghetti chart (secao "Highlight a
+# specific line")
+estilo_2 <- girafe_options(
+  girafe(ggobj = plot, width_svg = 9, height_svg = 6),
+  opts_hover(css = "stroke:#2a9d8f; stroke-width:3px; transition: all 0.3s ease;"),
+  opts_hover_inv(css = "opacity:0.15; filter:grayscale(80%); transition: all 0.3s ease;"),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+# 3) "Hover avançado": preenchimento translucido + traco tracejado + sombra
+# com transicao suave (secao "More advanced usage")
+estilo_3 <- girafe_options(
+  girafe(ggobj = plot, width_svg = 9, height_svg = 6),
+  opts_hover(css = "
+    fill: #ffe7a6;
+    fill-opacity: 0.6;
+    stroke: black;
+    stroke-width: 4px;
+    stroke-dasharray: 5,5;
+    transition: fill-opacity 0.4s, stroke-width 0.4s, filter 0.4s;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+  "),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+# 4) "Tooltip + zoom": tooltip escuro customizado, ponto cresce no hover,
+# selecao multipla, zoom por scroll e botao de exportar PNG (secao "Combine
+# CSS with other ggiraph features")
+estilo_4 <- girafe_options(
+  girafe(ggobj = plot, width_svg = 9, height_svg = 6),
+  opts_hover(css = "stroke:black; stroke-width:1px; r:8px; transition: all 0.3s ease;"),
+  opts_tooltip(
+    css = "background-color:#1d3557; color:#f1faee; padding:8px 10px; border-radius:6px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.35);",
+    use_fill = TRUE
+  ),
+  opts_selection(type = "multiple", only_shiny = FALSE),
+  opts_zoom(min = 0.5, max = 3),
+  opts_toolbar(saveaspng = TRUE, position = "topright", pngname = "grafico"),
   opts_sizing(rescale = TRUE)
 )
 
-# Salvar o widget interativo na propria pasta do grafico
-# (selfcontained = FALSE porque pandoc nao esta instalado -- ver docs/SETUP.md)
-htmlwidgets::saveWidget(interactive_plot, file = "widget.html", selfcontained = FALSE)
+# Barra de botoes (HTML/CSS/JS puro) que mostra/esconde cada painel --
+# so um `.estilo-painel` fica visivel por vez, controlado pela classe
+# `.ativo` alternada no clique
+estilo_css <- tags$style(HTML("
+  .estilo-toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; font-family: 'IBM Plex Sans', sans-serif; }
+  .estilo-btn { padding:8px 14px; border:1px solid #d0d0d0; border-radius:6px; background:#f7f7f7; cursor:pointer; font-size:13px; }
+  .estilo-btn:hover { background:#eee; }
+  .estilo-btn.ativo { background:#1d3557; color:white; border-color:#1d3557; }
+  .estilo-painel { display:none; }
+  .estilo-painel.ativo { display:block; }
+"))
+
+toolbar <- tags$div(
+  class = "estilo-toolbar",
+  tags$button("1. Hover simples", class = "estilo-btn ativo", `data-target` = "estilo-1"),
+  tags$button("2. Destacar + apagar outras", class = "estilo-btn", `data-target` = "estilo-2"),
+  tags$button("3. Hover avançado", class = "estilo-btn", `data-target` = "estilo-3"),
+  tags$button("4. Tooltip + zoom", class = "estilo-btn", `data-target` = "estilo-4")
+)
+
+paineis <- tags$div(
+  tags$div(id = "estilo-1", class = "estilo-painel ativo", estilo_1),
+  tags$div(id = "estilo-2", class = "estilo-painel", estilo_2),
+  tags$div(id = "estilo-3", class = "estilo-painel", estilo_3),
+  tags$div(id = "estilo-4", class = "estilo-painel", estilo_4)
+)
+
+estilo_js <- tags$script(HTML("
+  document.querySelectorAll('.estilo-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.estilo-btn').forEach(function (b) { b.classList.remove('ativo'); });
+      document.querySelectorAll('.estilo-painel').forEach(function (p) { p.classList.remove('ativo'); });
+      btn.classList.add('ativo');
+      document.getElementById(btn.getAttribute('data-target')).classList.add('ativo');
+    });
+  });
+"))
+
+pagina <- tagList(estilo_css, toolbar, paineis, estilo_js)
+
+# Salvar a pagina interativa na propria pasta do grafico -- htmltools::save_html
+# (o mesmo usado no tutorial original) aceita uma tagList combinando varios
+# widgets htmlwidgets + HTML/CSS/JS customizado, ao contrario de
+# htmlwidgets::saveWidget() que so aceita um widget por vez. libdir="widget_files"
+# pra bater com a convencao do projeto (ver site/scripts/sync-assets.mjs)
+save_html(pagina, file = "widget.html", libdir = "widget_files")
