@@ -266,8 +266,11 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   .widget-frame iframe {
     width: 100%;
+    /* altura inicial/fallback — o script ajusta pra altura real do widget
+       quando ele for mais alto que isso, pra nao sobrar barra de rolagem */
     height: 32rem;
     border: none;
+    display: block;
   }
 
   .notes {
@@ -415,6 +418,33 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   });
 
   document.querySelector('.lightbox-close')?.addEventListener('click', () => dialog?.close());
+
+  // Widgets sao servidos do mesmo dominio (public/graficos/...), entao dá pra
+  // medir a altura real do conteudo e crescer o iframe ate ela -- evita a
+  // barra de rolagem interna quando o widget e mais alto que o valor
+  // padrao (32rem), sem encolher os que já cabem.
+  document.querySelectorAll<HTMLIFrameElement>('.widget-frame iframe').forEach((frame) => {
+    const resize = () => {
+      try {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+        const contentHeight = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
+        if (contentHeight > frame.clientHeight) {
+          frame.style.height = `${contentHeight + 4}px`;
+        }
+      } catch {
+        // widget em outra origem (nao deveria acontecer aqui) -- mantem a altura padrao
+      }
+    };
+
+    frame.addEventListener('load', () => {
+      resize();
+      const doc = frame.contentDocument;
+      if (doc?.body && 'ResizeObserver' in window) {
+        new ResizeObserver(resize).observe(doc.body);
+      }
+    });
+  });
 
   const copyBtn = document.querySelector<HTMLButtonElement>('.copy-btn');
   const codeEl = document.querySelector<HTMLElement>('.codigo .astro-code');
