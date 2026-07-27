@@ -88,6 +88,16 @@ sorteadas usando `set.seed(77)`, filtrando auto-conexões.
 - **Problema**: salvar o widget falha por falta de `pandoc`. **Solução**: usar
   `selfcontained = FALSE` e manter a pasta `widget_files/` junto do HTML.
 
+- **Problema**: o grafo mostra um nó a menos do que o esperado — silenciosamente,
+  sem erro nenhum. **Por quê**: `simpleNetwork()` cria os nós só a partir do que
+  aparece nas colunas de ligação; se algum nome nunca sai sorteado em nenhuma
+  linha, ele simplesmente não existe no grafo. **Solução**: depois de montar as
+  ligações, comparar a lista de nós esperados com os que realmente aparecem
+  (`setdiff()`) e adicionar uma ligação extra para qualquer nó ausente — de
+  preferência para um nó bem conectado (um "hub"), não para outro nó periférico,
+  senão o layout de forças tende a empurrar essa dupla fraca pra fora do
+  enquadramento da imagem estática.
+
 ## Variações possíveis
 
 - Ajustar `charge` e `linkDistance` para uma rede mais compacta ou mais espalhada.
