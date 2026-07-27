@@ -1,6 +1,7 @@
 # Libraries
 library(rgl)
 library(png)
+library(htmltools)
 
 # Necessario pra rgl funcionar sem janela real (Rscript nao-interativo,
 # sem sessao grafica anexada)
@@ -45,3 +46,35 @@ rasterImage(readPNG(cena_tmp), 0, 0, 1, 1)
 legend("topright", legend = torras, pch = 16, col = cores, bty = "n", cex = 1.3, inset = 0.03)
 dev.off()
 unlink(cena_tmp)
+
+# Versao interativa: converte a cena rgl atual (mesmos pontos/cores) num
+# widget WebGL -- da pra girar/dar zoom no navegador. A legenda nativa do
+# rgl (legend3d()) tem a mesma limitacao headless do output.png, entao aqui
+# a legenda vira uma pequena lista HTML comum ao lado do widget, em vez de
+# tentar embuti-la na cena 3D -- mesma logica usada no arc diagram (legenda
+# fora do SVG em vez de dentro), ver AGENTS.md "Licoes aprendidas"
+widget <- rglwidget()
+
+# O canvas do rglwidget nasce com largura fixa em pixels (nao acompanha o
+# container) -- sem isso, o widget estoura a largura da pagina/iframe e gera
+# rolagem horizontal em telas mais estreitas que o tamanho original da cena
+estilo_responsivo <- tags$style(HTML("
+  .rglWebGL { max-width: 100%; }
+  .rglWebGL canvas { max-width: 100%; height: auto !important; }
+"))
+
+legenda <- tags$div(
+  style = "display:flex; gap:20px; margin-top:10px; font-family:sans-serif; font-size:14px;",
+  lapply(seq_along(torras), function(i) {
+    tags$span(
+      style = "display:inline-flex; align-items:center; gap:6px;",
+      tags$span(style = sprintf(
+        "display:inline-block; width:12px; height:12px; border-radius:50%%; background:%s;",
+        cores[i]
+      )),
+      torras[i]
+    )
+  })
+)
+
+save_html(tagList(estilo_responsivo, widget, legenda), file = "widget.html", libdir = "widget_files")
