@@ -30,7 +30,7 @@ open3d(windowRect = c(0, 0, 800, 600))
 bg3d("white")
 plot3d(
   cafes$acidez, cafes$corpo, cafes$docura,
-  col = cores[cafes$torra], size = 9, type = "p",
+  col = cores[cafes$torra], type = "s", radius = 0.15,
   xlab = "Acidez", ylab = "Corpo", zlab = "Docura"
 )
 

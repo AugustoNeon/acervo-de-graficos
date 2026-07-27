@@ -62,7 +62,10 @@ você está procurando — a miniatura estática mostra só um ângulo fixo.
 ## Como foi feito
 
 O gráfico vem de `rgl::plot3d()`, que recebe três vetores numéricos e desenha o
-cubo com os pontos posicionados e coloridos por grupo.
+cubo com os pontos posicionados e coloridos por grupo. Cada observação é uma
+esfera de verdade (`type = "s"`, com `radius` controlando o tamanho) em vez de um
+marcador achatado — isso dá sombreamento e reflexo de luz reais, que mudam
+conforme o ângulo, reforçando a sensação de profundidade ao girar o gráfico.
 
 Uma particularidade deste ambiente: o script roda sem uma janela gráfica real
 (`Rscript` não-interativo), então é preciso `options(rgl.useNULL = TRUE)` antes de
@@ -129,8 +132,12 @@ para a nova largura, então a imagem continua nítida.
 
 ## Variações possíveis
 
-- Ajustar `size` e adicionar transparência (`alpha`) quando os pontos se
+- Ajustar `radius` e adicionar transparência (`alpha`) quando as esferas se
   sobrepuserem muito.
+- Voltar para marcadores simples (`type = "p"`) quando o volume de pontos for
+  grande — esferas custam mais para renderizar que pontos achatados.
+- Usar `type = "h"` (hastes até a base) quando o interesse for a "altura" de cada
+  ponto em relação ao plano, não só a nuvem de pontos.
 - Trocar pontos por superfícies de contorno (`persp3d()`), quando o interesse for
   uma função contínua em vez de observações discretas.
 - Adicionar uma quarta dimensão via tamanho do ponto, mapeando uma variável extra.
