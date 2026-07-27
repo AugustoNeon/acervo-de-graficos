@@ -61,6 +61,9 @@ Adicionado em 2026-07-27 (bubble map interativo do Brasil):
 Adicionado em 2026-07-27 (dashboard mapa+dispersão+barras com ggiraph):
 - `spData` (CRAN) — fornece o objeto `sf` `world` (177 países, geometria + continente) pronto pra uso, sem precisar baixar shapefile externo. Usado com `geom_sf_interactive()` do `ggiraph` + `patchwork` pra combinar mapa coroplético com outros paineis `ggplot` interativos.
 
+Adicionado em 2026-07-27 (dispersão 3D de cafés especiais):
+- `rgl` (CRAN) — gráficos 3D (`plot3d()`, `open3d()`), com widget interativo via `rglwidget()`. Funciona headless (sem janela gráfica real) com `options(rgl.useNULL = TRUE)` **definido antes de `library(rgl)`** — sem isso o script espera um dispositivo OpenGL real e pode travar/falhar num `Rscript` não-interativo. Detalhe importante: `legend3d()` **não renderiza** nesse modo headless (limitação conhecida) — a legenda do `output.png` precisa ser composta manualmente por cima do `snapshot3d()` com gráficos base do R (`png` + `rasterImage()` + `legend()`). O pacote `png` (CRAN) é usado só pra essa composição.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
