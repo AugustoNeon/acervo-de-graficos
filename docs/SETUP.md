@@ -55,6 +55,9 @@ Adicionados em 2026-07-24 (gráficos de rede vindos de data-to-viz.com/graph/net
 Adicionado em 2026-07-24 (gráfico de linha interativo com CSS via ggiraph):
 - `ggiraph` (CRAN) — extensão do `ggplot2` com `geom_*_interactive()` (drop-in dos `geom_*` normais, aceitam `tooltip`/`data_id`/`onclick`) e `girafe()`/`girafe_options()` pra customizar hover/tooltip/seleção/zoom via CSS puro. Traz `gdtools`/`fontquiver`/`fontBitstreamVera`/`fontLiberation` como dependências transitivas (fontes pro SVG). Mesmo objeto `ggplot` funciona pro `output.png` (via `ggsave()` normal, as aes de interatividade são ignoradas) e pro `widget.html` (via `girafe()`), sem precisar duplicar o plot.
 
+Adicionado em 2026-07-27 (bubble map interativo do Brasil):
+- `leaflet` (CRAN) — mapas interativos (`addProviderTiles`, `addCircleMarkers`, `addLegend`). Traz `sf`/`terra`/`s2`/`raster`/`units`/`classInt` como dependências transitivas. Mesmo padrão de thumbnail via `webshot2` (sem equivalente `ggplot2` direto).
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
