@@ -58,6 +58,9 @@ Adicionado em 2026-07-24 (gráfico de linha interativo com CSS via ggiraph):
 Adicionado em 2026-07-27 (bubble map interativo do Brasil):
 - `leaflet` (CRAN) — mapas interativos (`addProviderTiles`, `addCircleMarkers`, `addLegend`). Traz `sf`/`terra`/`s2`/`raster`/`units`/`classInt` como dependências transitivas. Mesmo padrão de thumbnail via `webshot2` (sem equivalente `ggplot2` direto).
 
+Adicionado em 2026-07-27 (dashboard mapa+dispersão+barras com ggiraph):
+- `spData` (CRAN) — fornece o objeto `sf` `world` (177 países, geometria + continente) pronto pra uso, sem precisar baixar shapefile externo. Usado com `geom_sf_interactive()` do `ggiraph` + `patchwork` pra combinar mapa coroplético com outros paineis `ggplot` interativos.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
