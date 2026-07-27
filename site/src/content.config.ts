@@ -11,8 +11,15 @@ const graficos = defineCollection({
     title: z.string(),
     category: z.string(),
     date: z.coerce.date(),
+    // metadado interno: a fonte de referência NUNCA é renderizada no site
     source: z.string().url(),
     interactive: z.boolean().default(false),
+    // ficha técnica — obrigatórios, ver passo 6 de docs/WORKFLOW.md
+    resumo: z.string(),
+    pacotes: z.array(z.string()).nonempty(),
+    dados: z.string(),
+    nivel: z.enum(['básico', 'intermediário', 'avançado']),
+    tags: z.array(z.string()).nonempty(),
   }),
 });
 

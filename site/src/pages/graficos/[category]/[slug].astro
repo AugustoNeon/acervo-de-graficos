@@ -1,17 +1,35 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { Code } from 'astro:components';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import Base from '../../../layouts/Base.astro';
 import { formatDate } from '../../../lib/format';
 
 export async function getStaticPaths() {
+  // graficos/ vive fora de site/, entao o script.R de cada grafico e lido do
+  // disco em tempo de build (nao importado pelo Vite) -- assim a pagina sempre
+  // mostra o codigo real que gerou o grafico, sem duplica-lo no README.
+  // Precisa ficar DENTRO de getStaticPaths: o frontmatter do componente vira
+  // corpo de funcao no build, e getStaticPaths (hoisted) nao enxerga de la.
+  // process.cwd() e a raiz de site/ (npm roda os scripts de la); import.meta.url
+  // NAO serve aqui -- no build ele aponta pro chunk empacotado, nao pro fonte.
+  const graficosDir = join(process.cwd(), '..', 'graficos');
   const entries = await getCollection('graficos');
   return entries.map((entry) => {
     const [category, slug] = entry.id.split('/');
-    return { params: { category, slug }, props: { entry } };
+    const scriptPath = join(graficosDir, category, slug, 'script.R');
+    let code: string | null = null;
+    try {
+      code = readFileSync(scriptPath, 'utf-8').trimEnd();
+    } catch {
+      console.warn(`[grafico] script.R nao encontrado em ${scriptPath} — secao de codigo omitida`);
+    }
+    return { params: { category, slug }, props: { entry, code } };
   });
 }
 
-const { entry } = Astro.props;
+const { entry, code } = Astro.props;
 const { Content } = await render(entry);
 const base = import.meta.env.BASE_URL;
 const assetBase = `${base}/graficos/${entry.id}/`;
@@ -24,6 +42,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     <header class="head">
       <span class="category">{entry.data.category}</span>
       <h1>{entry.data.title}</h1>
+      <p class="resumo">{entry.data.resumo}</p>
       <div class="meta">
         <span>{formatDate(entry.data.date)}</span>
       </div>
@@ -44,9 +63,45 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       )}
     </figure>
 
+    <dl class="ficha">
+      <div class="ficha-row">
+        <dt>Pacotes</dt>
+        <dd class="chips">
+          {entry.data.pacotes.map((p) => <code class="chip">{p}</code>)}
+        </dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Dados</dt>
+        <dd>{entry.data.dados}</dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Nível</dt>
+        <dd>{entry.data.nivel}</dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Tags</dt>
+        <dd class="chips">
+          {entry.data.tags.map((t) => <span class="chip chip-tag">{t}</span>)}
+        </dd>
+      </div>
+    </dl>
+
     <section class="notes">
       <Content />
     </section>
+
+    {code && (
+      <section class="codigo">
+        <div class="codigo-head">
+          <h2>O código</h2>
+          <button type="button" class="copy-btn" data-copy-label="Copiar código">Copiar código</button>
+        </div>
+        <p class="codigo-hint">
+          Script completo que gera este gráfico — roda do zero, sem depender de arquivo externo.
+        </p>
+        <Code code={code} lang="r" theme="github-light" />
+      </section>
+    )}
   </div>
 
   <dialog id="lightbox">
@@ -93,6 +148,15 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     letter-spacing: -0.02em;
   }
 
+  .resumo {
+    margin-top: var(--space-xs);
+    max-width: var(--measure);
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+
   .meta {
     display: flex;
     flex-wrap: wrap;
@@ -100,6 +164,68 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     margin-top: var(--space-sm);
     font-size: var(--text-sm);
     color: var(--color-ink-muted);
+  }
+
+  /* Ficha técnica — metadados escaneáveis, tom de caderno de campo */
+  .ficha {
+    margin: 0 0 var(--space-xl);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .ficha-row {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: var(--space-sm);
+    align-items: baseline;
+  }
+
+  .ficha dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  .ficha dd {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs) var(--space-2xs);
+  }
+
+  .chip {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: 0.15em 0.5em;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  .chip-tag {
+    color: var(--color-accent-text);
+    border-color: transparent;
+    background: oklch(0.55 0.17 35 / 0.09);
+  }
+
+  @media (max-width: 32rem) {
+    .ficha-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-3xs);
+    }
   }
 
   .visual {
@@ -178,6 +304,72 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     color: var(--color-primary);
   }
 
+  .notes :global(strong) {
+    font-weight: 600;
+  }
+
+  .notes :global(p) {
+    margin-top: var(--space-xs);
+  }
+
+  /* Bloco de código — lido do script.R em tempo de build */
+  .codigo {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .codigo-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .codigo h2 {
+    font-size: var(--text-lg);
+  }
+
+  .copy-btn {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: 0.4em 0.8em;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .copy-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-ink);
+  }
+
+  .copy-btn[data-copied] {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .codigo-hint {
+    margin-top: var(--space-3xs);
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .codigo :global(.astro-code) {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+    overflow-x: auto;
+    /* Shiki injeta o fundo do tema inline; o do caderno de campo é o surface */
+    background: var(--color-surface) !important;
+  }
+
   dialog {
     padding: 0;
     border: none;
@@ -223,4 +415,22 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   });
 
   document.querySelector('.lightbox-close')?.addEventListener('click', () => dialog?.close());
+
+  const copyBtn = document.querySelector<HTMLButtonElement>('.copy-btn');
+  const codeEl = document.querySelector<HTMLElement>('.codigo .astro-code');
+
+  copyBtn?.addEventListener('click', async () => {
+    if (!codeEl) return;
+    try {
+      await navigator.clipboard.writeText(codeEl.textContent ?? '');
+      copyBtn.textContent = 'Copiado!';
+      copyBtn.dataset.copied = 'true';
+    } catch {
+      copyBtn.textContent = 'Não deu — copie manualmente';
+    }
+    setTimeout(() => {
+      copyBtn.textContent = copyBtn.dataset.copyLabel ?? 'Copiar código';
+      delete copyBtn.dataset.copied;
+    }, 2000);
+  });
 </script>

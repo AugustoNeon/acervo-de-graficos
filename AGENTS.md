@@ -16,7 +16,9 @@ Site (`site/`): `cd site && npm run dev`.
 
 ## Adicionando um gráfico novo
 
-Processo passo a passo: [docs/WORKFLOW.md](docs/WORKFLOW.md). Resumo: escolher gráfico não repetido → criar pasta em `graficos/<categoria>/<slug>/` a partir de `_template/` → copiar/rodar script → tentar versão interativa (prioridade, ver [PRODUCT.md](PRODUCT.md)) → preencher frontmatter+README da pasta → registrar em [docs/PROGRESS.md](docs/PROGRESS.md).
+Processo passo a passo: [docs/WORKFLOW.md](docs/WORKFLOW.md). Resumo: escolher gráfico não repetido → criar pasta em `graficos/<categoria>/<slug>/` a partir de `_template/` → copiar/rodar script → tentar versão interativa (prioridade, ver [PRODUCT.md](PRODUCT.md)) → preencher frontmatter+README da pasta **no padrão obrigatório** → registrar em [docs/PROGRESS.md](docs/PROGRESS.md).
+
+O `README.md` de cada gráfico **é a página pública dele no site**, não anotação interna: frontmatter estendido (`resumo`/`pacotes`/`dados`/`nivel`/`tags`, que viram a ficha técnica) + 7 seções fixas, sem citar a fonte original em texto nenhum. Padrão completo no passo 6 do [WORKFLOW.md](docs/WORKFLOW.md).
 
 ## Git e commits
 
@@ -64,6 +66,8 @@ _(mais recente no topo — poda entradas muito antigas/óbvias de tempos em temp
 ## Decisões fechadas
 
 _(mais recente no topo, formato: decisão. Por quê. Custo.)_
+
+- **2026-07-27**: toda página de gráfico do site segue um **padrão fixo de conteúdo editorial** — ficha técnica no topo (pacotes, tipo de dado exigido, nível, tags) + 7 seções obrigatórias (o que é / quando usar e evitar / que dados precisa / como ler / como foi feito / possíveis problemas / variações) + o `script.R` renderizado com destaque de sintaxe e botão de copiar. Por quê: pedido explícito do usuário — o site deixou de ser log técnico pessoal e passou a ser um **acervo autoral de referência sobre gráficos que dá pra criar**, escrito pra quem chega de fora. A antiga seção `## Observações` (notas de bastidor: "pacotes extras usados", "dificuldades encontradas") não servia a esse público; virou, entre outras, a seção de "possíveis problemas pelo caminho", que é aviso pra quem vai reproduzir, e não diário de bordo. Custo: cada gráfico novo dá bem mais trabalho de escrita (7 seções + 5 campos de frontmatter, todos obrigatórios — o build falha sem eles), e mudanças no padrão precisam ser propagadas pros gráficos já existentes. Padrão detalhado no passo 6 do [WORKFLOW.md](docs/WORKFLOW.md).
 
 - **2026-07-23**: quando não existe pacote R com versão interativa pronta pra um tipo de gráfico (ex: arc diagram), o `widget.html` pode ser escrito à mão em JS puro (D3.js ou similar) em vez de gerado por um pacote R — o `script.R`/`output.png` continuam existindo normalmente com os mesmos dados fictícios, pra manter a pasta com os 3 arquivos de sempre. Por quê: pedido explícito do usuário ("mesmo que use outra linguagem"), quando percebeu que nem toda técnica de gráfico tem um htmlwidget equivalente em R. Custo: esses widgets não ganham as libs JS automaticamente via `htmlwidgets`/`saveWidget()` — a dependência (ex: `d3.v7.min.js`) precisa ser baixada manualmente pra `widget_files/` (sem CDN, mesmo padrão self-contained dos outros), e a interatividade (hover, tooltip etc.) é código JS escrito à mão, não um parâmetro de função R. Ver primeiro caso em [graficos/network/arc-diagram-d3](graficos/network/arc-diagram-d3).
 - **2026-07-21**: todo gráfico replicado troca a paleta de cores em relação ao exemplo original do R Graph Gallery, e muda os valores/dados quando possível (seed diferente, estrutura/quantidade diferente etc.) — nunca copiamos técnica + visual idênticos. Por quê: pedido explícito do usuário, que notou o primeiro gráfico saindo com aparência idêntica ao tutorial original (mesma paleta `RdPu`/`Paired`, mesmo `set.seed(1234)`). Custo: mais um passo manual por gráfico (escolher paleta nova e ajustar a geração de dado fictício) — ver [`WORKFLOW.md`](docs/WORKFLOW.md).

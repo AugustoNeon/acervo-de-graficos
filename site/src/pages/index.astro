@@ -46,6 +46,7 @@ const base = import.meta.env.BASE_URL;
               date={entry.data.date}
               interactive={entry.data.interactive}
               thumbnail={`${base}/graficos/${category}/${slug}/output.png`}
+              resumo={entry.data.resumo}
             />
           );
         })}

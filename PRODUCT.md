@@ -10,7 +10,7 @@ Por enquanto, só o próprio Augusto — uma ferramenta pessoal de consulta pra 
 
 ## Product Purpose
 
-Servir de galeria/catálogo navegável dos gráficos R replicados do R Graph Gallery, organizados por categoria (mesma lógica de navegação do site original). Sucesso = Augusto consegue abrir o site, achar rápido um gráfico específico ou uma categoria, e ver/interagir com o resultado sem fricção.
+Ser um **acervo de referência sobre tipos de gráfico que dá pra criar** — não uma vitrine de resultados nem um log técnico pessoal. Cada entrada responde, pra quem chega de fora: o que é esse gráfico, pra que serve, quando usar e quando evitar, que dado ele exige, como lê-lo, como foi construído, que armadilhas esperar e como reproduzir (código completo na página). Organizado por categoria. Sucesso = alguém que nunca viu aquele tipo de gráfico entende se ele serve pro problema que tem em mãos, e consegue reproduzir.
 
 ## Brand Personality
 
@@ -26,8 +26,9 @@ O r-graph-gallery.com original: sidebar de categorias à esquerda, fundo branco 
 - **Interatividade real é prioridade #1**: ao adicionar cada gráfico novo, priorizar ativamente gerar um widget HTML interativo direto do R (`plotly::ggplotly()`, `networkD3`, `chorddiag`, `visNetwork`, etc.) quando existir um pacote adequado pro tipo de gráfico — mesmo que dê mais trabalho por gráfico. Quando não houver equivalente interativo razoável, cai para imagem estática com interação leve de vitrine (hover/zoom/lightbox) via CSS/JS da própria galeria.
 - Construir para o portfólio que isso vai virar, não só pra ferramenta de consulta de hoje — decisões de design não são descartáveis.
 - Categorias espelham a navegação do R Graph Gallery original, mas a execução visual é autoral, não um clone.
-- **O site nunca cita/linka o R Graph Gallery publicamente** — nem no texto, nem como fonte visível. A referência à fonte original fica só como metadado interno (frontmatter `source` de cada README, para uso nosso), nunca renderizada nas páginas do site.
-- Cada gráfico é uma entrada na galeria que leva pra uma página de detalhe própria (título, categoria, data, observações técnicas de quem fez).
+- **O site nunca cita/linka a fonte original publicamente** — nem no texto, nem como fonte visível, nem como "o exemplo original". A referência fica só como metadado interno (frontmatter `source` de cada README, para uso nosso), nunca renderizada nas páginas do site. O material precisa se sustentar como autoral.
+- **Toda página de gráfico segue o mesmo esqueleto editorial**, sem exceção: ficha técnica (pacotes, dado exigido, nível, tags) → o que é / para que serve → quando usar e evitar → que dados precisa → como ler → como foi feito → possíveis problemas → variações → código completo. Padrão detalhado no passo 6 do [`docs/WORKFLOW.md`](docs/WORKFLOW.md). Consistência entre páginas é o que separa "acervo" de "pasta de exemplos".
+- **Texto escrito pra quem chega de fora**, nunca pra nós mesmos — sem "detectei", "tive dificuldade", "reaproveitei do gráfico anterior".
 
 ## Accessibility & Inclusion
 

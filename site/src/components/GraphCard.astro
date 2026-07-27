@@ -8,9 +8,10 @@ interface Props {
   date: Date;
   interactive: boolean;
   thumbnail: string;
+  resumo: string;
 }
 
-const { href, title, category, date, interactive, thumbnail } = Astro.props;
+const { href, title, category, date, interactive, thumbnail, resumo } = Astro.props;
 ---
 
 <a class="card" href={href} data-category={category}>
@@ -25,6 +26,7 @@ const { href, title, category, date, interactive, thumbnail } = Astro.props;
   <div class="card-body">
     <span class="card-category">{category}</span>
     <h3 class="card-title">{title}</h3>
+    <p class="card-resumo">{resumo}</p>
   </div>
 </a>
 
@@ -122,6 +124,13 @@ const { href, title, category, date, interactive, thumbnail } = Astro.props;
     font-size: var(--text-lg);
     font-weight: 600;
     line-height: var(--leading-snug);
+  }
+
+  .card-resumo {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: var(--leading-snug);
+    text-wrap: pretty;
   }
 
   @media (prefers-reduced-motion: reduce) {
