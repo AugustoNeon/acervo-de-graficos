@@ -90,6 +90,11 @@ Adicionado em 2026-07-27 (dispersão 3D de cafés especiais):
 Adicionado em 2026-07-29 (circle packing, um nível — `graficos/part-of-whole/circle-packing-simples`):
 - `packcircles` (CRAN) — calcula o layout (posição + raio) de círculos compactados sem sobreposição a partir de um vetor de valores (`circleProgressiveLayout()` + `circleLayoutVertices()`). Combinado com `ggiraph` (já usado antes neste projeto) pra versão interativa via `geom_polygon_interactive()`.
 
+Adicionado em 2026-07-29 (circle packing hierárquico — `graficos/part-of-whole/circle-packing-hierarquico`):
+- `data.tree` (CRAN) — representa hierarquias como árvore em R (`as.Node()` a partir de uma coluna `pathString`, ex: `"raiz/grupo/subgrupo"`). Aceita nomes repetidos em galhos diferentes (cada nó é distinguido pela posição na árvore, não só pelo nome) — ao contrário de `igraph::graph_from_data_frame()`, que exige nome único por vértice em todo o grafo.
+- `circlepackeR` (só GitHub, não está no CRAN): `remotes::install_github("jeromefroe/circlepackeR")`. Widget interativo de circle packing hierárquico com zoom por clique, construído sobre um objeto `data.tree::Node`. Calcula o próprio diâmetro como o menor valor entre largura e altura do container (`Math.min(rect.width, rect.height)` no JS do widget) — passar `width`/`height` explícitos em vez de deixar `NULL` evita depender do tamanho padrão do container.
+- `ggraph`/`igraph` já estavam no projeto desde 2026-07-21 (ver início desta seção) — só precisaram ser reinstalados nesta máquina nova.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
