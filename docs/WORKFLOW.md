@@ -34,8 +34,10 @@ Use `_template/` como base (copie os 3 arquivos: `script.R`, `README.md`, e crie
 ## 4. Rodar o script
 
 ```powershell
-& "C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1\bin\Rscript.exe" "graficos\<categoria>\<slug>\script.R"
+& "C:\Program Files\R\R-4.6.1\bin\Rscript.exe" "graficos\<categoria>\<slug>\script.R"
 ```
+
+(Caminho do `Rscript.exe` pode variar por máquina — confirme em [`SETUP.md`](SETUP.md) antes de assumir este.)
 
 Confirme que `output.png` foi gerado corretamente na pasta.
 

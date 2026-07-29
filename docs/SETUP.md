@@ -6,23 +6,46 @@ Registro do que já foi instalado/configurado nesta máquina, para não reinstal
 
 ## R
 
-Instalado via `winget` em 2026-07-21.
+> **2026-07-29**: sessão rodando numa máquina diferente da de 2026-07-21 (usuário
+> `augus`, não `augusto.ryba`) — R não estava instalado nela, reinstalado do
+> zero via `winget`. Desta vez o instalador colocou em `C:\Program Files\R\`
+> (instalação de máquina) em vez de `AppData\Local\Programs` (instalação
+> por-usuário, o que saiu da vez anterior). Os caminhos abaixo já refletem a
+> máquina atual; se abrir numa terceira máquina e os caminhos não baterem, não
+> assuma nenhum dos dois — confira com o comando de registro logo abaixo.
+
+Instalado via `winget install --id RProject.R -e --silent --accept-package-agreements --accept-source-agreements`.
 
 - Pacote winget: `RProject.R` (versão 4.6.1)
-- Caminho de instalação real: `C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1`
+- Caminho de instalação real: `C:\Program Files\R\R-4.6.1`
 - Executáveis:
-  - `C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1\bin\R.exe`
-  - `C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1\bin\Rscript.exe`
+  - `C:\Program Files\R\R-4.6.1\bin\R.exe`
+  - `C:\Program Files\R\R-4.6.1\bin\Rscript.exe`
 
-> Nota: o instalador do winget não necessariamente adiciona R ao `PATH` do sistema. Se `Rscript` não for reconhecido direto no terminal, use o caminho completo acima, ou rode:
-> ```powershell
-> $env:PATH += ";C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1\bin"
-> ```
+> Nota: o instalador do winget não necessariamente adiciona R ao `PATH` do sistema. Se `Rscript` não for reconhecido direto no terminal, use o caminho completo acima.
 
 Para checar se ainda está instalado e achar o caminho novamente, caso algo mude:
 ```powershell
 Get-ItemProperty "HKCU:\SOFTWARE\R-core\R64\*" -ErrorAction SilentlyContinue | Select-Object InstallPath
+# se vazio (instalacao de maquina, nao por-usuario, feita como administrador),
+# procure direto em Program Files:
+Get-ChildItem "C:\Program Files\R" -ErrorAction SilentlyContinue
 ```
+
+> **Biblioteca de pacotes do usuário não existe por padrão**: quando o R fica em
+> `C:\Program Files\R\...`, `install.packages()` sem `lib=` explícito tenta
+> gravar na biblioteca do próprio R (`C:/Program Files/R/R-4.6.1/library`), que
+> não é gravável sem privilégio de admin — falha com "não é possível instalar
+> pacotes" num `Rscript` não-interativo (numa sessão interativa normal do R,
+> ele perguntaria e criaria a biblioteca pessoal sozinho; `Rscript` não
+> pergunta nada, só falha). Solução: criar a pasta pessoal (`R_LIBS_USER`)
+> antes do primeiro `install.packages()` da sessão:
+> ```powershell
+> New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\R\win-library\4.6"
+> ```
+> Depois de criada, `.libPaths()` passa a incluir essa pasta automaticamente
+> nas próximas chamadas de `Rscript` (o R só adiciona `R_LIBS_USER` à lista se
+> a pasta já existir em disco no momento em que inicia).
 
 ## Pacotes R instalados
 
@@ -64,6 +87,9 @@ Adicionado em 2026-07-27 (dashboard mapa+dispersão+barras com ggiraph):
 Adicionado em 2026-07-27 (dispersão 3D de cafés especiais):
 - `rgl` (CRAN) — gráficos 3D (`plot3d()`, `open3d()`), com widget interativo via `rglwidget()`. Funciona headless (sem janela gráfica real) com `options(rgl.useNULL = TRUE)` **definido antes de `library(rgl)`** — sem isso o script espera um dispositivo OpenGL real e pode travar/falhar num `Rscript` não-interativo. Detalhe importante: `legend3d()` **não renderiza** nesse modo headless (limitação conhecida), nem no `output.png` nem dentro do `rglwidget()` — a legenda do `output.png` é composta manualmente por cima do `snapshot3d()` com gráficos base do R (`png` + `rasterImage()` + `legend()`), e a do widget interativo vira uma lista HTML comum (`htmltools`) ao lado do gráfico em vez de dentro da cena. O pacote `png` (CRAN) é usado só pra essa composição do `output.png`. Outro detalhe: o canvas WebGL do `rglwidget()` nasce com largura fixa em pixels (herdada do `open3d(windowRect=...)`) e estoura a largura da página — precisa de `max-width: 100%` via CSS no canvas pra virar responsivo.
 
+Adicionado em 2026-07-29 (circle packing, um nível — `graficos/part-of-whole/circle-packing-simples`):
+- `packcircles` (CRAN) — calcula o layout (posição + raio) de círculos compactados sem sobreposição a partir de um vetor de valores (`circleProgressiveLayout()` + `circleLayoutVertices()`). Combinado com `ggiraph` (já usado antes neste projeto) pra versão interativa via `geom_polygon_interactive()`.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
@@ -79,7 +105,9 @@ Atualize esta seção com pacotes novos relevantes de uso frequente, se fizer se
 ## Como rodar um script
 
 ```powershell
-& "C:\Users\augusto.ryba\AppData\Local\Programs\R\R-4.6.1\bin\Rscript.exe" caminho\para\script.R
+& "C:\Program Files\R\R-4.6.1\bin\Rscript.exe" caminho\para\script.R
 ```
+
+(Confirme o caminho real do `Rscript.exe` no início da seção "R" acima antes de assumir este — já mudou de máquina pra máquina neste projeto.)
 
 O script deve salvar a imagem final com `ggsave()` (ou equivalente) dentro da própria pasta do gráfico, como `output.png`.
