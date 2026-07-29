@@ -37,7 +37,10 @@ p <- ggplot() +
   theme(legend.position = "none") +
   coord_equal()
 
-ggsave("output.png", plot = p, width = 8, height = 8, dpi = 150)
+# Proporcao 3:2 (em vez de quadrada) para o grafico caber na tela sem barra
+# de rolagem -- coord_equal() garante que os circulos continuam redondos,
+# so sobra mais respiro nas laterais em vez de esticar por cima/baixo
+ggsave("output.png", plot = p, width = 9, height = 6, dpi = 150)
 
 # Versao interativa: mesmo layout, hover mostra o total de downloads
 library(ggiraph)
@@ -58,8 +61,11 @@ p_int <- ggplot() +
   coord_equal()
 
 widget <- girafe(
-  ggobj = p_int, width_svg = 8, height_svg = 8,
-  options = list(opts_hover(css = "stroke:#222;stroke-width:3px;"))
+  ggobj = p_int, width_svg = 9, height_svg = 6,
+  options = list(
+    opts_hover(css = "stroke:#222;stroke-width:3px;"),
+    opts_sizing(rescale = TRUE)
+  )
 )
 
 htmlwidgets::saveWidget(widget, file = "widget.html", selfcontained = FALSE)
