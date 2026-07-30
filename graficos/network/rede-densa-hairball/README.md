@@ -80,6 +80,17 @@ e nós arrastáveis.
   mascara a do `igraph`, e a versão do `dplyr` não aceita o argumento `what=`.
   **Solução**: chamar com o prefixo explícito: `igraph::as_data_frame()`.
 
+- **Problema**: a versão interativa sai com todos os nós da mesma cor, enquanto a
+  estática colore cada nó pelo grau. **Por quê**: `visNetwork` não tem escalas
+  contínuas como o `ggplot2` — não existe um `scale_colour_*` ali; ele espera a
+  cor de cada nó já pronta, em hexadecimal, numa coluna do `data.frame`.
+  **Solução**: calcular as cores no R e passar por nó em `color.background`. Para
+  bater exatamente com a versão estática, vale saber que
+  `scale_colour_distiller(palette = "OrRd")` é, por dentro, um gradiente sobre as
+  7 cores do brewer — ou seja,
+  `scales::gradient_n_pal(RColorBrewer::brewer.pal(7, "OrRd"))(scales::rescale(x))`
+  reproduz a mesma rampa.
+
 - **Problema**: a versão interativa fica lenta ou trava. **Por quê**: a simulação
   de física roda continuamente no navegador e o custo cresce com o número de nós.
   **Solução**: desligar a física depois da estabilização, ou reduzir a rede.

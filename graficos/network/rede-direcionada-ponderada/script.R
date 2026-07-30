@@ -43,16 +43,30 @@ ggsave("output.png", plot = p, width = 8, height = 6.5, dpi = 150)
 
 # --- Versão interativa (visNetwork): mesmos dados, setas nativas + arrastar
 # nós + espessura de linha por peso (`value`) ---
-nodes_vis <- data.frame(id = V(g)$name, label = V(g)$name, font.size = 20)
+nodes_vis <- data.frame(
+  id = V(g)$name, label = V(g)$name,
+  font.size = 20, font.color = "#1a1a1a"
+)
+
+# No estatico o peso aparece em DUAS pistas: espessura e opacidade da linha
+# (scale_edge_alpha(range = c(0.35, 0.9))). O visNetwork nao tem escala de
+# opacidade por aresta, so um valor global -- entao a opacidade entra embutida
+# na propria cor de cada aresta, em rgba(), pra rota fraca ficar apagada e
+# rota forte ficar cheia igual ao grafico estatico
+alpha_aresta <- scales::rescale(edges$peso, to = c(0.35, 0.9))
+
 edges_vis <- data.frame(
   from = edges$from, to = edges$to, value = edges$peso,
-  title = paste0(edges$peso, " pessoas/ano"), arrows = "to"
+  title = paste0(edges$peso, " pessoas/ano"), arrows = "to",
+  color.color = sprintf("rgba(61,90,128,%.2f)", alpha_aresta),  # #3d5a80
+  color.highlight = "#c1440e"
 )
 
 wv <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "600px") |>
-  visEdges(smooth = TRUE, scaling = list(min = 1, max = 8),
-            color = list(color = "#3d5a80", opacity = 0.55, highlight = "#c1440e")) |>
-  visNodes(color = list(background = "#ee6c4d", border = "#c1440e", highlight = "#f4a261")) |>
+  visEdges(smooth = TRUE, scaling = list(min = 1, max = 8)) |>
+  # borda igual ao fundo: no estatico geom_node_point() nao desenha contorno
+  visNodes(size = 12, color = list(background = "#ee6c4d", border = "#ee6c4d",
+                                    highlight = "#f4a261")) |>
   visOptions(highlightNearest = TRUE) |>
   visPhysics(solver = "forceAtlas2Based", stabilization = TRUE) |>
   visInteraction(navigationButtons = TRUE, dragNodes = TRUE)

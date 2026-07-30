@@ -50,12 +50,21 @@ vertices <- data.frame(
 
 mygraph <- graph_from_data_frame(edges, vertices = vertices)
 
-# Esconde o primeiro nivel (raiz vira branco, some no fundo branco) e colore
-# os outros 3 por profundidade -- paleta trocada em relacao ao original
-# (viridis) por tons teal/dourado/terracota
+# Paleta por profundidade, definida UMA vez e reaproveitada pelas duas versoes
+# (estatica aqui, interativa no fim do script) -- evita as duas dessincronizarem
+# quando uma cor muda. Paleta trocada em relacao ao original (viridis) por
+# tons teal/dourado/terracota
+cor_nivel <- c("0" = "white", "1" = "#2a9d8f", "2" = "#e9c46a", "3" = "#e76f51")
+
+# Esconde o primeiro nivel: a raiz recebe a mesma cor do fundo, entao ainda
+# ocupa espaco mas fica invisivel (o layout nao tem opcao de omitir nivel).
+# set.seed imediatamente antes do layout: o "circlepack" do ggraph e
+# estocastico (duas chamadas seguidas, com os mesmos dados, produzem arranjos
+# diferentes), entao sem semente o output.png muda a cada execucao
+set.seed(2907)
 p <- ggraph(mygraph, layout = "circlepack", weight = horas) +
   geom_node_circle(aes(fill = as.factor(depth), color = as.factor(depth))) +
-  scale_fill_manual(values = c("0" = "white", "1" = "#2a9d8f", "2" = "#e9c46a", "3" = "#e76f51")) +
+  scale_fill_manual(values = cor_nivel) +
   scale_color_manual(values = c("0" = "white", "1" = "black", "2" = "black", "3" = "black")) +
   theme_void() +
   theme(legend.position = "none")
@@ -66,6 +75,7 @@ ggsave("output.png", plot = p, width = 7, height = 7, dpi = 150)
 # hierarquia (o ggraph estatico so mostra tudo de uma vez, sem navegacao)
 library(data.tree)
 library(circlepackeR)
+library(htmltools)
 
 # pathString usa os nomes originais (curtos) -- o data.tree aceita nomes
 # repetidos em galhos diferentes, entao aqui nem precisaria da unicidade
@@ -76,14 +86,97 @@ populacao <- as.Node(dados)
 # width/height explicitos (em vez de deixar NULL) -- o widget calcula seu
 # proprio diametro como o MENOR entre largura e altura do container
 # (ver htmlwidgets/circlepackeR.js), entao uma altura fixa e razoavel evita
-# depender do fallback de altura do iframe do site
+# depender do fallback de altura do iframe do site.
+#
+# color_min/color_max sao os EXTREMOS de um gradiente continuo de 2 cores: o
+# widget nao aceita uma cor por nivel. Vao no tom certo (teal -> terracota) so
+# pra degradar bem caso o JS abaixo nao rode; as cores finais de cada nivel
+# quem manda sao o CSS e o JS.
 widget <- circlepackeR(
   populacao,
   size = "horas",
-  color_min = "hsl(175,45%,88%)",
-  color_max = "hsl(14,65%,35%)",
+  color_min = cor_nivel[["1"]],
+  color_max = cor_nivel[["3"]],
   width = "100%",
   height = 480
 )
 
-htmlwidgets::saveWidget(widget, file = "widget.html", selfcontained = FALSE)
+# O circlepackeR pinta os circulos por um gradiente continuo de DUAS cores
+# (dominio fixo de profundidade -1 a 5), e as folhas vem brancas do CSS do
+# proprio pacote -- nenhum parametro da funcao permite uma cor por nivel como
+# no grafico estatico. Duas camadas resolvem, aplicadas sobre o widget salvo:
+#
+# 1. CSS pra raiz (invisivel) e folhas -- estas nao tem cor inline, entao
+#    basta a regra normal; a raiz tem, por isso o !important.
+# margin: 0 auto no svg centraliza o desenho: o widget usa como diametro o
+# MENOR entre largura e altura do container, entao num container largo e baixo
+# o svg sai quadrado e sobra vazio de um lado so se nao centralizar
+folha_css <- tags$style(HTML(sprintf("
+  body { margin: 0; }
+  .circlepackeR > svg        { display: block; margin: 0 auto; }
+  .circlepackeR .node        { stroke: #1a1a1a; stroke-width: 0.6px; }
+  .circlepackeR .node--root  { fill: %s !important; stroke: %s; }
+  .circlepackeR .node--leaf  { fill: %s; }
+", cor_nivel[["0"]], cor_nivel[["0"]], cor_nivel[["3"]])))
+
+# 2. JS pros niveis do meio (midia/genero), que recebem cor inline do
+#    gradiente e por isso nao podem ser resolvidos por CSS. O d3 deixa o dado
+#    de cada circulo em `__data__`, entao da pra reler a profundidade e
+#    repintar. setInterval (e nao requestAnimationFrame) porque o widget
+#    renderiza depois desta tag, e um timer roda mesmo em aba fora de foco.
+#    A funcao de zoom do pacote so anima posicao/raio, nunca o preenchimento,
+#    logo repintar uma vez basta -- o clique-pra-ampliar continua igual.
+#
+# O mesmo script tambem conserta um segundo defeito do pacote: ele mede o
+# container UMA vez, no render, e o handler de resize dele e uma funcao VAZIA.
+# Se nesse instante o container ainda nao tiver layout (acontece de forma
+# intermitente dentro de um iframe), o diametro sai 0 -- o widget fica vazio
+# pra sempre e ainda escreve height:0px no iframe que o contem. Como o
+# renderValue do pacote limpa o container antes de desenhar, refazer o desenho
+# e seguro: aqui ele e refeito uma unica vez, so quando o container ja tem
+# tamanho real (nao ha laco de redimensionamento).
+nivel_js <- tags$script(HTML(sprintf("
+  (function () {
+    var cor = { 1: '%s', 2: '%s' };
+
+    function pintarNiveis(el) {
+      el.querySelectorAll('circle').forEach(function (c) {
+        var d = c.__data__;
+        if (d && cor[d.depth]) c.style.fill = cor[d.depth];
+      });
+    }
+
+    function redesenhar(el) {
+      var reg = (window.HTMLWidgets && HTMLWidgets.widgets || []).filter(
+        function (w) { return w.name === 'circlepackeR'; }
+      )[0];
+      var carga = document.querySelector('script[data-for=\"' + el.id + '\"]');
+      if (!reg || !carga) return;
+      var x = JSON.parse(carga.textContent).x;
+      reg.renderValue(el, x, reg.initialize(el, el.offsetWidth, el.offsetHeight));
+    }
+
+    function desenhado(el) {
+      var svg = el.querySelector('svg');
+      return svg && parseFloat(svg.getAttribute('width')) > 0;
+    }
+
+    var voltas = 0;
+    var tentativa = setInterval(function () {
+      var el = document.querySelector('.circlepackeR');
+      if (++voltas > 80) { clearInterval(tentativa); return; }
+      if (!el) return;
+      var caixa = el.getBoundingClientRect();
+      if (!desenhado(el)) {
+        if (caixa.width > 0 && caixa.height > 0) redesenhar(el);
+        if (!desenhado(el)) return;
+      }
+      clearInterval(tentativa);
+      pintarNiveis(el);
+    }, 50);
+  })();
+", cor_nivel[["1"]], cor_nivel[["2"]])))
+
+# save_html (em vez de saveWidget) porque precisamos de CSS/JS proprios junto
+# do widget no mesmo arquivo -- mesmo padrao dos graficos de ggiraph do acervo
+save_html(tagList(folha_css, widget, nivel_js), file = "widget.html", libdir = "widget_files")

@@ -84,6 +84,14 @@ Na interativa, o `visNetwork` recebe `arrows = "to"` para o sentido e a coluna
   escondidas atrás dos círculos dos nós. **Solução**: reduzir o tamanho dos nós ou
   afastar a ponta com o argumento `end_cap`.
 
+- **Problema**: na versão interativa todas as arestas têm a mesma transparência,
+  enquanto na estática as mais fracas aparecem apagadas. **Por quê**: o peso pode
+  ser codificado em duas pistas ao mesmo tempo (espessura *e* opacidade), mas o
+  `visNetwork` só aceita **um** valor global de opacidade — não existe escala de
+  opacidade por aresta como o `scale_edge_alpha()`. **Solução**: embutir a
+  transparência na própria cor de cada aresta, passando `rgba(r,g,b,a)` na coluna
+  `color.color` do `data.frame` de arestas, com o `a` calculado a partir do peso.
+
 - **Problema**: uma aresta muito grossa domina o desenho. **Por quê**: valor extremo
   nos pesos. **Solução**: limitar o intervalo com `scale_edge_width(range = ...)` ou
   transformar os pesos antes do mapeamento.

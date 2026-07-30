@@ -62,7 +62,12 @@ install.packages(c("tidyverse","ggraph","igraph","RColorBrewer"), repos="https:/
 ```
 
 Adicionados em 2026-07-22 (gráfico de streamgraph):
-- `webshot2` + `chromote` (CRAN) — tiram screenshot de um `widget.html` pra gerar `output.png` em gráficos que só existem como htmlwidget (sem equivalente `ggplot2`). Usa o Chrome já instalado na máquina (`C:\Program Files\Google\Chrome\Application\chrome.exe`) via CDP, não precisa de PhantomJS.
+- `webshot2` + `chromote` (CRAN) — tiram screenshot de um `widget.html` pra gerar `output.png` em gráficos que só existem como htmlwidget (sem equivalente `ggplot2`), e também servem pra **conferir visualmente** um widget já existente sem abrir o navegador na mão. Usa um navegador Chromium da máquina via CDP, não precisa de PhantomJS.
+  > **2026-07-29**: esta máquina **não tem Google Chrome** — o `webshot2` falha com "Google Chrome was not found". Tem Edge (também Chromium), em `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`, e funciona igual apontando a variável de ambiente antes de chamar o R:
+  > ```powershell
+  > $env:CHROMOTE_CHROME = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+  > ```
+  > Vale checar quais navegadores existem antes de assumir o Chrome (`Test-Path` nos caminhos de Chrome/Edge).
 - `streamgraph` (só GitHub, não está no CRAN): `remotes::install_github("hrbrmstr/streamgraph")`.
 
 Adicionado em 2026-07-22 (gráfico de rede interativa):

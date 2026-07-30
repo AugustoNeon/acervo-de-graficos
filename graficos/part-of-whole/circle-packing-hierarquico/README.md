@@ -5,7 +5,7 @@ date: 2026-07-29
 source: "https://r-graph-gallery.com/315-hide-first-level-in-circle-packing.html"
 interactive: true
 resumo: "Círculos aninhados dentro de círculos maiores, cada camada representando um nível de uma hierarquia, do todo até a menor subcategoria."
-pacotes: ["ggraph", "igraph", "data.tree", "circlepackeR"]
+pacotes: ["ggraph", "igraph", "data.tree", "circlepackeR", "htmltools"]
 dados: "Uma hierarquia de categorias (vários níveis) + 1 variável numérica nas folhas"
 nivel: intermediário
 tags: ["interativo", "parte-do-todo", "hierarquia"]
@@ -89,6 +89,15 @@ original.
   mas só funciona se todo nó já começar com um número válido. **Solução**:
   preencher a coluna de valor com `0` em vez de `NA` em todo nó que não for
   folha.
+- **Problema**: cada execução do script produz um arranjo diferente dos
+  círculos, mesmo com os dados idênticos. **Por quê**: o layout `circlepack`
+  do `ggraph` é estocástico — duas chamadas seguidas, na mesma sessão, já
+  devolvem coordenadas diferentes. **Solução**: fixar a semente
+  (`set.seed()`) imediatamente antes da chamada do layout, se a
+  reprodutibilidade importar. Vale lembrar que a versão interativa nunca vai
+  ter o mesmo arranjo da estática de qualquer forma: são implementações
+  diferentes do mesmo algoritmo de empacotamento.
+
 - **Problema**: dois círculos de galhos diferentes colidem, ou o grafo nem
   chega a construir. **Por quê**: `graph_from_data_frame()` identifica cada
   nó pelo nome — dois nós com o mesmo nome em galhos diferentes da hierarquia
@@ -100,7 +109,25 @@ original.
   menor valor entre a largura e a altura do espaço disponível — se um dos
   dois não estiver bem definido, o diâmetro sai errado. **Solução**: passar
   `width`/`height` explícitos na chamada de `circlepackeR()`, em vez de
-  depender do padrão.
+  depender do padrão. Num espaço largo e baixo o desenho sai quadrado e
+  encostado num lado: centralizar com `margin: 0 auto` no `<svg>`.
+
+- **Problema**: o widget interativo sai com uma paleta completamente diferente
+  da versão estática — tons pálidos nos anéis e círculos **brancos** nas
+  folhas. **Por quê**: são duas limitações somadas. `circlepackeR` aceita
+  apenas **duas** cores (`color_min`/`color_max`) e interpola entre elas numa
+  escala de profundidade fixa de −1 a 5; como cada nível ocupa só 1/6 dessa
+  escala, e a interpolação de matiz percorre no máximo 180° no total, dois
+  níveis vizinhos não conseguem ficar a mais de ~30° de matiz um do outro —
+  teal e dourado, por exemplo, são impossíveis de obter juntos. Além disso, o
+  CSS do próprio pacote pinta as folhas de branco
+  (`.node--leaf { fill: white }`), independentemente do gradiente.
+  **Solução**: sobrepor uma camada própria ao widget salvo — CSS resolve a raiz
+  e as folhas, e um `<script>` curto reaplica a cor dos níveis do meio lendo a
+  profundidade em `__data__` de cada círculo (o zoom do pacote só anima posição
+  e raio, nunca o preenchimento, então repintar uma vez basta). O importante é
+  a paleta viver num único lugar no código e alimentar as duas versões, em vez
+  de repetir os hexadecimais.
 - **Problema**: a raiz escondida aparece como um círculo branco visível.
   **Por quê**: o fundo da página ou do card não é branco puro (ex: modo
   escuro). **Solução**: usar a cor de fundo real como cor da raiz, em vez de
