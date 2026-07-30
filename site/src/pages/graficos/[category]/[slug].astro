@@ -238,7 +238,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     padding: 0;
     border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
     background: var(--color-surface);
   }
 
@@ -260,7 +260,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   .widget-frame {
     border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
     background: var(--color-surface);
   }
 
@@ -437,6 +437,27 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       try {
         const doc = frame.contentDocument;
         if (!doc) return;
+
+        // ggiraph/girafe: quando o widget.html tem a tag de sizingPolicy com
+        // "browser.fill":false (padrao do htmlwidgets pra export standalone),
+        // o htmlwidgets.js nunca reescala o .girafe pro tamanho do container
+        // -- ele fica travado no width_svg/height_svg fixo em px e estoura a
+        // largura do iframe (corta o grafico e sobra scrollbar horizontal).
+        // Forcando width:100%/height:auto aqui, o SVG (sem width/height
+        // proprios, so viewBox) reescala mantendo a proporcao. So mexe em
+        // .girafe -- nao afeta leaflet/plotly/dygraphs/networkD3, que ja se
+        // redimensionam sozinhos.
+        doc.querySelectorAll<HTMLElement>('.girafe').forEach((el) => {
+          el.style.width = '100%';
+          el.style.height = 'auto';
+          const svg = el.querySelector('svg');
+          if (svg) {
+            svg.style.width = '100%';
+            svg.style.height = 'auto';
+            svg.style.display = 'block';
+          }
+        });
+
         const contentHeight = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
         if (contentHeight > frame.clientHeight) {
           frame.style.height = `${Math.min(contentHeight + 4, MAX_ALTURA_PX)}px`;
