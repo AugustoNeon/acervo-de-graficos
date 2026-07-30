@@ -453,7 +453,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
         // encosta em leaflet/plotly/dygraphs/networkD3, que ja se
         // redimensionam sozinhos -- so acrescente a classe do wrapper aqui
         // quando um gráfico novo de outro pacote SVG cair no mesmo problema.
-        doc.querySelectorAll<HTMLElement>('.girafe, .streamgraph').forEach((el) => {
+        doc.querySelectorAll<HTMLElement>('.girafe, .streamgraph, .collapsibleTree').forEach((el) => {
           el.style.width = '100%';
           el.style.height = 'auto';
           const svg = el.querySelector('svg');
