@@ -438,20 +438,31 @@ const assetBase = `${base}/graficos/${entry.id}/`;
         const doc = frame.contentDocument;
         if (!doc) return;
 
-        // ggiraph/girafe: quando o widget.html tem a tag de sizingPolicy com
-        // "browser.fill":false (padrao do htmlwidgets pra export standalone),
-        // o htmlwidgets.js nunca reescala o .girafe pro tamanho do container
-        // -- ele fica travado no width_svg/height_svg fixo em px e estoura a
-        // largura do iframe (corta o grafico e sobra scrollbar horizontal).
-        // Forcando width:100%/height:auto aqui, o SVG (sem width/height
-        // proprios, so viewBox) reescala mantendo a proporcao. So mexe em
-        // .girafe -- nao afeta leaflet/plotly/dygraphs/networkD3, que ja se
-        // redimensionam sozinhos.
-        doc.querySelectorAll<HTMLElement>('.girafe').forEach((el) => {
+        // Varios pacotes de htmlwidget baseados em SVG (ggiraph/girafe,
+        // streamgraph, e provavelmente outros que vierem depois) nascem com
+        // o sizingPolicy do htmlwidgets marcado como "browser.fill":false --
+        // o htmlwidgets.js entao nunca reescala o widget pro tamanho do
+        // container, ele fica travado no width/height fixo em px passado na
+        // geracao e estoura a largura do iframe (corta o grafico e sobra
+        // scrollbar horizontal). Forcando width:100%/height:auto no wrapper
+        // e no <svg>, o navegador reescala mantendo a proporcao -- desde que
+        // o <svg> tenha um viewBox; se so tiver width/height (SVG "antigo",
+        // sem viewBox, ex: streamgraph), sintetizamos um viewBox a partir
+        // deles antes. Lista de seletores fica curta e explicita de
+        // proposito (em vez de pegar todo .html-widget): assim nao
+        // encosta em leaflet/plotly/dygraphs/networkD3, que ja se
+        // redimensionam sozinhos -- so acrescente a classe do wrapper aqui
+        // quando um gráfico novo de outro pacote SVG cair no mesmo problema.
+        doc.querySelectorAll<HTMLElement>('.girafe, .streamgraph').forEach((el) => {
           el.style.width = '100%';
           el.style.height = 'auto';
           const svg = el.querySelector('svg');
           if (svg) {
+            if (!svg.getAttribute('viewBox')) {
+              const w = svg.getAttribute('width');
+              const h = svg.getAttribute('height');
+              if (w && h) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            }
             svg.style.width = '100%';
             svg.style.height = 'auto';
             svg.style.display = 'block';
