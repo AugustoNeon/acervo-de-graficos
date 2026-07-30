@@ -1,13 +1,6 @@
 # Graficos
 
-Galeria pessoal de gráficos em R, replicados a partir de [R Graph Gallery](https://r-graph-gallery.com/). O objetivo é adicionar gráficos novos periodicamente, aprendendo diferentes tipos de visualização e construindo uma referência reutilizável de código.
-
-## Para IAs continuando este projeto
-
-Comece por [`AGENTS.md`](AGENTS.md) — é o contrato vivo do projeto (protocolo de primeira sessão, lições aprendidas, decisões fechadas). Ele aponta para os demais docs conforme necessário:
-1. [`docs/SETUP.md`](docs/SETUP.md) — ambiente já configurado (R, pacotes, caminhos). Confira antes de rodar qualquer script.
-2. [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — passo a passo para adicionar um novo gráfico.
-3. [`docs/PROGRESS.md`](docs/PROGRESS.md) — log do que já foi feito, para não repetir gráficos e saber o estado atual.
+Galeria pessoal de gráficos em R. O objetivo é adicionar gráficos novos periodicamente, aprendendo diferentes tipos de visualização e construindo uma referência reutilizável de código.
 
 ## Estrutura
 
@@ -32,10 +25,10 @@ Graficos/
 ```
 
 Cada gráfico vive em `graficos/<categoria>/<slug-do-grafico>/` com três arquivos:
-- `script.R` — código fonte (adaptado do R Graph Gallery)
+- `script.R` — código fonte
 - `output.png` — imagem gerada
-- `README.md` — fonte original, notas, data
+- `README.md` — notas, data
 
-## Categorias (baseadas no R Graph Gallery)
+## Categorias
 
-As categorias em `graficos/` espelham a navegação do próprio site, o que facilita achar exemplos parecidos quando for adicionar um novo.
+As categorias em `graficos/` cobrem os principais tipos de visualização, o que facilita achar exemplos parecidos quando for adicionar um novo.
