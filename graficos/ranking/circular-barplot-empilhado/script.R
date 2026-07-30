@@ -53,8 +53,7 @@ dados_grade$inicio <- dados_grade$inicio - 1
 dados_grade <- dados_grade[-1, ]
 
 # Paleta categorica fixa (RColorBrewer) no lugar do scale_fill_viridis() do
-# exemplo original -- definida uma vez e reaproveitada pela versao interativa
-# no fim do script, pra nao dessincronizar as cores entre as duas
+# exemplo original
 paleta <- RColorBrewer::brewer.pal(3, "Dark2")
 names(paleta) <- c("ficcao", "nao_ficcao", "infantil")
 
@@ -92,47 +91,3 @@ p <- ggplot(dados) +
   geom_text(data = dados_base, aes(x = centro, y = -14, label = regiao), hjust = c(1, 1, 0, 0), colour = "black", alpha = 0.8, size = 3.5, fontface = "bold", inherit.aes = FALSE)
 
 ggsave("output.png", plot = p, width = 9, height = 9, dpi = 150)
-
-# Versao interativa: mesmos dados/paleta, mas via plotly::plot_ly(type =
-# "barpolar") nativo em vez de tentar converter o coord_polar() do ggplot2 --
-# o ggplotly() nao suporta coordenadas polares (mesma limitacao ja
-# documentada no grafico de rosca de alocacao de tempo, que tambem usa uma
-# funcao nativa do plotly em vez de ggplotly() por esse motivo)
-library(plotly)
-
-# Remove as barras vazias -- so serviam de respiro no estatico, aqui viram
-# so um espaco em branco entre regioes se entrarem com receita NA/0
-dados_int <- dados %>% filter(!is.na(receita))
-
-# theta categorico na MESMA ordem (por id) do grafico estatico -- senao o
-# plotly reordena as filiais em ordem alfabetica e perde o agrupamento
-# visual por regiao
-dados_int$filial <- factor(dados_int$filial, levels = unique(dados_int$filial[order(dados_int$id)]))
-
-# Rotulo de exibicao pra legenda (o estatico nao mostra legenda, entao o nome
-# bruto da coluna nunca apareceu ali -- aqui precisa ficar apresentavel)
-rotulo_categoria <- c(ficcao = "Ficção", nao_ficcao = "Não-ficção", infantil = "Infantil")
-dados_int$categoria <- factor(rotulo_categoria[dados_int$categoria], levels = rotulo_categoria)
-paleta_int <- paleta
-names(paleta_int) <- rotulo_categoria[names(paleta)]
-
-widget <- plot_ly(
-  dados_int,
-  type = "barpolar",
-  r = ~receita,
-  theta = ~filial,
-  color = ~categoria,
-  colors = paleta_int,
-  hovertemplate = ~paste0("<b>", filial, "</b><br>", regiao, "<br>",
-                          categoria, ": R$ ", receita, " mil<extra></extra>")
-) %>%
-  layout(
-    barmode = "stack",
-    showlegend = TRUE,
-    polar = list(
-      radialaxis = list(showticklabels = TRUE, ticksuffix = "", angle = 90),
-      angularaxis = list(showticklabels = FALSE, ticks = "")
-    )
-  )
-
-htmlwidgets::saveWidget(widget, file = "widget.html", selfcontained = FALSE)

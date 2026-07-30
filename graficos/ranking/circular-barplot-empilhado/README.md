@@ -3,12 +3,12 @@ title: "Circular barplot empilhado"
 category: ranking
 date: 2026-07-30
 source: "https://r-graph-gallery.com/299-circular-stacked-barplot.html"
-interactive: true
+interactive: false
 resumo: "Um barplot empilhado dobrado em círculo, com as barras agrupadas por categoria e um respiro visual entre cada grupo."
-pacotes: ["ggplot2", "dplyr", "tidyr", "plotly"]
+pacotes: ["ggplot2", "dplyr", "tidyr"]
 dados: "1 variável de identificação + 1 categórica (grupo) + várias numéricas empilháveis"
 nivel: intermediário
-tags: ["interativo", "ranking", "parte-do-todo"]
+tags: ["ranking", "parte-do-todo"]
 ---
 
 ## O que é
@@ -73,19 +73,13 @@ A técnica tem três partes que não aparecem num barplot comum:
 O gráfico final usa `coord_polar()` do `ggplot2` pra dobrar tudo isso em
 círculo — até esse ponto, os dados são um barplot empilhado comum.
 
-**Versão interativa**: em vez de converter o gráfico acima com `ggplotly()`
-(coordenadas polares não têm suporte confiável nessa conversão), a versão
-interativa foi refeita nativamente com `plotly::plot_ly(type = "barpolar")`,
-que já empilha por categoria (`barmode = "stack"`) e mostra os valores exatos
-no hover — trocando os rótulos girados por tooltip, mais fácil de ler em tela
-pequena.
-
 Dados fictícios: uma rede fictícia de livrarias com filiais agrupadas por
 região (Norte, Sul, Leste, Oeste, em quantidades diferentes por região) e
 receita mensal fictícia (R$ mil) em três linhas de produto (ficção,
 não-ficção, infantil), no lugar dos indivíduos genéricos ("Mister N") e das
 variáveis sem nome do exemplo original. Paleta categórica fixa
-(`RColorBrewer::brewer.pal(3, "Dark2")`), reaproveitada nas duas versões.
+(`RColorBrewer::brewer.pal(3, "Dark2")`) no lugar do `scale_fill_viridis()`
+do exemplo original.
 
 ## Possíveis problemas pelo caminho
 
@@ -100,12 +94,6 @@ variáveis sem nome do exemplo original. Paleta categórica fixa
   de categorias empilhadas sem ajustar essa conta faz o respiro sumir ou
   dobrar de tamanho. **Solução**: sempre calcular esse número a partir dos
   próprios dados (`nlevels(...)`), nunca deixar um valor fixo solto no script.
-- **Problema**: converter esse gráfico direto com `ggplotly()` produz um
-  resultado quebrado ou não gira como esperado. **Por quê**: `coord_polar()`
-  não é uma coordenada com suporte confiável na conversão do `plotly`.
-  **Solução**: usar a função nativa do pacote interativo pro mesmo conceito
-  (aqui, `plot_ly(type = "barpolar")`) em vez de insistir na conversão
-  automática.
 
 ## Variações possíveis
 
@@ -117,5 +105,7 @@ variáveis sem nome do exemplo original. Paleta categórica fixa
   maior.
 - Reduzir a quantidade de "barras vazias" pra deixar os grupos mais próximos
   entre si, ou aumentar pra dar mais destaque à separação entre eles.
-- Usar um `hole` no `plot_ly(type = "barpolar")` pra abrir mais ou menos o
-  buraco central, no lugar do `ylim()` negativo do estático.
+- Fazer uma versão interativa com `plotly::plot_ly(type = "barpolar")` —
+  empilha por categoria e mostra tooltip sozinho, mas exige recriar os
+  rótulos girados e o arco por grupo na mão, já que esse layout de anotações
+  não é algo que o `barpolar` reproduz automaticamente.
