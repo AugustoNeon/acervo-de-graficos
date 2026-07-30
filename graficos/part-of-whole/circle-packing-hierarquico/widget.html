@@ -38,26 +38,26 @@
       if (!reg || !carga) return;
       var x = JSON.parse(carga.textContent).x;
       reg.renderValue(el, x, reg.initialize(el, el.offsetWidth, el.offsetHeight));
-    }
-
-    function desenhado(el) {
-      var svg = el.querySelector('svg');
-      return svg && parseFloat(svg.getAttribute('width')) > 0;
-    }
-
-    var voltas = 0;
-    var tentativa = setInterval(function () {
-      var el = document.querySelector('.circlepackeR');
-      if (++voltas > 80) { clearInterval(tentativa); return; }
-      if (!el) return;
-      var caixa = el.getBoundingClientRect();
-      if (!desenhado(el)) {
-        if (caixa.width > 0 && caixa.height > 0) redesenhar(el);
-        if (!desenhado(el)) return;
-      }
-      clearInterval(tentativa);
       pintarNiveis(el);
-    }, 50);
+    }
+
+    var el = document.querySelector('.circlepackeR');
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    var pendente = null;
+    var ultimoW = 0;
+    var ultimoH = 0;
+    var ro = new ResizeObserver(function (entries) {
+      var caixa = entries[0].contentRect;
+      var w = Math.round(caixa.width);
+      var h = Math.round(caixa.height);
+      if (w <= 0 || h <= 0 || (w === ultimoW && h === ultimoH)) return;
+      ultimoW = w;
+      ultimoH = h;
+      clearTimeout(pendente);
+      pendente = setTimeout(function () { redesenhar(el); }, 60);
+    });
+    ro.observe(el);
   })();
 </script>
 </body>

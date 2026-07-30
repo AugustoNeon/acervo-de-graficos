@@ -128,13 +128,23 @@ folha_css <- tags$style(HTML(sprintf("
 #    logo repintar uma vez basta -- o clique-pra-ampliar continua igual.
 #
 # O mesmo script tambem conserta um segundo defeito do pacote: ele mede o
-# container UMA vez, no render, e o handler de resize dele e uma funcao VAZIA.
-# Se nesse instante o container ainda nao tiver layout (acontece de forma
-# intermitente dentro de um iframe), o diametro sai 0 -- o widget fica vazio
-# pra sempre e ainda escreve height:0px no iframe que o contem. Como o
-# renderValue do pacote limpa o container antes de desenhar, refazer o desenho
-# e seguro: aqui ele e refeito uma unica vez, so quando o container ja tem
-# tamanho real (nao ha laco de redimensionamento).
+# container UMA vez, no render, e o handler de resize dele e uma funcao VAZIA
+# -- ele nunca reage a mudancas de tamanho depois do primeiro desenho. Isso da
+# dois sintomas possiveis, dependendo de QUANDO a medicao acontece: se o
+# container ainda nao tem layout (diametro 0), o widget fica vazio pra sempre;
+# se o container tem um tamanho so PROVISORIO nesse instante (ex: o script da
+# pagina ainda vai ajustar a altura do iframe, ou uma fonte carrega por ultimo
+# e remexe o layout por alguns px), o SVG fica desenhado pro tamanho antigo e
+# sai desalinhado/cortado em relacao a caixa final -- intermitente, porque
+# depende de uma corrida contra esses outros ajustes de layout.
+#
+# Um ResizeObserver no proprio container resolve os dois de uma vez, no lugar
+# do polling anterior (que so tentava redesenhar enquanto o SVG media 0): o
+# primeiro callback do observer ja cobre 'container sem layout ainda' (o
+# ResizeObserver dispara de novo assim que o tamanho deixar de ser 0x0), e os
+# callbacks seguintes cobrem qualquer resize depois disso -- inclusive os que
+# a pagina do site faz depois do primeiro desenho. Redesenhar e seguro: o
+# renderValue do pacote limpa o container antes de desenhar de novo.
 nivel_js <- tags$script(HTML(sprintf("
   (function () {
     var cor = { 1: '%s', 2: '%s' };
@@ -154,26 +164,26 @@ nivel_js <- tags$script(HTML(sprintf("
       if (!reg || !carga) return;
       var x = JSON.parse(carga.textContent).x;
       reg.renderValue(el, x, reg.initialize(el, el.offsetWidth, el.offsetHeight));
-    }
-
-    function desenhado(el) {
-      var svg = el.querySelector('svg');
-      return svg && parseFloat(svg.getAttribute('width')) > 0;
-    }
-
-    var voltas = 0;
-    var tentativa = setInterval(function () {
-      var el = document.querySelector('.circlepackeR');
-      if (++voltas > 80) { clearInterval(tentativa); return; }
-      if (!el) return;
-      var caixa = el.getBoundingClientRect();
-      if (!desenhado(el)) {
-        if (caixa.width > 0 && caixa.height > 0) redesenhar(el);
-        if (!desenhado(el)) return;
-      }
-      clearInterval(tentativa);
       pintarNiveis(el);
-    }, 50);
+    }
+
+    var el = document.querySelector('.circlepackeR');
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    var pendente = null;
+    var ultimoW = 0;
+    var ultimoH = 0;
+    var ro = new ResizeObserver(function (entries) {
+      var caixa = entries[0].contentRect;
+      var w = Math.round(caixa.width);
+      var h = Math.round(caixa.height);
+      if (w <= 0 || h <= 0 || (w === ultimoW && h === ultimoH)) return;
+      ultimoW = w;
+      ultimoH = h;
+      clearTimeout(pendente);
+      pendente = setTimeout(function () { redesenhar(el); }, 60);
+    });
+    ro.observe(el);
   })();
 ", cor_nivel[["1"]], cor_nivel[["2"]])))
 
