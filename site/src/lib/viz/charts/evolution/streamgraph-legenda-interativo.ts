@@ -12,7 +12,7 @@
  */
 
 import { select, area, scaleLinear, pointer, bisector } from 'd3';
-import { DURATION, EASE_ENTER, EASE_STATE, stagger } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Faixa {
@@ -214,6 +214,12 @@ const chart: VizChart = {
               })
             )!;
         });
+
+      // A entrada parte de faixas de altura zero — sem esta garantia, um
+      // renderer que nao compoe frames deixaria o grafico em branco.
+      garantirEstadoFinal(260 + DURATION.enter * 1.5, () => {
+        camadas.interrupt().attr('d', (f) => areaFaixa(pontos(f)));
+      });
     }
   },
 };

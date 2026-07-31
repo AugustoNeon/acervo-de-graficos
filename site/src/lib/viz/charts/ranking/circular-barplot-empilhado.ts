@@ -10,7 +10,7 @@
  */
 
 import { select, arc, scaleLinear } from 'd3';
-import { DURATION, EASE_ENTER, EASE_STATE, stagger } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Dados {
@@ -344,6 +344,14 @@ const chart: VizChart = {
         .delay(DURATION.enter * 0.45)
         .duration(DURATION.base)
         .attr('opacity', 1);
+
+      // A entrada parte de barras de espessura zero e texto invisivel — sem
+      // esta garantia, um renderer que nao compoe frames deixaria a pagina com
+      // o grafico em branco.
+      garantirEstadoFinal(DURATION.enter * 1.6, () => {
+        paths.interrupt().attr('d', arcoBarra);
+        camadaTexto.interrupt().attr('opacity', 1);
+      });
     }
   },
 };

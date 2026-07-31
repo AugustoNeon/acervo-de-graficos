@@ -5,7 +5,7 @@ date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
 interactive: true
 resumo: "O que acontece quando uma rede tem conexões demais: uma bola de linhas emaranhadas em que nada se distingue."
-pacotes: ["ggraph", "igraph", "visNetwork"]
+pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma lista de conexões (origem, destino)"
 nivel: intermediário
 tags: ["interativo", "rede", "armadilha"]

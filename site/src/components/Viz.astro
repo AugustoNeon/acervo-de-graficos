@@ -94,6 +94,47 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     color: var(--color-ink);
   }
 
+  /* Controles do grafico (alternar layout, etc). Mesma familia visual dos
+     filtros da galeria — a cor ativa e a da categoria da pagina. */
+  .viz :global(.viz-controles) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2xs);
+    margin-top: var(--space-xs);
+  }
+
+  .viz :global(.viz-controles button) {
+    padding: 0.4em 0.9em;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-controles button:hover) {
+    border-color: var(--cat);
+    color: var(--color-ink);
+  }
+
+  .viz :global(.viz-controles button[aria-pressed='true']) {
+    background: var(--cat-wash);
+    border-color: var(--cat);
+    color: var(--cat-ink);
+  }
+
+  .viz :global(.viz-nota) {
+    margin-top: var(--space-xs);
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
   /* Global de proposito: o mesmo quadradinho de cor aparece na legenda (dentro
      de .viz) e no tooltip, que vive no <body> pra escapar de qualquer
      `overflow: hidden` — fora do alcance de um seletor ancorado em .viz. */
