@@ -125,7 +125,9 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   <dialog id="lightbox">
     <button type="button" class="lightbox-close" aria-label="Fechar">✕</button>
-    <img id="lightbox-img" src="" alt="" />
+    {/* A imagem e criada no clique, ja com o endereco definido: deixada no
+        markup sem endereco, o navegador a trataria como imagem quebrada. */}
+    <div id="lightbox-slot"></div>
   </dialog>
 </Base>
 
@@ -190,7 +192,6 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     margin: 0 0 var(--space-xl);
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--color-border);
-    border-left: 3px solid var(--color-accent);
     border-radius: var(--radius-md);
     background: var(--color-surface);
     display: flex;
@@ -429,12 +430,19 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
 <script>
   const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
-  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement | null;
+  const slot = document.getElementById('lightbox-slot');
 
   document.querySelectorAll<HTMLButtonElement>('.zoom-trigger').forEach((trigger) => {
     trigger.addEventListener('click', () => {
-      if (!dialog || !lightboxImg) return;
-      lightboxImg.src = trigger.dataset.zoomSrc ?? '';
+      if (!dialog || !slot) return;
+      const src = trigger.dataset.zoomSrc;
+      if (!src) return;
+      // Recriada a cada abertura: o elemento nunca existe sem endereco, e a
+      // troca de grafico nao deixa a imagem anterior piscando antes da nova.
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = trigger.querySelector('img')?.alt ?? '';
+      slot.replaceChildren(img);
       dialog.showModal();
     });
   });
