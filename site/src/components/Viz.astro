@@ -33,8 +33,13 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
   .viz {
     margin: 0;
     position: relative;
-    /* Reserva a altura antes do desenho: sem isso o conteudo abaixo pula
-       quando o SVG entra no lugar da imagem. */
+  }
+
+  /* Reserva a altura antes do desenho, senao o conteudo abaixo pula quando o
+     SVG entra no lugar da imagem. Some assim que o grafico monta: a partir dai
+     a altura tem que caber SVG + legenda, e uma proporcao fixa (que so descreve
+     o SVG) cortaria a legenda fora. */
+  .viz:not([data-viz-state='ready']) {
     aspect-ratio: var(--viz-aspect);
   }
 

@@ -1,11 +1,11 @@
 ---
-title: "Streamgraph interativo com legenda/dropdown"
+title: "Streamgraph interativo com legenda"
 category: evolution
 date: 2026-07-22
 source: "https://r-graph-gallery.com/156-interactive-streamgraph-with-legend.html"
 interactive: true
 resumo: "Áreas empilhadas que fluem em torno de um eixo central, mostrando como a composição de um total mudou ao longo do tempo."
-pacotes: ["streamgraph", "webshot2", "chromote"]
+pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
 tags: ["interativo", "temporal", "composição"]
