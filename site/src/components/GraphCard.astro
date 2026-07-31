@@ -1,5 +1,6 @@
 ---
 import { formatDate } from '../lib/format';
+import { corDaCategoria } from '../lib/categoria';
 
 interface Props {
   href: string;
@@ -9,12 +10,19 @@ interface Props {
   interactive: boolean;
   thumbnail: string;
   resumo: string;
+  /** Posição na grade — só alimenta o atraso escalonado da entrada. */
+  index?: number;
 }
 
-const { href, title, category, date, interactive, thumbnail, resumo } = Astro.props;
+const { href, title, category, date, interactive, thumbnail, resumo, index = 0 } = Astro.props;
 ---
 
-<a class="card" href={href} data-category={category}>
+<a
+  class="card"
+  href={href}
+  data-category={category}
+  style={`${corDaCategoria(category)} --i: ${index};`}
+>
   <div class="card-media">
     <img src={thumbnail} alt="" loading="lazy" decoding="async" />
     {interactive && <span class="card-badge">interativo</span>}
@@ -24,7 +32,7 @@ const { href, title, category, date, interactive, thumbnail, resumo } = Astro.pr
     </div>
   </div>
   <div class="card-body">
-    <span class="card-category">{category}</span>
+    <span class="card-category"><i class="card-dot" aria-hidden="true"></i>{category}</span>
     <h3 class="card-title">{title}</h3>
     <p class="card-resumo">{resumo}</p>
   </div>
@@ -45,8 +53,17 @@ const { href, title, category, date, interactive, thumbnail, resumo } = Astro.pr
     aspect-ratio: 4 / 3;
     overflow: hidden;
     border-radius: var(--radius-md);
-    background: var(--color-surface);
+    /* O fundo do thumbnail é o lavado da categoria: os output.png têm fundo
+       branco, então a cor aparece na margem em volta do gráfico — é onde dá
+       pra ter área de cor sem tocar no gráfico em si. */
+    background: var(--cat-wash);
     border: 1px solid var(--color-border);
+    transition: border-color var(--duration-base) var(--ease-out-expo);
+  }
+
+  .card:hover .card-media,
+  .card:focus-visible .card-media {
+    border-color: var(--cat);
   }
 
   .card-media img {
@@ -65,7 +82,9 @@ const { href, title, category, date, interactive, thumbnail, resumo } = Astro.pr
     position: absolute;
     top: var(--space-2xs);
     right: var(--space-2xs);
-    background: var(--color-primary);
+    /* -ink, não a variante viva: é texto pequeno sobre a cor, precisa dos
+       4.5:1 que só a variante escura garante. */
+    background: var(--cat-ink);
     color: var(--color-primary-ink);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
@@ -112,12 +131,26 @@ const { href, title, category, date, interactive, thumbnail, resumo } = Astro.pr
     gap: var(--space-3xs);
   }
 
+  /* O nome da categoria e o ponto ao lado são o mesmo sinal em dois pesos: a
+     cor viva marca de longe (é o que se vê varrendo a grade), o texto em -ink
+     confirma de perto e é o que precisa passar em contraste. */
   .card-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    color: var(--color-accent-text);
+    color: var(--cat-ink);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+  }
+
+  .card-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--cat);
+    flex: none;
   }
 
   .card-title {
@@ -133,7 +166,27 @@ const { href, title, category, date, interactive, thumbnail, resumo } = Astro.pr
     text-wrap: pretty;
   }
 
+  /* Entrada escalonada da grade.
+     O card é visível por padrão — a animação é acréscimo, não o que o traz à
+     tela. Se ela nunca rodar (aba em segundo plano, motor sem composição), o
+     que fica é o card normal, nunca um espaço em branco. Por isso `backwards`
+     e não `both`: o estado inicial só vale durante o atraso. */
+  @media (prefers-reduced-motion: no-preference) {
+    .card {
+      animation: card-entra var(--duration-slow) var(--ease-out-quint) backwards;
+      animation-delay: calc(var(--i, 0) * 35ms);
+    }
+  }
+
+  @keyframes card-entra {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .card-media,
     .card-media img,
     .card-overlay {
       transition: none;

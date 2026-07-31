@@ -79,13 +79,29 @@ export function getTheme(): VizTheme {
     border: read('--color-border', FALLBACK.border),
     borderStrong: read('--color-border-strong', FALLBACK.borderStrong),
     primary: read('--color-primary', FALLBACK.primary),
-    accent: read('--color-accent', FALLBACK.accent),
+    accent: FALLBACK.accent,
     fontBody: read('--font-body', FALLBACK.fontBody),
     fontMono: read('--font-mono', FALLBACK.fontMono),
     categorical: FALLBACK.categorical,
   };
 
   return cached;
+}
+
+/**
+ * Tema do grafico ancorado na categoria da pagina.
+ *
+ * `--cat` e definida na `.page`, nao no `:root` — entao precisa ser lida a
+ * partir de um elemento dentro dela, e nao pode entrar no cache global do
+ * `getTheme()` (paginas de categorias diferentes teriam acentos diferentes).
+ * Com isso, um realce dentro do grafico usa exatamente a mesma cor que o chip
+ * do filtro e o ponto do card daquela categoria.
+ */
+export function getThemeFor(el: Element): VizTheme {
+  const base = getTheme();
+  if (typeof window === 'undefined') return base;
+  const cat = getComputedStyle(el).getPropertyValue('--cat').trim();
+  return cat ? { ...base, accent: cat } : base;
 }
 
 /** So pra teste/hot-reload: proxima chamada de getTheme() le os tokens de novo. */

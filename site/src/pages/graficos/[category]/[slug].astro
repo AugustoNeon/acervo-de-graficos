@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import Base from '../../../layouts/Base.astro';
 import Viz from '../../../components/Viz.astro';
 import { formatDate } from '../../../lib/format';
+import { corDaCategoria } from '../../../lib/categoria';
 
 export async function getStaticPaths() {
   // graficos/ vive fora de site/, entao o script.R de cada grafico e lido do
@@ -43,11 +44,11 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 ---
 
 <Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title}>
-  <div class="page">
+  <div class="page" style={corDaCategoria(entry.data.category)}>
     <a class="back" href={`${base}/`}>← Todos os gráficos</a>
 
     <header class="head">
-      <span class="category">{entry.data.category}</span>
+      <span class="category"><i class="category-dot" aria-hidden="true"></i>{entry.data.category}</span>
       <h1>{entry.data.title}</h1>
       <p class="resumo">{entry.data.resumo}</p>
       <div class="meta">
@@ -155,18 +156,31 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   }
 
   .category {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-accent-text);
+    color: var(--cat-ink);
     margin-bottom: var(--space-sm);
   }
 
+  .category-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--cat);
+    flex: none;
+  }
+
+  /* Esta é a página onde se passa o tempo — antes o título saía menor que o da
+     home, em tamanho de documentação. */
   h1 {
-    font-size: var(--text-2xl);
-    letter-spacing: -0.02em;
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-tight);
   }
 
   .resumo {
@@ -236,9 +250,9 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   }
 
   .chip-tag {
-    color: var(--color-accent-text);
+    color: var(--cat-ink);
     border-color: transparent;
-    background: oklch(0.55 0.17 35 / 0.09);
+    background: var(--cat-wash);
   }
 
   @media (max-width: 32rem) {

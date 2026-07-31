@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import GraphCard from '../components/GraphCard.astro';
+import { corDaCategoria } from '../lib/categoria';
 
 const entries = (await getCollection('graficos')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -15,7 +16,6 @@ const base = import.meta.env.BASE_URL;
 <Base title="Acervo de Gráficos">
   <header class="masthead">
     <div class="masthead-inner">
-      <p class="kicker">Acervo de Gráficos</p>
       <h1>Um catálogo de gráficos em R, um de cada vez.</h1>
       <p class="intro">
         Um gráfico novo em R, de tempos em tempos, organizados por categoria conforme vão sendo feitos.
@@ -27,7 +27,8 @@ const base = import.meta.env.BASE_URL;
     <nav class="filters" aria-label="Filtrar por categoria">
       <button type="button" class="filter is-active" data-filter="all">Todos<span>{entries.length}</span></button>
       {categories.map((category) => (
-        <button type="button" class="filter" data-filter={category}>
+        <button type="button" class="filter" data-filter={category} style={corDaCategoria(category)}>
+          <i class="filter-dot" aria-hidden="true"></i>
           {category}
           <span>{entries.filter((e) => e.data.category === category).length}</span>
         </button>
@@ -36,7 +37,7 @@ const base = import.meta.env.BASE_URL;
 
     {entries.length > 0 ? (
       <div class="grid" id="grid">
-        {entries.map((entry) => {
+        {entries.map((entry, i) => {
           const [category, slug] = entry.id.split('/');
           return (
             <GraphCard
@@ -47,6 +48,7 @@ const base = import.meta.env.BASE_URL;
               interactive={entry.data.interactive}
               thumbnail={`${base}/graficos/${category}/${slug}/output.png`}
               resumo={entry.data.resumo}
+              index={i}
             />
           );
         })}
@@ -74,19 +76,11 @@ const base = import.meta.env.BASE_URL;
     margin-inline: auto;
   }
 
-  .kicker {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-accent-text);
-    margin-bottom: var(--space-sm);
-  }
-
   h1 {
     font-size: var(--text-display);
-    max-width: 20ch;
-    letter-spacing: -0.02em;
+    max-width: 18ch;
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-tight);
   }
 
   .intro {
@@ -110,7 +104,7 @@ const base = import.meta.env.BASE_URL;
     margin-bottom: var(--space-lg);
     position: sticky;
     top: 0;
-    background: oklch(1 0 0 / 0.92);
+    background: color-mix(in oklch, var(--color-bg) 92%, transparent);
     backdrop-filter: blur(6px);
     padding-block: var(--space-sm);
     z-index: var(--z-sticky);
@@ -119,7 +113,7 @@ const base = import.meta.env.BASE_URL;
   .filter {
     display: inline-flex;
     align-items: center;
-    gap: 0.4em;
+    gap: 0.45em;
     padding: 0.5em 0.9em;
     border-radius: 999px;
     border: 1px solid var(--color-border);
@@ -131,6 +125,17 @@ const base = import.meta.env.BASE_URL;
       border-color var(--duration-fast) var(--ease-out-expo);
   }
 
+  /* O ponto é a cor viva da categoria; o rótulo fica em texto legível. Assim o
+     filtro usa exatamente o mesmo par de sinais do card, e a correspondência
+     entre chip e grade se lê sem precisar de rótulo extra. */
+  .filter-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--cat);
+    flex: none;
+  }
+
   .filter span {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
@@ -139,13 +144,24 @@ const base = import.meta.env.BASE_URL;
   }
 
   .filter:hover {
-    border-color: var(--color-border-strong);
+    border-color: var(--cat, var(--color-border-strong));
     color: var(--color-ink);
   }
 
   .filter.is-active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
+    background: var(--cat-wash);
+    border-color: var(--cat);
+    color: var(--cat-ink);
+  }
+
+  .filter.is-active .filter-dot {
+    background: var(--cat-ink);
+  }
+
+  /* "Todos" não é categoria nenhuma, então não empresta matiz de ninguém. */
+  .filter[data-filter='all'].is-active {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
     color: var(--color-primary-ink);
   }
 

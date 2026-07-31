@@ -1,28 +1,89 @@
 :root {
-  /* Cor — estratégia Restrained: neutros quase puros + 1 primary (links, tags
-     ativas, foco) + 1 accent (destaque pontual). Mood: caderno de campo de
-     um cientista de dados — papel branco verdadeiro, um traço de tinta
-     cobalto pra marcar o que importa. */
-  --color-bg: oklch(1 0 0);
-  --color-surface: oklch(0.965 0.006 235);
-  --color-surface-hover: oklch(0.94 0.009 235);
-  --color-border: oklch(0.87 0.008 235);
-  --color-border-strong: oklch(0.72 0.012 235);
+  /* ------------------------------------------------------------------ cor
+     Estratégia: paleta completa (full palette) — a cor carrega informação, não
+     decora. As oito categorias do acervo têm cada uma o seu matiz, e é ele que
+     identifica a categoria em toda a navegação: filtro, card, página.
 
-  --color-ink: oklch(0.16 0.014 235);
-  --color-ink-muted: oklch(0.44 0.014 235);
+     Os matizes têm L e C IGUAIS entre si, variando só o ângulo. Se cada um
+     pegasse o croma máximo do seu matiz no sRGB, o violeta (que chega a 0.29)
+     gritaria e o turquesa (que só chega a 0.085) sumiria — a interface passaria
+     a sugerir uma hierarquia entre categorias que não existe. Os ângulos também
+     evitam de propósito o vale de croma do ciano (~195-215).
 
-  --color-primary: oklch(0.47 0.14 232);
-  --color-primary-strong: oklch(0.38 0.13 232);
-  --color-primary-ink: oklch(1 0 0);
+     Três papéis por categoria, porque num layout de fundo claro cor viva vem de
+     ÁREA, nunca de texto pequeno colorido — exigir 4.5:1 de um texto contra
+     quase-branco empurra qualquer matiz pro murcho:
 
-  --color-accent: oklch(0.55 0.17 35);
-  --color-accent-text: oklch(0.42 0.16 35);
-  --color-accent-ink: oklch(1 0 0);
+       --cat-X        marca não-textual (ponto, régua, bloco, acento). 3:1 basta,
+                      então é a variante mais viva. Mínimo medido: 3.04:1.
+       --cat-X-ink    texto. Mínimo medido: 4.52:1 contra fundo e superfície,
+                      e 4.58:1 sobre o -wash da própria categoria.
+       --cat-X-wash   fundo de área.
 
-  --color-focus-ring: oklch(0.47 0.14 232 / 0.5);
+     Valores derivados por busca no gamut sRGB, não escolhidos no olho. */
 
-  /* Tipografia */
+  --cat-part-of-whole: oklch(0.62 0.108 28);
+  --cat-ranking: oklch(0.62 0.108 70);
+  --cat-map: oklch(0.62 0.108 128);
+  --cat-evolution: oklch(0.62 0.108 158);
+  --cat-flow: oklch(0.62 0.108 215);
+  --cat-correlation: oklch(0.62 0.108 262);
+  --cat-distribution: oklch(0.62 0.108 305);
+  --cat-network: oklch(0.62 0.108 350);
+
+  --cat-part-of-whole-ink: oklch(0.525 0.092 28);
+  --cat-ranking-ink: oklch(0.525 0.092 70);
+  --cat-map-ink: oklch(0.525 0.092 128);
+  --cat-evolution-ink: oklch(0.525 0.092 158);
+  --cat-flow-ink: oklch(0.525 0.092 215);
+  --cat-correlation-ink: oklch(0.525 0.092 262);
+  --cat-distribution-ink: oklch(0.525 0.092 305);
+  --cat-network-ink: oklch(0.525 0.092 350);
+
+  --cat-part-of-whole-wash: oklch(0.955 0.038 28);
+  --cat-ranking-wash: oklch(0.955 0.038 70);
+  --cat-map-wash: oklch(0.955 0.038 128);
+  --cat-evolution-wash: oklch(0.955 0.038 158);
+  --cat-flow-wash: oklch(0.955 0.038 215);
+  --cat-correlation-wash: oklch(0.955 0.038 262);
+  --cat-distribution-wash: oklch(0.955 0.038 305);
+  --cat-network-wash: oklch(0.955 0.038 350);
+
+  /* Fallback pra quando a categoria não resolve (categoria nova ainda sem
+     matiz). Cinza neutro, nunca uma das oito — emprestar a cor de outra
+     categoria seria pior que não ter cor. */
+  --cat-fallback: oklch(0.62 0 0);
+  --cat-fallback-ink: oklch(0.44 0 0);
+  --cat-fallback-wash: oklch(0.955 0 0);
+
+  /* Cor da categoria da página/card atual. Cada superfície redefine as três
+     locais (ver lib/categoria.ts) e todo o resto do CSS lê daqui — assim
+     nenhum componente precisa saber quais categorias existem. */
+  --cat: var(--cat-fallback);
+  --cat-ink: var(--cat-fallback-ink);
+  --cat-wash: var(--cat-fallback-wash);
+
+  /* Neutros em croma 0 de propósito: são o palco de oito matizes diferentes e
+     de 22 gráficos com fundo branco. Qualquer tinta aqui favoreceria uma das
+     categorias e brigaria com os thumbnails. Off-white de verdade, não creme. */
+  --color-bg: oklch(0.985 0 0);
+  --color-surface: oklch(0.955 0 0);
+  --color-surface-hover: oklch(0.925 0 0);
+  --color-border: oklch(0.885 0 0);
+  --color-border-strong: oklch(0.72 0 0);
+
+  --color-ink: oklch(0.19 0 0);
+  --color-ink-muted: oklch(0.46 0 0);
+
+  /* Papéis de interface que não pertencem a categoria nenhuma (foco, seleção,
+     link dentro de texto corrido). */
+  --color-primary: var(--color-ink);
+  --color-primary-ink: oklch(0.985 0 0);
+  --color-focus-ring: oklch(0.19 0 0 / 0.55);
+
+  /* ---------------------------------------------------------- tipografia
+     Fraunces (serifada variável) contra IBM Plex Sans — pareadas no eixo de
+     contraste serif/sans, não duas humanistas parecidas. */
   --font-display: 'Fraunces Variable', ui-serif, Georgia, 'Times New Roman', serif;
   --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
@@ -33,10 +94,18 @@
   --text-lg: 1.25rem;
   --text-xl: 1.75rem;
   --text-2xl: 2.25rem;
-  --text-display: clamp(2.5rem, 1.6rem + 3.5vw, 5rem);
+  /* Título de página de gráfico — antes era 2.25rem fixo, tamanho de
+     documentação. É onde se passa o tempo, então é onde a tipografia precisa
+     mandar. */
+  --text-3xl: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+  --text-display: clamp(2.75rem, 1.7rem + 4vw, 5.5rem);
 
-  --leading-tight: 1.15;
-  --leading-snug: 1.35;
+  /* Piso de -0.04em: abaixo disso as letras se tocam e vira aperto, não design. */
+  --tracking-display: -0.035em;
+  --tracking-title: -0.02em;
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.3;
   --leading-body: 1.6;
 
   /* Espaçamento — escala base 4pt */
@@ -53,15 +122,18 @@
   /* Estrutura */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
-  --measure: 65ch;
+  --measure: 68ch;
   --content-width: 76rem;
 
-  --shadow-sm: 0 1px 2px oklch(0.16 0.014 235 / 0.06), 0 1px 1px oklch(0.16 0.014 235 / 0.04);
-  --shadow-md: 0 8px 24px oklch(0.16 0.014 235 / 0.10), 0 2px 6px oklch(0.16 0.014 235 / 0.06);
+  --shadow-sm: 0 1px 2px oklch(0.19 0 0 / 0.06), 0 1px 1px oklch(0.19 0 0 / 0.04);
+  --shadow-md: 0 8px 24px oklch(0.19 0 0 / 0.10), 0 2px 6px oklch(0.19 0 0 / 0.06);
 
+  /* ------------------------------------------------------------- movimento */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
+  --duration-slow: 520ms;
 
   /* z-index — escala semântica */
   --z-dropdown: 10;

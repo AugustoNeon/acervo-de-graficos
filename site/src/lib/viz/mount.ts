@@ -11,7 +11,7 @@
  * scroll -- as duas coisas que um iframe torna impossiveis.
  */
 
-import { getTheme } from './theme';
+import { getThemeFor } from './theme';
 import { createTooltip, type Tooltip } from './tooltip';
 import { onEnterViewport, prefersReducedMotion } from './motion';
 import type { VizChart } from './types';
@@ -66,7 +66,7 @@ async function montar(host: HTMLElement): Promise<void> {
   host.dataset.vizState = 'ready';
 
   const tooltip = getTooltip();
-  const theme = getTheme();
+  const theme = getThemeFor(host);
   const medir = () => Math.round(host.getBoundingClientRect().width);
   let largura = 0;
 
