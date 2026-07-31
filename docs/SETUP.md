@@ -6,21 +6,20 @@ Registro do que já foi instalado/configurado nesta máquina, para não reinstal
 
 ## R
 
-> **2026-07-29**: sessão rodando numa máquina diferente da de 2026-07-21 (usuário
-> `augus`, não `augusto.ryba`) — R não estava instalado nela, reinstalado do
-> zero via `winget`. Desta vez o instalador colocou em `C:\Program Files\R\`
-> (instalação de máquina) em vez de `AppData\Local\Programs` (instalação
-> por-usuário, o que saiu da vez anterior). Os caminhos abaixo já refletem a
-> máquina atual; se abrir numa terceira máquina e os caminhos não baterem, não
-> assuma nenhum dos dois — confira com o comando de registro logo abaixo.
+> **O caminho do R muda de máquina pra máquina — sempre confira antes de usar.**
+> Já apareceram os dois casos neste projeto: instalação por-usuário
+> (`AppData\Local\Programs\R\`, máquina do usuário `augusto.ryba`) e instalação
+> de máquina (`C:\Program Files\R\`, máquina do usuário `augus`, 2026-07-29).
+> Nenhum dos dois entra no `PATH` automaticamente. Não assuma nenhum dos dois:
+> rode o comando de registro logo abaixo.
 
 Instalado via `winget install --id RProject.R -e --silent --accept-package-agreements --accept-source-agreements`.
 
 - Pacote winget: `RProject.R` (versão 4.6.1)
-- Caminho de instalação real: `C:\Program Files\R\R-4.6.1`
-- Executáveis:
-  - `C:\Program Files\R\R-4.6.1\bin\R.exe`
-  - `C:\Program Files\R\R-4.6.1\bin\Rscript.exe`
+- Caminhos já vistos (confirme qual vale na máquina atual):
+  - `C:\Users\<usuário>\AppData\Local\Programs\R\R-4.6.1` — instalação por-usuário
+  - `C:\Program Files\R\R-4.6.1` — instalação de máquina
+- Executáveis: `bin\R.exe` e `bin\Rscript.exe` dentro do caminho acima.
 
 > Nota: o instalador do winget não necessariamente adiciona R ao `PATH` do sistema. Se `Rscript` não for reconhecido direto no terminal, use o caminho completo acima.
 

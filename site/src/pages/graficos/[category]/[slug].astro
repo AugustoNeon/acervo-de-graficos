@@ -1,9 +1,10 @@
 ---
 import { getCollection, render } from 'astro:content';
 import { Code } from 'astro:components';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Base from '../../../layouts/Base.astro';
+import Viz from '../../../components/Viz.astro';
 import { formatDate } from '../../../lib/format';
 
 export async function getStaticPaths() {
@@ -25,11 +26,17 @@ export async function getStaticPaths() {
     } catch {
       console.warn(`[grafico] script.R nao encontrado em ${scriptPath} — secao de codigo omitida`);
     }
-    return { params: { category, slug }, props: { entry, code } };
+    // Um grafico e "viz" quando existe um modulo D3 pra ele em lib/viz/charts:
+    // nesse caso o grafico e desenhado no proprio fluxo da pagina, herdando as
+    // fontes e a paleta do site. Sem modulo, cai no widget.html em iframe (os
+    // graficos gerados por pacote R) ou na imagem estatica.
+    const vizPath = join(process.cwd(), 'src', 'lib', 'viz', 'charts', category, `${slug}.ts`);
+    const temViz = existsSync(vizPath);
+    return { params: { category, slug }, props: { entry, code, temViz } };
   });
 }
 
-const { entry, code } = Astro.props;
+const { entry, code, temViz } = Astro.props;
 const { Content } = await render(entry);
 const base = import.meta.env.BASE_URL;
 const assetBase = `${base}/graficos/${entry.id}/`;
@@ -48,20 +55,32 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       </div>
     </header>
 
-    <figure class="visual">
-      {entry.data.interactive ? (
-        <div class="widget-frame">
-          <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
-        </div>
-      ) : (
-        <>
-          <button type="button" class="zoom-trigger" data-zoom-src={`${assetBase}output.png`}>
-            <img src={`${assetBase}output.png`} alt={entry.data.title} loading="eager" decoding="async" />
-          </button>
-          <figcaption>Clique na imagem pra ver em tamanho real</figcaption>
-        </>
-      )}
-    </figure>
+    {temViz ? (
+      <div class="visual">
+        <Viz
+          id={entry.id}
+          dataUrl={`${assetBase}data.json`}
+          fallbackSrc={`${assetBase}output.png`}
+          title={entry.data.title}
+        />
+        <p class="visual-dica">Passe o cursor por uma barra pra ver os números da filial.</p>
+      </div>
+    ) : (
+      <figure class="visual">
+        {entry.data.interactive ? (
+          <div class="widget-frame">
+            <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
+          </div>
+        ) : (
+          <>
+            <button type="button" class="zoom-trigger" data-zoom-src={`${assetBase}output.png`}>
+              <img src={`${assetBase}output.png`} alt={entry.data.title} loading="eager" decoding="async" />
+            </button>
+            <figcaption>Clique na imagem pra ver em tamanho real</figcaption>
+          </>
+        )}
+      </figure>
+    )}
 
     <dl class="ficha">
       <div class="ficha-row">
@@ -230,6 +249,13 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   .visual {
     margin: 0 0 var(--space-xl);
+  }
+
+  .visual-dica {
+    margin-top: var(--space-2xs);
+    text-align: center;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
   }
 
   .zoom-trigger {

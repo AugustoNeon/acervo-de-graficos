@@ -3,12 +3,12 @@ title: "Circular barplot empilhado"
 category: ranking
 date: 2026-07-30
 source: "https://r-graph-gallery.com/299-circular-stacked-barplot.html"
-interactive: false
+interactive: true
 resumo: "Um barplot empilhado dobrado em círculo, com as barras agrupadas por categoria e um respiro visual entre cada grupo."
-pacotes: ["ggplot2", "dplyr", "tidyr"]
+pacotes: ["ggplot2", "dplyr", "tidyr", "jsonlite", "d3"]
 dados: "1 variável de identificação + 1 categórica (grupo) + várias numéricas empilháveis"
 nivel: intermediário
-tags: ["ranking", "parte-do-todo"]
+tags: ["ranking", "parte-do-todo", "interativo"]
 ---
 
 ## O que é
@@ -80,6 +80,18 @@ não-ficção, infantil), no lugar dos indivíduos genéricos ("Mister N") e das
 variáveis sem nome do exemplo original. Paleta categórica fixa
 (`RColorBrewer::brewer.pal(3, "Dark2")`) no lugar do `scale_fill_viridis()`
 do exemplo original.
+
+**Versão interativa**: nenhuma biblioteca interativa pronta reproduz um
+circular barplot com grade, rótulos rotacionados e arcos de grupo
+customizados — todas trazem o próprio sistema de eixos junto. Então a versão
+interativa é desenhada em D3, e o script em R exporta um `data.json` com o
+dado *e a geometria já calculada* (posição angular de cada barra, extensão de
+cada grupo, arcos de grade, paleta). O desenho acontece em dois lugares, mas
+a regra de layout mora num só: recalcular os ângulos do outro lado faria as
+duas versões divergirem na primeira edição. Por cima disso, a versão
+interativa acrescenta o que a imagem não dá — as barras crescem do centro pra
+fora ao entrar na tela, passar o cursor numa barra mostra os números daquela
+filial, e a legenda destaca uma linha de produto em todas as barras de uma vez.
 
 ## Possíveis problemas pelo caminho
 

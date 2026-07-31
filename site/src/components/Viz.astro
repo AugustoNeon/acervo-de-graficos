@@ -1,0 +1,114 @@
+---
+/**
+ * Monta um grafico interativo direto no fluxo da pagina (sem iframe).
+ *
+ * Progressive enhancement: o que vai no HTML e o `output.png`. Se o JS falhar,
+ * nao carregar ou estiver desligado, a pagina continua mostrando o grafico --
+ * so que estatico. O runtime (lib/viz/mount.ts) troca a imagem pelo SVG
+ * interativo depois que o modulo e o data.json chegam.
+ */
+interface Props {
+  /** "<categoria>/<slug>" — resolve tanto o modulo quanto o data.json */
+  id: string;
+  dataUrl: string;
+  fallbackSrc: string;
+  title: string;
+  /** Proporcao largura/altura, pra reservar o espaco e evitar salto de layout */
+  aspectRatio?: number;
+}
+
+const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
+---
+
+<figure
+  class="viz"
+  data-viz={id}
+  data-viz-data={dataUrl}
+  style={`--viz-aspect: ${aspectRatio};`}
+>
+  <img data-viz-fallback src={fallbackSrc} alt={title} loading="eager" decoding="async" />
+</figure>
+
+<style>
+  .viz {
+    margin: 0;
+    position: relative;
+    /* Reserva a altura antes do desenho: sem isso o conteudo abaixo pula
+       quando o SVG entra no lugar da imagem. */
+    aspect-ratio: var(--viz-aspect);
+  }
+
+  .viz > :global(img[data-viz-fallback]) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .viz > :global(.viz-canvas) {
+    width: 100%;
+  }
+
+  .viz :global(svg) {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Alvos de ponteiro nos graficos — o cursor precisa dizer que da pra
+     interagir antes do usuario tentar. */
+  .viz :global([data-interactive]) {
+    cursor: pointer;
+  }
+
+  /* Legenda: montada em HTML pelo modulo do grafico, nunca dentro do <svg>
+     (texto num viewBox que cresce com o dado encolhe junto e fica ilegivel).
+     Tambem e o caminho de teclado pra filtrar o grafico. */
+  .viz :global(.viz-legenda) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2xs) var(--space-sm);
+    margin-top: var(--space-xs);
+  }
+
+  .viz :global(.viz-legenda button) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.3em 0.6em;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-legenda button:hover),
+  .viz :global(.viz-legenda button:focus-visible) {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  /* Global de proposito: o mesmo quadradinho de cor aparece na legenda (dentro
+     de .viz) e no tooltip, que vive no <body> pra escapar de qualquer
+     `overflow: hidden` — fora do alcance de um seletor ancorado em .viz. */
+  :global(.viz-swatch) {
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 2px;
+    flex: none;
+    margin-right: 0.1em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viz :global(.viz-legenda button) {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { mountAllViz } from '../lib/viz/mount';
+  mountAllViz();
+</script>

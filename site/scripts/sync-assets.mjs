@@ -10,7 +10,10 @@ const siteRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const graficosDir = join(siteRoot, '..', 'graficos');
 const publicDir = join(siteRoot, 'public', 'graficos');
 
-const ASSET_FILES = ['output.png', 'widget.html'];
+// data.json e a fonte de dados dos graficos desenhados em D3 no proprio site
+// (src/lib/viz/) -- gerado pelo script.R junto com o output.png, pra que as
+// duas versoes do mesmo grafico nunca partam de numeros diferentes.
+const ASSET_FILES = ['output.png', 'widget.html', 'data.json'];
 // pasta de dependencias de um widget.html nao-selfcontained (htmlwidgets::saveWidget
 // com selfcontained=FALSE) -- precisa ir junto ou o iframe do widget quebra
 const ASSET_DIRS = ['widget_files'];

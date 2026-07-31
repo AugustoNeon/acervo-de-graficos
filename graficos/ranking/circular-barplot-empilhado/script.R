@@ -91,3 +91,58 @@ p <- ggplot(dados) +
   geom_text(data = dados_base, aes(x = centro, y = -14, label = regiao), hjust = c(1, 1, 0, 0), colour = "black", alpha = 0.8, size = 3.5, fontface = "bold", inherit.aes = FALSE)
 
 ggsave("output.png", plot = p, width = 9, height = 9, dpi = 150)
+
+# ---------------------------------------------------------------------------
+# Exporta os mesmos dados e a mesma geometria pra versao interativa (data.json).
+#
+# A versao interativa desenha o grafico de novo em D3, e a regra do acervo e
+# que ela precise sair visualmente igual a este output.png. Por isso o que vai
+# pro JSON nao e so o dado bruto: vai tambem o layout ja calculado (posicao de
+# cada barra, arcos de grade, extensao de cada regiao) e a paleta. Recalcular
+# essa geometria do outro lado seria duplicar a regra em duas linguagens -- na
+# primeira edicao de uma delas as duas versoes divergiriam.
+# ---------------------------------------------------------------------------
+
+# Rotulos legiveis por categoria -- o nome da coluna (nao_ficcao) serve pro
+# codigo, nao pra quem le o grafico. Este arquivo esta em UTF-8.
+rotulos_categoria <- list(
+  ficcao     = "Ficção",
+  nao_ficcao = "Não ficção",
+  infantil   = "Infantil"
+)
+
+# Ordem de empilhamento de baixo pra cima. O ggplot empilha na ordem inversa
+# dos niveis do fator (ficcao, infantil, nao_ficcao, em ordem alfabetica), o
+# que poe nao_ficcao na base e ficcao no topo.
+ordem_empilhamento <- rev(levels(as.factor(dados$categoria)))
+
+segmentos <- dados %>%
+  filter(!is.na(receita)) %>%
+  transmute(id, categoria, receita)
+
+# Fora as barras "vazias" do preenchimento: elas existem so pra abrir o respiro
+# entre regioes, nao tem filial nem valor pra mostrar.
+barras <- dados_rotulo %>%
+  left_join(dados %>% distinct(id, regiao), by = "id") %>%
+  filter(!is.na(filial)) %>%
+  transmute(id, filial, regiao = as.character(regiao), total)
+
+viz <- list(
+  meta = list(
+    nBarras = n_barras,
+    yMin = -60,
+    yMax = max(dados_rotulo$total, na.rm = TRUE) + 20,
+    grade = c(0, 40, 80, 120),
+    yLinhaRegiao = -4,
+    yRotuloRegiao = -14,
+    paleta = as.list(paleta),
+    ordem = ordem_empilhamento,
+    rotulos = rotulos_categoria
+  ),
+  barras = barras,
+  segmentos = segmentos,
+  regioes = dados_base %>% transmute(regiao = as.character(regiao), inicio, fim, centro),
+  arcosGrade = dados_grade %>% transmute(inicio, fim)
+)
+
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)
