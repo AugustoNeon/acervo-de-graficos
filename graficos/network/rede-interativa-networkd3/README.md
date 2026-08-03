@@ -5,7 +5,7 @@ date: 2026-07-22
 source: "https://r-graph-gallery.com/network-interactive.html"
 interactive: true
 resumo: "Grafo com layout dirigido por forças, em que os nós se organizam sozinhos e podem ser arrastados pelo navegador."
-pacotes: ["networkD3", "webshot2", "chromote"]
+pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma tabela de ligações com duas colunas: origem e destino"
 nivel: básico
 tags: ["interativo", "rede", "força"]

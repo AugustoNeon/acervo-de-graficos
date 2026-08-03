@@ -3,9 +3,9 @@ title: "Tipos básicos de rede (não-ponderada vs ponderada)"
 category: network
 date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
-interactive: false
+interactive: true
 resumo: "A mesma rede desenhada duas vezes, com e sem peso nas conexões, mostrando o que essa informação acrescenta."
-pacotes: ["ggraph", "igraph", "patchwork"]
+pacotes: ["ggraph", "igraph", "patchwork", "jsonlite", "d3"]
 dados: "lista de conexões (origem, destino) + opcionalmente um peso por conexão"
 nivel: básico
 tags: ["estático", "rede", "comparação"]

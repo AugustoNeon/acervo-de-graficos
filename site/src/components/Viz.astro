@@ -94,6 +94,25 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     color: var(--color-ink);
   }
 
+  /* Paineis lado a lado (mesmo grafo, codificacoes ou layouts diferentes).
+     `auto-fit` em vez de um numero fixo de colunas: no celular eles empilham
+     sozinhos, e um painel de rede espremido a um terco da largura de 375px
+     seria ilegivel. */
+  .viz :global(.viz-paineis) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: var(--space-sm);
+    align-items: start;
+  }
+
+  .viz :global(.viz-painel-titulo) {
+    margin: 0 0 var(--space-3xs);
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
   /* Controles do grafico (alternar layout, etc). Mesma familia visual dos
      filtros da galeria — a cor ativa e a da categoria da pagina. */
   .viz :global(.viz-controles) {

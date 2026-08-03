@@ -3,9 +3,9 @@ title: "Comparação de layouts de rede (Fruchterman-Reingold, DrL, Aleatório)"
 category: network
 date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
-interactive: false
+interactive: true
 resumo: "A mesma rede, com os mesmos dados, desenhada por três algoritmos de posicionamento diferentes — e três leituras diferentes."
-pacotes: ["ggraph", "igraph", "patchwork"]
+pacotes: ["ggraph", "igraph", "patchwork", "jsonlite", "d3"]
 dados: "uma lista de conexões (origem, destino)"
 nivel: intermediário
 tags: ["estático", "rede", "comparação"]
