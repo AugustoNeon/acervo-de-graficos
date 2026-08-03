@@ -5,18 +5,42 @@
  * poucas linhas em `charts/network/`, que so chama `redeChart()` — o que muda
  * entre eles esta no `data.json`, nao em codigo.
  *
- * **As posicoes vem prontas do R, e nao de uma simulacao aqui.** Os layouts do
- * igraph (`fr`, `drl`) sao estocasticos: rodar `d3.forceSimulation()` no
- * navegador produziria um desenho diferente do `output.png` a cada carga, e a
- * regra do acervo e que as duas versoes sejam a mesma figura. O R resolve o
- * layout uma vez, desenha a imagem com ele e exporta as mesmas coordenadas.
+ * ## Layout publicado e fisica ao mesmo tempo
  *
- * O que sobra pra ca e o que a imagem nao faz: entrada animada, realce da
- * vizinhanca de um no, arrasto, e — quando o data.json traz mais de um layout —
- * transicao animada entre eles.
+ * Os layouts do igraph (`fr`, `drl`) sao estocasticos: deixar uma simulacao de
+ * forcas resolver o desenho no navegador daria uma rede diferente do
+ * `output.png` a cada carga, e a regra do acervo e que as duas versoes sejam a
+ * mesma figura. Mas uma rede sem fisica perde o que ela tem de melhor —
+ * puxar um no e ver a vizinhanca reagir.
+ *
+ * As duas coisas convivem assim:
+ *
+ * 1. O R resolve o layout uma vez, desenha a imagem com ele e exporta as
+ *    coordenadas. A simulacao e criada **parada** (`stop()`) com os nos ja
+ *    nessas posicoes — a pagina abre exatamente na figura publicada.
+ * 2. A simulacao so esquenta quando o usuario arrasta um no. Ai sim as
+ *    vizinhancas reagem, com a elasticidade que se espera de um grafo.
+ * 3. Cada no e ancorado a sua posicao de origem por uma forca fraca
+ *    (`forceX`/`forceY` em `x0`/`y0`), e o comprimento de repouso de cada
+ *    aresta e a distancia que ela tem no layout original. Ou seja: a figura
+ *    publicada e um ponto de equilibrio da simulacao. O arrasto deforma
+ *    localmente e a rede tende a voltar pra ela, em vez de derivar pra um
+ *    desenho qualquer.
  */
 
-import { select, scaleLinear, drag } from 'd3';
+import {
+  select,
+  scaleLinear,
+  drag,
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCollide,
+  forceX,
+  forceY,
+  type Simulation,
+  type SimulationNodeDatum,
+} from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../motion';
 import type { DrawContext, VizChart } from '../types';
 
@@ -52,11 +76,31 @@ export interface Aresta {
   peso?: number;
 }
 
-/** No do data.json ja resolvido em coordenada de tela. */
-type No = NoBruto & { x: number; y: number; r: number };
+/** No ja resolvido em coordenada de tela e participando da simulacao. */
+interface No extends SimulationNodeDatum, NoBruto {
+  x: number;
+  y: number;
+  r: number;
+  /** Posicao de origem (a do output.png) — ancora da simulacao. */
+  x0: number;
+  y0: number;
+}
+
+/** Aresta no formato que o `forceLink` consome. */
+interface Ligacao {
+  source: No | string;
+  target: No | string;
+  peso?: number;
+}
 
 const VB = 900;
 const OPACIDADE_APAGADA = 0.12;
+/** Quanto cada no puxa de volta pra sua posicao publicada. */
+const FORCA_ANCORA = 0.14;
+/** Alvo de "temperatura" enquanto o usuario arrasta. */
+const CALOR_ARRASTO = 0.3;
+
+const comoNo = (v: No | string): No => v as No;
 
 export interface OpcoesRede {
   label: string;
@@ -88,16 +132,22 @@ export function redeChart({ label, aspectRatio = 1 }: OpcoesRede): VizChart {
 
       let layoutAtual = meta.layouts[0];
 
-      const posicionar = (n: NoBruto, layout: string): [number, number] => {
+      const posicaoDe = (n: NoBruto, layout: string): [number, number] => {
         const p = n.pos[layout] ?? n.pos[meta.layouts[0]];
         return [mapX(p[0]), mapY(p[1])];
       };
 
       const estado: No[] = nos.map((n) => {
-        const [x, y] = posicionar(n, layoutAtual);
-        return { ...n, x, y, r: raio(n.t) };
+        const [x, y] = posicaoDe(n, layoutAtual);
+        return { ...n, x, y, x0: x, y0: y, r: raio(n.t) };
       });
       const porId = new Map(estado.map((n) => [n.id, n]));
+
+      const ligacoes: Ligacao[] = arestas.map((a) => ({
+        source: a.de,
+        target: a.para,
+        peso: a.peso,
+      }));
 
       // Vizinhanca pre-calculada: o realce no hover precisa responder na hora,
       // e varrer as arestas a cada movimento do ponteiro num grafo denso custa.
@@ -117,35 +167,60 @@ export function redeChart({ label, aspectRatio = 1 }: OpcoesRede): VizChart {
       const camadaNos = svg.append('g');
 
       const linhas = camadaArestas
-        .selectAll<SVGLineElement, Aresta>('line')
-        .data(arestas)
+        .selectAll<SVGLineElement, Ligacao>('line')
+        .data(ligacoes)
         .join('line')
         .attr('stroke', meta.aresta.cor)
         .attr('stroke-opacity', meta.aresta.opacidade)
-        .attr('stroke-width', (a) => px(meta.aresta.largura) * (a.peso ?? 1))
-        .attr('x1', (a) => porId.get(a.de)!.x)
-        .attr('y1', (a) => porId.get(a.de)!.y)
-        .attr('x2', (a) => porId.get(a.para)!.x)
-        .attr('y2', (a) => porId.get(a.para)!.y);
+        .attr('stroke-width', (l) => px(meta.aresta.largura) * (l.peso ?? 1));
 
       const circulos = camadaNos
         .selectAll<SVGCircleElement, No>('circle')
         .data(estado, (n) => n.id)
         .join('circle')
-        .attr('cx', (n) => n.x)
-        .attr('cy', (n) => n.y)
         .attr('r', (n) => n.r)
         .attr('fill', (n) => n.cor)
         .attr('data-interactive', '');
 
-      const reposicionar = () => {
+      const desenharPosicoes = () => {
         circulos.attr('cx', (n) => n.x).attr('cy', (n) => n.y);
         linhas
-          .attr('x1', (a) => porId.get(a.de)!.x)
-          .attr('y1', (a) => porId.get(a.de)!.y)
-          .attr('x2', (a) => porId.get(a.para)!.x)
-          .attr('y2', (a) => porId.get(a.para)!.y);
+          .attr('x1', (l) => comoNo(l.source).x)
+          .attr('y1', (l) => comoNo(l.source).y)
+          .attr('x2', (l) => comoNo(l.target).x)
+          .attr('y2', (l) => comoNo(l.target).y);
       };
+
+      // ------------------------------------------------------------- simulacao
+      // Comprimento de repouso = distancia que a aresta ja tem no layout
+      // publicado. E o que torna esse layout um equilibrio da simulacao, em vez
+      // de um ponto de partida que ela vai desmanchar no primeiro tick.
+      const distanciaOriginal = (l: Ligacao) => {
+        const a = porId.get(typeof l.source === 'string' ? l.source : l.source.id)!;
+        const b = porId.get(typeof l.target === 'string' ? l.target : l.target.id)!;
+        return Math.hypot(a.x0 - b.x0, a.y0 - b.y0);
+      };
+
+      const sim: Simulation<No, Ligacao> = forceSimulation<No>(estado)
+        .force(
+          'link',
+          forceLink<No, Ligacao>(ligacoes)
+            .id((n) => n.id)
+            .distance(distanciaOriginal)
+            .strength(0.35)
+        )
+        .force('carga', forceManyBody<No>().strength(-18))
+        .force(
+          'colisao',
+          forceCollide<No>().radius((n) => n.r + px(1.5))
+        )
+        .force('ancoraX', forceX<No>((n) => n.x0).strength(FORCA_ANCORA))
+        .force('ancoraY', forceY<No>((n) => n.y0).strength(FORCA_ANCORA))
+        .on('tick', desenharPosicoes)
+        // Nasce parada: o primeiro quadro tem que ser a figura publicada.
+        .stop();
+
+      desenharPosicoes();
 
       // ------------------------------------------------------------- realce
       const realcar = (id: string | null) => {
@@ -159,13 +234,11 @@ export function redeChart({ label, aspectRatio = 1 }: OpcoesRede): VizChart {
           .transition()
           .duration(DURATION.fast)
           .ease(EASE_STATE)
-          .attr('stroke-opacity', (a) =>
-            !perto
-              ? meta.aresta.opacidade
-              : perto.has(a.de) && perto.has(a.para)
-                ? 0.85
-                : meta.aresta.opacidade * 0.35
-          );
+          .attr('stroke-opacity', (l) => {
+            if (!perto) return meta.aresta.opacidade;
+            const dentro = perto.has(comoNo(l.source).id) && perto.has(comoNo(l.target).id);
+            return dentro ? 0.85 : meta.aresta.opacidade * 0.35;
+          });
       };
 
       circulos
@@ -180,57 +253,103 @@ export function redeChart({ label, aspectRatio = 1 }: OpcoesRede): VizChart {
         });
 
       // ------------------------------------------------------------- arrasto
-      // Arrastar um no e o que permite desemaranhar um trecho da rede na mao,
-      // que e a razao de existir da versao interativa num grafo denso.
+      // Aqui a simulacao esquenta. Enquanto o no esta preso ao ponteiro
+      // (`fx`/`fy`), os vizinhos reagem pelas arestas; ao soltar, a rede
+      // reassenta puxada pelas ancoras.
       circulos.call(
         drag<SVGCircleElement, No>()
-          .on('start', () => tooltip.hide())
+          .on('start', (evento, n) => {
+            tooltip.hide();
+            if (!evento.active) sim.alphaTarget(CALOR_ARRASTO).restart();
+            n.fx = n.x;
+            n.fy = n.y;
+          })
           .on('drag', (evento, n) => {
-            n.x = evento.x;
-            n.y = evento.y;
-            reposicionar();
+            n.fx = evento.x;
+            n.fy = evento.y;
+          })
+          .on('end', (evento, n) => {
+            if (!evento.active) sim.alphaTarget(0);
+            n.fx = null;
+            n.fy = null;
           }) as never
       );
 
-      // ------------------------------------------- alternancia entre layouts
+      // ------------------------------------------------------------ controles
+      const controles = select(root).append('div').attr('class', 'viz-controles');
+
       if (meta.layouts.length > 1) {
-        const controles = select(root).append('div').attr('class', 'viz-controles');
         controles
-          .selectAll('button')
+          .selectAll('button.layout')
           .data(meta.layouts)
           .join('button')
+          .attr('class', 'layout')
           .attr('type', 'button')
           .attr('data-interactive', '')
           .attr('aria-pressed', (l) => String(l === layoutAtual))
           .text((l) => meta.rotulosLayout?.[l] ?? l)
-          .on('click', function (_e, l) {
+          .on('click', (_e, l) => {
             if (l === layoutAtual) return;
             layoutAtual = l;
-            controles.selectAll('button').attr('aria-pressed', (d) => String(d === l));
-
-            // O mesmo grafo se reorganizando é a comparação: ver o nó sair de
-            // uma posição e chegar na outra diz mais do que dois desenhos
-            // lado a lado.
-            estado.forEach((n) => {
-              const [x, y] = posicionar(n, l);
-              n.x = x;
-              n.y = y;
-            });
-            circulos
-              .transition()
-              .duration(DURATION.slow)
-              .ease(EASE_STATE)
-              .attr('cx', (n) => n.x)
-              .attr('cy', (n) => n.y);
-            linhas
-              .transition()
-              .duration(DURATION.slow)
-              .ease(EASE_STATE)
-              .attr('x1', (a) => porId.get(a.de)!.x)
-              .attr('y1', (a) => porId.get(a.de)!.y)
-              .attr('x2', (a) => porId.get(a.para)!.x)
-              .attr('y2', (a) => porId.get(a.para)!.y);
+            controles.selectAll('button.layout').attr('aria-pressed', (d) => String(d === l));
+            irPara(l);
           });
+      }
+
+      controles
+        .append('button')
+        .attr('type', 'button')
+        .attr('data-interactive', '')
+        .text('Restaurar layout')
+        .on('click', () => irPara(layoutAtual));
+
+      /**
+       * Leva a rede pras posicoes de um layout e volta a ancorar nelas.
+       * Serve tanto pra trocar de layout quanto pra desfazer o que o arrasto
+       * bagunçou — sem isso nao haveria caminho de volta pra figura publicada.
+       */
+      function irPara(layout: string) {
+        sim.alphaTarget(0).stop();
+        estado.forEach((n) => {
+          const [x, y] = posicaoDe(n, layout);
+          n.x0 = x;
+          n.y0 = y;
+          n.fx = null;
+          n.fy = null;
+        });
+
+        // O mesmo grafo se reorganizando é a comparação: ver o nó sair de uma
+        // posição e chegar na outra diz mais do que dois desenhos lado a lado.
+        circulos
+          .transition()
+          .duration(DURATION.slow)
+          .ease(EASE_STATE)
+          .attrTween('cx', (n) => {
+            const de = n.x;
+            return (t) => String((n.x = de + (n.x0 - de) * t));
+          })
+          .attrTween('cy', (n) => {
+            const de = n.y;
+            return (t) => String((n.y = de + (n.y0 - de) * t));
+          })
+          .on('end.linhas', null);
+
+        // As arestas seguem os nós quadro a quadro durante a transição.
+        const inicio = performance.now();
+        const seguir = () => {
+          desenharPosicoes();
+          if (performance.now() - inicio < DURATION.slow + 40) requestAnimationFrame(seguir);
+        };
+        requestAnimationFrame(seguir);
+
+        garantirEstadoFinal(DURATION.slow, () => {
+          circulos.interrupt();
+          estado.forEach((n) => {
+            n.x = n.x0;
+            n.y = n.y0;
+          });
+          desenharPosicoes();
+        });
       }
 
       if (meta.nota) {
