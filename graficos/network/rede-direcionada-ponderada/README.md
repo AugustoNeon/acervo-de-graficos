@@ -5,7 +5,7 @@ date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
 interactive: true
 resumo: "Rede em que cada conexão tem sentido (setas) e intensidade (espessura da linha) ao mesmo tempo."
-pacotes: ["ggraph", "igraph", "visNetwork"]
+pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de conexões com origem, destino e peso"
 nivel: intermediário
 tags: ["interativo", "rede", "fluxo"]

@@ -2,13 +2,9 @@
 library(ggraph)
 library(igraph)
 library(tidyverse)
-library(visNetwork)
-library(htmlwidgets)
+library(jsonlite)
 
-# Fluxo direcionado e ponderado ficticio entre cidades brasileiras (dado
-# inspirado no exemplo de migracao entre paises da pagina original, mas com
-# cidades/pesos proprios) -- seed e estrutura diferentes do generico da
-# pagina original
+# Fluxo direcionado e ponderado ficticio entre cidades brasileiras
 set.seed(19)
 cidades <- c("Recife", "Salvador", "Belém", "Manaus", "Curitiba", "Porto Alegre", "Goiânia", "Fortaleza")
 n_rotas <- 14
@@ -23,9 +19,14 @@ edges$peso <- sample(5:120, nrow(edges), replace = TRUE)
 
 g <- graph_from_data_frame(edges, directed = TRUE)
 
-# --- Versão estática (ggraph): setas indicam direção, espessura/opacidade
-# da linha indica o peso ---
-p <- ggraph(g, layout = "fr") +
+# O layout `fr` e estocastico: calculado uma vez e reaproveitado pelas duas
+# versoes, senao a interativa sairia com a rede em outro lugar (ver AGENTS.md).
+set.seed(19)
+lay <- create_layout(g, layout = "fr")
+
+# --- Versão estática: setas indicam direção, espessura/opacidade da linha
+# indicam o peso ---
+p <- ggraph(lay) +
   geom_edge_fan(
     aes(edge_width = peso, edge_alpha = peso),
     arrow = arrow(length = unit(2.5, "mm"), type = "closed"),
@@ -41,34 +42,57 @@ p <- ggraph(g, layout = "fr") +
 
 ggsave("output.png", plot = p, width = 8, height = 6.5, dpi = 150)
 
-# --- Versão interativa (visNetwork): mesmos dados, setas nativas + arrastar
-# nós + espessura de linha por peso (`value`) ---
-nodes_vis <- data.frame(
-  id = V(g)$name, label = V(g)$name,
-  font.size = 20, font.color = "#1a1a1a"
+# --------------------------------------------------------------- data.json
+# As escalas de largura e opacidade sao resolvidas AQUI e exportadas prontas.
+# O ggplot tem sistema de escalas (`scale_edge_width`, `scale_edge_alpha`) e o
+# D3 nao: reimplementar essas duas rampas do outro lado e a forma mais comum de
+# as duas versoes divergirem sem ninguem perceber (ver AGENTS.md, 2026-07-29).
+LARGURA <- c(0.3, 2.5) * 1.6   # em px de tela; o fator so compensa a unidade do ggplot
+OPACIDADE <- c(0.35, 0.9)
+
+largura_aresta <- scales::rescale(edges$peso, to = LARGURA)
+opacidade_aresta <- scales::rescale(edges$peso, to = OPACIDADE)
+
+# Mesma escala nos dois eixos, e o eixo menor centrado: normalizar x e y
+# separadamente esticaria o layout ate preencher o quadro, mudando a forma da
+# rede em relacao a esta imagem.
+rx <- range(lay$x)
+ry <- range(lay$y)
+esc <- max(diff(rx), diff(ry))
+px_ <- (lay$x - mean(rx)) / esc + 0.5
+py_ <- (lay$y - mean(ry)) / esc + 0.5
+
+viz <- list(
+  meta = list(
+    layouts = list("fr"),
+    raio = c(9, 9),          # nó de tamanho fixo: aqui o peso está na aresta
+    aresta = list(cor = "#3d5a80", opacidade = 0.6, largura = 1),
+    dirigido = TRUE,
+    nota = "A seta indica o sentido da rota; a espessura e a opacidade da linha indicam o volume. Passe o cursor num nó para isolar suas rotas; arraste para reorganizar."
+  ),
+  nos = lapply(seq_len(vcount(g)), function(i) {
+    list(
+      id = V(g)$name[i],
+      cor = "#ee6c4d",
+      t = 1,
+      pos = list(fr = c(px_[i], py_[i])),
+      rotulo = V(g)$name[i],
+      titulo = paste0(
+        V(g)$name[i], " · ",
+        sum(edges$from == V(g)$name[i]), " rotas saindo, ",
+        sum(edges$to == V(g)$name[i]), " chegando"
+      )
+    )
+  }),
+  arestas = lapply(seq_len(nrow(edges)), function(i) {
+    list(
+      de = edges$from[i],
+      para = edges$to[i],
+      largura = largura_aresta[i],
+      opacidade = opacidade_aresta[i],
+      titulo = paste0(edges$from[i], " → ", edges$to[i], ": ", edges$peso[i], " mil/ano")
+    )
+  })
 )
 
-# No estatico o peso aparece em DUAS pistas: espessura e opacidade da linha
-# (scale_edge_alpha(range = c(0.35, 0.9))). O visNetwork nao tem escala de
-# opacidade por aresta, so um valor global -- entao a opacidade entra embutida
-# na propria cor de cada aresta, em rgba(), pra rota fraca ficar apagada e
-# rota forte ficar cheia igual ao grafico estatico
-alpha_aresta <- scales::rescale(edges$peso, to = c(0.35, 0.9))
-
-edges_vis <- data.frame(
-  from = edges$from, to = edges$to, value = edges$peso,
-  title = paste0(edges$peso, " pessoas/ano"), arrows = "to",
-  color.color = sprintf("rgba(61,90,128,%.2f)", alpha_aresta),  # #3d5a80
-  color.highlight = "#c1440e"
-)
-
-wv <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "600px") |>
-  visEdges(smooth = TRUE, scaling = list(min = 1, max = 8)) |>
-  # borda igual ao fundo: no estatico geom_node_point() nao desenha contorno
-  visNodes(size = 12, color = list(background = "#ee6c4d", border = "#ee6c4d",
-                                    highlight = "#f4a261")) |>
-  visOptions(highlightNearest = TRUE) |>
-  visPhysics(solver = "forceAtlas2Based", stabilization = TRUE) |>
-  visInteraction(navigationButtons = TRUE, dragNodes = TRUE)
-
-saveWidget(wv, file = "widget.html", selfcontained = FALSE)
+write_json(viz, "data.json", auto_unbox = TRUE, digits = 5)
