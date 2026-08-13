@@ -5,7 +5,7 @@ date: 2026-07-30
 source: "https://r-graph-gallery.com/336-interactive-dendrogram-with-collapsibletree.html"
 interactive: true
 resumo: "Uma árvore hierárquica que começa fechada e se abre por clique, nível por nível, até chegar nas folhas."
-pacotes: ["collapsibleTree", "webshot2", "chromote"]
+pacotes: ["dplyr", "ggplot2", "jsonlite", "d3"]
 dados: "3 ou mais variáveis categóricas aninhadas (cada linha é um caminho raiz→folha)"
 nivel: básico
 tags: ["interativo", "hierarquia", "parte-do-todo"]
@@ -54,40 +54,43 @@ uma combinação única das colunas hierárquicas), não uma coluna por nível.
 
 ## Como foi feito
 
-O pacote espera um data frame "largo por linha, longo por nível": cada linha
-é um caminho completo (aqui, tipo de lã → nível de tensão → número de
-quebras do fio), e a função reconstrói a árvore internamente a partir dessas
-combinações — não é preciso montar a estrutura em árvore na mão, só apontar
-quais colunas representam a hierarquia e em que ordem.
+A árvore completa é montada a partir de combinações únicas de `wool`/`tension`/
+`breaks`: cada linha do dataset vira um caminho raiz→folha, e linhas com o
+mesmo valor de quebras dentro do mesmo tipo de lã e tensão colapsam num só
+nó-folha (`dplyr::count()`), guardando quantos lotes originais compartilham
+aquele valor. O script exporta essa árvore inteira — todos os níveis, não só
+o primeiro — num `data.json`; quem decide o que fica visível em cada momento
+é o estado de clique no próprio D3, não o R.
+
+A versão interativa é desenhada em D3 (`d3.hierarchy()`+`d3.tree()`), com um
+clique em qualquer nó com filhos abrindo ou fechando aquele galho — a mesma
+navegação que o `collapsibleTree` dava. Nós fechados (com filhos escondidos)
+aparecem preenchidos; nós abertos ou folhas, vazios.
 
 Dados: o dataset `warpbreaks`, que já vem embutido no R (testes de tecelagem
 — tipo de lã, nível de tensão aplicada e número de quebras do fio em cada
-lote). Paleta e estrutura mantidas exatamente iguais ao exemplo de
-referência para este gráfico, como exceção à regra geral do acervo.
+lote). Paleta e estrutura mantidas simples, sem cor por nível, como exceção
+à regra geral do acervo pra este gráfico específico.
 
-**Sobre o `output.png`**: este gráfico só existe como widget interativo (não
-tem uma versão equivalente em `ggplot2`), então a miniatura estática é um
-screenshot do próprio widget no seu estado inicial (fechado) — os dois são
-sempre visualmente idênticos por construção.
+**Sobre o `output.png`**: como o gráfico começa fechado (só raiz + primeiro
+nível visíveis), a miniatura estática mostra exatamente esse estado inicial
+— raiz e os dois nós de `wool` (A, B) — desenhado à mão com `geom_curve()` em
+vez de recalcular a árvore inteira só pra descartar quase tudo dela.
 
 ## Possíveis problemas pelo caminho
 
-- **Problema**: a captura do `output.png` sai com o texto dos rótulos em
-  cores erradas, como se cada letra tivesse uma cor diferente (nada disso
-  aparece no widget de verdade, só no PNG). **Por quê**: em fontes muito
-  pequenas (o padrão do pacote é 10px), a suavização de texto do screenshot
-  headless pode gerar um efeito de franja colorida por causa do
-  anti-aliasing por subpixel. **Solução**: capturar com `zoom` maior que 1
-  no `webshot2::webshot()` (aqui, `zoom = 2`) — a super-amostragem elimina a
-  franja sem mudar o enquadramento nem o tamanho final combinado com
-  `vwidth`/`vheight`.
-- **Problema**: a captura do `output.png` sai com nós sobrepostos ou com
-  metade da imagem em branco. **Por quê**: o tamanho do "papel" do
-  screenshot (`vwidth`/`vheight`) e o tamanho do próprio widget (`width`/
-  `height` passados pra função que gera a árvore, quando definidos) precisam
-  ser parecidos — um sobrando ou faltando estica ou aperta demais o layout
-  calculado pelo D3. **Solução**: ajustar os dois juntos e conferir a
-  imagem gerada antes de seguir.
+- **Problema**: um valor de quebras que se repete em lotes diferentes vira
+  dois nós-folha em vez de um. **Por quê**: agrupar direto por `breaks` sem
+  contar quantas linhas caem em cada valor perde a informação de "quantos
+  lotes" e, pior, sem `count()` cada linha original viraria sua própria
+  folha, duplicando valores repetidos dentro do mesmo grupo. **Solução**:
+  `dplyr::count(wool, tension, breaks)` agrega antes de montar a árvore, e o
+  `n` resultante (renomeado `lotes`) fica disponível pro tooltip.
+- **Problema**: a ordem dos filhos de cada nó muda entre execuções, mesmo com
+  os mesmos dados. **Por quê**: `split()` agrupa por ordem alfabética dos
+  níveis do fator quando a coluna é convertida sem especificar `levels`
+  explicitamente. **Solução**: fixar `levels = unique(x)` no `factor()` antes
+  de dividir, preservando a ordem de primeira aparição nos dados.
 
 ## Variações possíveis
 

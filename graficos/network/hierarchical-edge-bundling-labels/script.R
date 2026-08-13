@@ -3,6 +3,7 @@ library(ggraph)
 library(igraph)
 library(tidyverse)
 library(RColorBrewer)
+library(jsonlite)
 
 # create a data frame giving the hierarchical structure of your individuals
 # (valores customizados: seed, numero de grupos/subgrupos e paleta diferentes
@@ -74,3 +75,49 @@ p <- ggraph(mygraph, layout = 'dendrogram', circular = TRUE) +
   expand_limits(x = c(-1.3, 1.3), y = c(-1.3, 1.3))
 
 ggsave("output.png", plot = p, width = 8, height = 8, dpi = 150)
+
+# ---------------------------------------------------------------------------
+# Versao interativa: desenhada em D3 (d3.hierarchy + d3.cluster, layout
+# circular, bundling via curveBundle) -- mesma regra do resto do acervo pra
+# grafico de hierarquia/rede: o layout NAO vem do R (o dendrograma do ggraph
+# tambem depende de como o igraph ordena a arvore por baixo dos panos, entao
+# nao ha posicao "oficial" pra herdar), o D3 recalcula a partir da mesma
+# arvore + lista de conexoes. O que precisa vir do R e so a arvore, as
+# conexoes e as paletas (grupo e gradiente), pra manter a MESMA cor dos dois
+# lados.
+# ---------------------------------------------------------------------------
+grupos <- unique(d1$to) # "group1".."group8", na ordem de criacao
+paleta_grupo <- setNames(brewer.pal(8, "Dark2"), grupos)
+
+arvore <- list(
+  nome = "origin",
+  filhos = lapply(grupos, function(g) {
+    subs <- d2$to[d2$from == g]
+    list(
+      nome = g,
+      filhos = lapply(subs, function(s) {
+        list(nome = s, valor = vertices$value[vertices$name == s])
+      })
+    )
+  })
+)
+
+conexoes <- connect %>% transmute(from = as.character(from), to = as.character(to))
+
+# As duas cores extremas da rampa YlGnBu usada no estatico
+# (scale_edge_colour_distiller): o D3 nao recalcula a rampa continua, so
+# aplica essas duas cores num gradiente por aresta (aproximacao pratica --
+# ver AGENTS.md "Licoes aprendidas").
+rampa_ylgnbu <- brewer.pal(9, "YlGnBu")
+
+viz <- list(
+  meta = list(
+    paletaGrupo = as.list(paleta_grupo),
+    gradiente = c(rampa_ylgnbu[2], rampa_ylgnbu[8]),
+    nota = "Passe o cursor num item pra destacar só as conexões dele."
+  ),
+  arvore = arvore,
+  conexoes = conexoes
+)
+
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

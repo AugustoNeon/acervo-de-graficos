@@ -3,12 +3,12 @@ title: "Hierarchical Edge Bundling com labels, cores e tamanhos"
 category: network
 date: 2026-07-21
 source: "https://r-graph-gallery.com/311-add-labels-to-hierarchical-edge-bundling.html"
-interactive: false
+interactive: true
 resumo: "Conexões entre os itens de uma hierarquia, desenhadas como feixes curvos que acompanham a árvore em vez de cortar o círculo em linha reta."
-pacotes: ["ggraph", "igraph", "tidyverse", "RColorBrewer"]
+pacotes: ["ggraph", "igraph", "tidyverse", "RColorBrewer", "jsonlite", "d3"]
 dados: "uma hierarquia (pai → filho) + uma lista de conexões entre as folhas"
 nivel: avançado
-tags: ["hierarquia", "rede", "circular", "estático"]
+tags: ["hierarquia", "rede", "circular", "interativo"]
 ---
 
 ## O que é
@@ -59,6 +59,9 @@ nomes para os índices que o `ggraph` espera.
   sentido do percurso, do início ao fim da ligação.
 - **Feixes grossos** entre duas regiões do círculo significam que aqueles dois
   grupos se conectam muito — é a leitura principal do gráfico.
+- **Passar o cursor** num item (ponto ou rótulo), na versão interativa,
+  apaga todas as outras curvas e destaca só as conexões daquele item — a
+  forma prática de seguir uma ligação específica no meio do emaranhado.
 
 ## Como foi feito
 
@@ -73,6 +76,18 @@ quase retas e o efeito se perde.
 
 Os rótulos são posicionados com trigonometria manual (`angle`, `hjust`) para cada
 um sair na tangente do círculo, em vez de todos na horizontal.
+
+A versão interativa é desenhada em D3, com o layout recalculado do zero por
+`d3.hierarchy()`+`d3.cluster()` — o dendrograma circular do `ggraph` depende de
+como o `igraph` ordena a árvore por baixo dos panos, sem uma posição "oficial"
+pra herdar, então o D3 monta o círculo a partir da mesma árvore. O bundling
+usa a mesma ideia do `geom_conn_bundle()`: cada conexão vira uma curva
+(`d3.curveBundle`) que segue o caminho pela árvore entre as duas folhas
+(`origem.path(destino)`), em vez de ir direto. O gradiente de cada curva usa
+sempre as mesmas duas cores extremas da rampa `YlGnBu` do estático, orientadas
+da origem pro destino. O que a imagem não dá: passar o cursor num item destaca
+só as conexões daquele item — no emaranhado de 165 curvas, seguir uma isolada
+a olho nu não é viável.
 
 Dados fictícios: hierarquia gerada com `set.seed(42)` — 8 grupos, 96 folhas — e
 conexões sorteadas aleatoriamente entre folhas.
@@ -99,6 +114,18 @@ conexões sorteadas aleatoriamente entre folhas.
 - **Problema**: os rótulos saem cortados nas bordas. **Por quê**: eles ficam fora
   do raio do círculo e o `ggplot2` recorta pelo limite dos dados. **Solução**:
   ampliar manualmente os limites com `expand_limits()`.
+
+- **Problema**: como reproduzir no D3 um gradiente de cor **ao longo de cada
+  curva** (`aes(colour = after_stat(index))`), já que SVG não tem um
+  equivalente direto pra "cor que muda seguindo o traçado de um path".
+  **Por quê**: um `<linearGradient>` colore por **posição no espaço**
+  (`x1,y1`→`x2,y2`), não por posição ao longo do comprimento do path — pra
+  uma curva bem torta, as duas coisas divergem. **Solução usada**: como o
+  gradiente do estático é sempre as duas mesmas cores extremas da rampa
+  (não varia por aresta), basta orientar um `<linearGradient
+  gradientUnits="userSpaceOnUse">` por aresta na reta origem→destino — uma
+  aproximação que acompanha bem o sentido geral da curva sem precisar
+  amostrar pontos ao longo do path.
 
 ## Variações possíveis
 
