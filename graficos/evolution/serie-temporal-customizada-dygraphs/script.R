@@ -1,8 +1,6 @@
 # Libraries
-library(dygraphs)
-library(xts)
-library(htmlwidgets)
-library(webshot2)
+library(ggplot2)
+library(jsonlite)
 
 # Dados ficticios: downloads diarios de um app fictício ao longo de ~300 dias,
 # com tendencia de crescimento + sazonalidade semanal (picos no fim de semana)
@@ -18,25 +16,45 @@ sazonalidade <- ifelse(dia_semana %in% c(6, 7), 25, 0)
 ruido <- rnorm(n_dias, mean = 0, sd = 8)
 downloads <- pmax(round(120 + tendencia + sazonalidade + ruido), 0)
 
-# xts eh o formato que dygraphs espera (serie indexada por data-hora)
-don <- xts(x = downloads, order.by = as.POSIXct(datas))
+dados <- data.frame(data = datas, downloads = downloads)
+cor <- "#2a9d8f"
 
-# Grafico interativo: paleta trocada (verde-azulado em vez do dourado
-# "#D8AE5A" do original) e rollPeriod inicial de 3 dias em vez de 1 --
-# demais customizacoes (range selector, crosshair, highlight) mantidas
-# por serem funcionais, nao uma questao de estilo/paleta
-p <- dygraph(don, main = "Downloads diários de um app (dado fictício)") %>%
-  dyAxis("y", label = "Downloads") %>%
-  dyOptions(labelsUTC = TRUE, fillGraph = TRUE, fillAlpha = 0.15, drawGrid = FALSE, colors = "#2a9d8f") %>%
-  dyRangeSelector() %>%
-  dyCrosshair(direction = "vertical") %>%
-  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE) %>%
-  dyRoller(rollPeriod = 3)
+# Estatico: a mesma serie completa, sem media movel nem recorte -- e o estado
+# em que a versao interativa nasce, antes de qualquer interacao com o
+# controle deslizante ou a faixa de selecao.
+p <- ggplot(dados, aes(x = data, y = downloads)) +
+  geom_area(fill = cor, alpha = 0.15) +
+  geom_line(color = cor, linewidth = 0.9) +
+  scale_x_date(date_labels = "%b/%y", expand = expansion(mult = c(0.01, 0.03))) +
+  labs(
+    title = "Downloads diários de um app (dado fictício)",
+    x = NULL, y = "Downloads"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(t = 10, r = 16, b = 8, l = 8)
+  )
 
-# Salvar o widget interativo na propria pasta do grafico
-# (selfcontained = FALSE porque pandoc nao esta instalado -- ver docs/SETUP.md)
-saveWidget(p, file = "widget.html", selfcontained = FALSE)
+ggsave("output.png", plot = p, width = 9, height = 5.5, dpi = 150)
 
-# Gerar thumbnail estatico (output.png) tirando um screenshot do widget,
-# ja que dygraphs nao tem equivalente estatico em ggplot2
-webshot2::webshot("widget.html", file = "output.png", vwidth = 900, vheight = 600, delay = 1)
+# ---------------------------------------------------------------------------
+# Versao interativa: desenhada em D3, no proprio runtime do site. Ao contrario
+# do widget dygraphs (que ja vem com seletor de intervalo, media movel e
+# crosshair prontos), aqui as tres interacoes sao recalculadas no navegador --
+# o script exporta so a serie bruta, a media movel inicial fica por conta do
+# D3.
+# ---------------------------------------------------------------------------
+viz <- list(
+  meta = list(
+    cor = cor,
+    unidade = "downloads",
+    rollInicial = 3,
+    rollMax = 21,
+    nota = "Arraste as bordas da faixa inferior pra recortar um período; o controle deslizante ajusta a média móvel em tempo real."
+  ),
+  serie = data.frame(data = format(dados$data, "%Y-%m-%d"), valor = dados$downloads)
+)
+
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

@@ -145,6 +145,36 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     color: var(--cat-ink);
   }
 
+  /* Controle deslizante (ex: janela de média móvel). Mesma família visual dos
+     outros controles — a cor ativa é a da categoria da página. */
+  .viz :global(.viz-slider) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2xs);
+    margin-top: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .viz :global(.viz-slider-rotulo) {
+    white-space: nowrap;
+  }
+
+  .viz :global(.viz-slider output) {
+    min-width: 4.5em;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  .viz :global(.viz-slider input[type='range']) {
+    width: min(14rem, 40vw);
+    accent-color: var(--cat);
+    cursor: pointer;
+  }
+
   .viz :global(.viz-nota) {
     margin-top: var(--space-xs);
     text-align: center;
