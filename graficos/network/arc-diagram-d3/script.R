@@ -2,6 +2,7 @@
 library(tidyverse)
 library(igraph)
 library(ggraph)
+library(jsonlite)
 
 # Dados ficticios: 14 nos em 3 grupos, ordenados por grupo (pra evitar o erro
 # comum que o proprio tutorial original alerta -- ordem aleatoria deixa o
@@ -37,3 +38,21 @@ p <- ggraph(mygraph, layout = "linear") +
   )
 
 ggsave("output.png", plot = p, width = 10, height = 5, dpi = 150)
+
+# ---------------------------------------------------------------------------
+# Versao interativa: agora desenhada dentro do runtime do site (D3 no proprio
+# fluxo da pagina, sem widget.html em iframe) -- o script.R passa a exportar
+# os mesmos dados via data.json, mesma regra do resto do acervo. A posicao x
+# de cada no e a geometria de cada arco sao recalculadas no D3, nao herdadas
+# do R -- mesma decisao ja usada nos outros graficos de rede/hierarquia.
+# ---------------------------------------------------------------------------
+viz <- list(
+  meta = list(
+    paletaGrupo = as.list(cores_grupo),
+    nota = "Passe o cursor num nó pra destacar as conexões dele."
+  ),
+  nos = nodes,
+  arestas = links
+)
+
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

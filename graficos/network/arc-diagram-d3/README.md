@@ -1,11 +1,11 @@
 ---
-title: "Arc diagram (com versão interativa em D3.js)"
+title: "Arc diagram"
 category: network
 date: 2026-07-23
 source: "https://www.data-to-viz.com/graph/arc.html"
 interactive: true
 resumo: "Rede com todos os nós alinhados numa única linha e as conexões desenhadas como arcos acima dela."
-pacotes: ["ggraph", "igraph", "D3.js"]
+pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de nós (com grupo) + lista de conexões entre eles"
 nivel: avançado
 tags: ["interativo", "rede", "linear"]
@@ -69,11 +69,14 @@ dados.
 A **estática** vem do `ggraph`, com `layout = "linear"` e `geom_edge_arc()` — a
 combinação que produz o alinhamento em linha com arcos.
 
-A **interativa** foi escrita à mão em D3.js (v7), sem pacote R envolvido: não
-existe biblioteca R que entregue um arc diagram interativo pronto. Os arcos são
-caminhos SVG desenhados com o comando de arco elíptico, e o destaque no hover é
-manipulação direta de classes CSS. A biblioteca é carregada de um arquivo local em
-`widget_files/`, não de CDN, para o gráfico funcionar sem internet.
+A **interativa** é escrita à mão em D3 — não existe pacote R que entregue um arc
+diagram interativo pronto —, agora desenhada dentro do próprio runtime do site
+(sem `<iframe>`), como o resto do acervo: o `script.R` exporta só a lista de
+nós/arestas (na ordem que importa) e a paleta por grupo num `data.json`; a
+posição de cada nó no eixo e a geometria de cada arco são calculadas no D3. Os
+arcos são caminhos SVG desenhados com o comando de arco elíptico
+(`A r r 0 0 sentido x2 y2`), com o raio igual à metade da distância entre os
+dois nós — quanto mais distantes na linha, mais alto o arco.
 
 Dados fictícios: 14 nós em 3 grupos (`A1`–`A5`, `B1`–`B5`, `C1`–`C4`) e 17
 conexões — a maioria dentro do próprio grupo, mais 4 pontes entre grupos. A ordem
@@ -89,7 +92,9 @@ agrupada é intencional, justamente para demonstrar o que a técnica pede.
 - **Problema**: os rótulos ficam ilegíveis quando a rede cresce. **Por quê**: com
   um `viewBox` largo, qualquer texto **dentro** do SVG encolhe proporcionalmente ao
   ser ajustado à tela. **Solução**: manter legendas e textos de instrução em HTML
-  comum, fora do SVG, com tamanho de fonte real.
+  comum, fora do SVG, com tamanho de fonte real — a legenda de grupo, que na
+  primeira versão do widget vivia dentro do próprio `<svg>`, passou pra um
+  `<div>` HTML comum ao entrar no runtime do site.
 
 - **Problema**: os arcos saem cortados no topo. **Por quê**: a altura do arco mais
   longo é proporcional à distância entre os nós, e pode ultrapassar a área de
