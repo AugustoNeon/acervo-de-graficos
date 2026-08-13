@@ -1,11 +1,11 @@
 ---
-title: "Rosca de alocação de tempo (ggplot2 + plotly)"
+title: "Rosca de alocação de tempo"
 category: part-of-whole
 date: 2026-07-27
 source: "https://r-graph-gallery.com/doughnut-plot.html"
 interactive: true
 resumo: "Um anel dividido em fatias proporcionais ao todo, com um vazio no centro no lugar do miolo de uma pizza."
-pacotes: ["ggplot2", "plotly"]
+pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma fatia por categoria)"
 nivel: básico
 tags: ["interativo", "parte-do-todo", "proporção"]
@@ -69,12 +69,16 @@ com `coord_polar(theta = "y")`. O buraco no centro vem de `xlim(c(2, 4))` — o
 gráfico só é desenhado a partir do raio 3 (em vez de 0), abrindo o vazio; mudar
 esse intervalo controla a espessura do anel.
 
-A versão interativa **não** usa `ggplotly()` sobre esse mesmo objeto: converter
-gráficos com `coord_polar()` é uma limitação conhecida do `plotly` (o resultado
-sai incorreto ou distorcido). Em vez disso, o widget é construído direto com a
-função nativa de pizza do `plotly` (`type = "pie"`), que aceita um parâmetro
-`hole` para abrir o buraco central — mesmos dados, técnica diferente, exatamente
-como esse acervo já lida com outros casos sem conversão direta entre pacotes.
+A versão interativa é desenhada em D3 (`d3.pie()`+`d3.arc()`), com `innerRadius`
+fazendo o mesmo papel do `xlim()` do estático — controla a espessura do anel. O
+problema de conversão que existia antes (`ggplotly()` não lida bem com
+`coord_polar()`, então a rosca interativa tinha que ser construída com a função
+nativa de pizza do `plotly` em vez de reaproveitar o objeto `ggplot`) nem existe
+mais: o D3 desenha a rosca do zero a partir dos mesmos dados, sem depender de
+conversão nenhuma. Por cima disso, a fatia sob o cursor salta um pouco pra fora
+do anel e o tooltip mostra o percentual exato — o rótulo dentro da fatia só
+aparece quando ela é larga o bastante pra não ficar espremido, ver "Possíveis
+problemas" abaixo.
 
 Dados fictícios: 5 categorias de uso do tempo num dia (Trabalho, Sono, Lazer,
 Estudo, Outros), com horas inventadas somando 24.
@@ -86,15 +90,11 @@ Estudo, Outros), com horas inventadas somando 24.
   **Solução**: mover rótulos de fatias pequenas para fora do anel com uma linha
   guia (`geom_label_repel` ou similar), ou omitir o rótulo e confiar na legenda.
 
-- **Problema**: `ggplotly()` aplicado a este gráfico produz um resultado errado.
-  **Por quê**: `coord_polar()` não é bem suportado na conversão do `plotly` para
-  `ggplot2`. **Solução**: construir a versão interativa direto com
-  `plot_ly(type = "pie", hole = ...)`, sem tentar converter o objeto `ggplot`.
-
 - **Problema**: o buraco central fica grande ou pequeno demais. **Por quê**: o
-  primeiro valor de `xlim()` (estático) ou `hole` (interativo) define a
-  proporção do vazio. **Solução**: ajustar esse valor — mais perto de `xlim(c(0,4))`
-  ou `hole=0` vira pizza cheia; valores maiores abrem mais o buraco.
+  primeiro valor de `xlim()` (estático) ou a razão `innerRadius`/`outerRadius`
+  (interativo, no `d3.arc()`) define a proporção do vazio. **Solução**: ajustar
+  esse valor — mais perto de `xlim(c(0,4))` ou `innerRadius` próximo de zero
+  vira pizza cheia; valores maiores abrem mais o buraco.
 
 - **Problema**: duas fatias de tamanho parecido parecem idênticas. **Por quê**: é
   uma limitação perceptual real de gráficos circulares, não um bug. **Solução**:

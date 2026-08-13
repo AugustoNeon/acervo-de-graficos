@@ -1,6 +1,6 @@
 # Libraries
 library(ggplot2)
-library(plotly)
+library(jsonlite)
 
 # Dados 100% ficticios: alocacao de tempo (horas) num dia ficticio de 24h,
 # no lugar dos rotulos genericos ("A","B","C"...) do exemplo original -- ver
@@ -43,21 +43,16 @@ p <- ggplot(dados, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 3, fill = cate
 
 ggsave("output.png", plot = p, width = 7, height = 7, dpi = 150)
 
-# Versao interativa: ggplotly() nao converte bem graficos com coord_polar()
-# (limitacao conhecida do pacote), entao a rosca interativa usa a funcao
-# nativa de pizza do plotly (hole > 0 vira rosca) em vez de tentar converter
-# o objeto ggplot -- mesmos dados, tecnica diferente
-widget <- plot_ly(
-  dados,
-  labels = ~categoria, values = ~horas, type = "pie", hole = 0.55,
-  marker = list(colors = cores[dados$categoria], line = list(color = "white", width = 2)),
-  textinfo = "label+percent",
-  hovertemplate = "%{label}: %{value}h (%{percent})<extra></extra>",
-  sort = FALSE
-) |>
-  layout(
-    title = list(text = "Alocação de tempo em um dia (dado fictício)"),
-    showlegend = TRUE
-  )
+# ---------------------------------------------------------------------------
+# Versao interativa: desenhada em D3 (d3.pie()+d3.arc()), no proprio runtime
+# do site -- mesma regra do resto do acervo. Antes usava o plotly (funcao
+# nativa de pizza, hole>0), porque ggplotly() nao converte bem coord_polar();
+# esse problema nao existe mais no D3, que desenha a rosca do zero.
+# ---------------------------------------------------------------------------
+viz <- list(
+  meta = list(nota = "Passe o cursor numa fatia pra ver o percentual exato."),
+  fatias = dados[, c("categoria", "horas")],
+  paleta = as.list(cores)
+)
 
-htmlwidgets::saveWidget(widget, file = "widget.html", selfcontained = FALSE)
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

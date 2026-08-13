@@ -2,6 +2,7 @@
 library(networkD3)
 library(htmlwidgets)
 library(webshot2)
+library(jsonlite)
 
 # Dados ficticios: fluxo simplificado em 3 estagios (3 fontes -> 3 canais ->
 # 2 resultados). O exemplo original do R Graph Gallery usa o dataset real
@@ -44,3 +45,36 @@ saveWidget(p, file = "widget.html", selfcontained = FALSE)
 # Gerar thumbnail estatico (output.png) tirando um screenshot do widget,
 # ja que sankeyNetwork nao tem equivalente estatico em ggplot2
 webshot2::webshot("widget.html", file = "output.png", vwidth = 700, vheight = 450, delay = 1)
+
+# O widget.html/widget_files so existiam pra tirar essa captura -- a versao
+# interativa de verdade agora mora no runtime do site (D3), entao os
+# artefatos do screenshot sao descartados na hora, sem virar arquivo
+# publicado na pasta do grafico.
+unlink("widget.html")
+unlink("widget_files", recursive = TRUE)
+
+# ---------------------------------------------------------------------------
+# Versao interativa: desenhada em D3 (d3-sankey) no proprio runtime do site.
+# O layout do fluxo (posicao de cada no, espessura de cada link) e
+# recalculado la -- o script so exporta nos/links pelo NOME (em vez dos
+# indices 0-based que o networkD3 exige) e a cor de cada no.
+#
+# Cor por ESTAGIO (nao uma por no): reproduz de proposito o mesmo efeito
+# visual do output.png, onde o `d.group.replace(/ .*/, "")` do networkD3 (ver
+# "Possiveis problemas") faz todo no de um estagio compartilhar cor -- so que
+# aqui e uma escolha explicita, nao um efeito colateral de uma leitura parcial
+# do nome.
+estagio <- c(rep("Fonte", 3), rep("Canal", 3), rep("Resultado", 2))
+cor_estagio <- c(Fonte = cores[1], Canal = cores[2], Resultado = cores[3])
+
+viz <- list(
+  meta = list(nota = "Passe o cursor num nó ou fluxo pra destacar o caminho."),
+  nos = data.frame(name = nodes$name, cor = unname(cor_estagio[estagio])),
+  fluxos = data.frame(
+    origem = nodes$name[links$source + 1],
+    destino = nodes$name[links$target + 1],
+    valor = links$value
+  )
+)
+
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

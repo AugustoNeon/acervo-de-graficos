@@ -1,11 +1,11 @@
 ---
-title: "Sankey diagram simplificado (networkD3)"
+title: "Sankey diagram simplificado"
 category: flow
 date: 2026-07-22
 source: "https://r-graph-gallery.com/323-sankey-diagram-with-the-networkd3-library.html"
 interactive: true
 resumo: "Fluxos entre estágios desenhados como faixas cuja espessura é proporcional à quantidade que passa por ali."
-pacotes: ["networkD3", "webshot2", "chromote"]
+pacotes: ["networkD3", "jsonlite", "d3"]
 dados: "lista de nós + lista de ligações (origem, destino, valor)"
 nivel: intermediário
 tags: ["interativo", "fluxo", "rede"]
@@ -57,15 +57,16 @@ Passe o mouse sobre um bloco ou faixa para ver o valor exato.
 
 ## Como foi feito
 
-`networkD3::sankeyNetwork()` recebe as duas tabelas e devolve um htmlwidget
-pronto, com hover e arraste de nós já embutidos — não é preciso escrever
-JavaScript.
+A miniatura estática ainda vem do `networkD3::sankeyNetwork()`: como não há
+equivalente em `ggplot2`, o script gera o widget uma vez só pra tirar um
+screenshot (`webshot2::webshot()`) e descarta os arquivos dele na sequência
+— não sobra nenhum `widget.html` na pasta do gráfico.
 
-As cores vêm de uma escala ordinal declarada com `JS("d3.scaleOrdinal().range([...])")`,
-com valores hexadecimais explícitos.
-
-Como não há equivalente estático em `ggplot2`, a miniatura foi gerada com
-`webshot2::webshot()` sobre o próprio widget.
+A versão interativa é desenhada em D3 (`d3-sankey`, o mesmo algoritmo de
+layout que o `networkD3` usa por baixo dos panos), dentro do runtime do
+site. O script exporta nós e fluxos pelo **nome** (em vez dos índices
+0-based que o `networkD3` exige) e a cor de cada nó; a posição de cada nó na
+coluna e a espessura de cada fluxo são recalculadas no D3, não herdadas do R.
 
 Dados fictícios: um fluxo de três estágios (`Fonte A/B/C` → `Canal X/Y/Z` →
 `Resultado 1/2`), 8 nós e 10 ligações, com `set.seed(99)`. O tamanho pequeno é
@@ -86,7 +87,9 @@ proposital: é o que mantém o diagrama legível.
   descartado. `"Fonte A"`, `"Fonte B"` e `"Fonte C"` viram todos `"Fonte"`.
   **Solução**: usar nomes sem espaço (`"FonteA"`) para colorir nó a nó. Aqui o
   comportamento foi mantido de propósito: uma cor por estágio ficou mais limpo do
-  que oito tons distintos.
+  que oito tons distintos — e a versão em D3 reproduz o mesmo efeito visual de
+  propósito, mesmo sem ter essa limitação: o `data.json` já exporta a cor de
+  cada nó atribuída por estágio (`Fonte`/`Canal`/`Resultado`), não uma por nó.
 
 - **Problema**: as faixas não aparecem, ou aparecem nos lugares errados. **Por
   quê**: `source`/`target` foram preenchidos com nomes ou com índices começando em
