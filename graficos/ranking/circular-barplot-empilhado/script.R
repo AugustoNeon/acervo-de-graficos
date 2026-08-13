@@ -137,7 +137,8 @@ viz <- list(
     yRotuloRegiao = -14,
     paleta = as.list(paleta),
     ordem = ordem_empilhamento,
-    rotulos = rotulos_categoria
+    rotulos = rotulos_categoria,
+    nota = "Passe o cursor por uma barra pra ver os números da filial."
   ),
   barras = barras,
   segmentos = segmentos,

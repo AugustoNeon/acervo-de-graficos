@@ -64,7 +64,6 @@ const assetBase = `${base}/graficos/${entry.id}/`;
           fallbackSrc={`${assetBase}output.png`}
           title={entry.data.title}
         />
-        <p class="visual-dica">Passe o cursor por uma barra pra ver os números da filial.</p>
       </div>
     ) : (
       <figure class="visual">
@@ -264,13 +263,6 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   .visual {
     margin: 0 0 var(--space-xl);
-  }
-
-  .visual-dica {
-    margin-top: var(--space-2xs);
-    text-align: center;
-    font-size: var(--text-xs);
-    color: var(--color-ink-muted);
   }
 
   .zoom-trigger {

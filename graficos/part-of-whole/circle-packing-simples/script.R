@@ -42,30 +42,30 @@ p <- ggplot() +
 # so sobra mais respiro nas laterais em vez de esticar por cima/baixo
 ggsave("output.png", plot = p, width = 9, height = 6, dpi = 150)
 
-# Versao interativa: mesmo layout, hover mostra o total de downloads
-library(ggiraph)
+# ---------------------------------------------------------------------------
+# Exporta os mesmos dados e a mesma geometria pra versao interativa (data.json),
+# desenhada em D3 -- mesmo padrao usado no resto do acervo (ver AGENTS.md).
+#
+# A cor de cada bolha (fill = id, um gradiente continuo do scale_fill_distiller)
+# nao tem formula fechada simples de reproduzir: em vez de recalcular a rampa
+# na mao, lemos a cor que o proprio ggplot_build() resolveu pra cada grupo --
+# garante paridade exata com o output.png por construcao, sem duplicar a regra
+# de escala em duas linguagens.
+# ---------------------------------------------------------------------------
+poligonos <- ggplot_build(p)$data[[1]]
+cor_por_id <- poligonos[!duplicated(poligonos$group), c("group", "fill")]
+cor_por_id <- setNames(cor_por_id$fill, cor_por_id$group)
 
-dados$tooltip <- paste0(dados$jogo, "\n", dados$downloads, " mil downloads")
+dados$id <- seq_len(nrow(dados))
+dados$cor <- cor_por_id[as.character(dados$id)]
 
-p_int <- ggplot() +
-  geom_polygon_interactive(
-    data = dat.gg,
-    aes(x, y, group = id, fill = id, tooltip = dados$tooltip[id], data_id = id),
-    colour = "black", alpha = 0.75
-  ) +
-  scale_fill_distiller(palette = "Spectral") +
-  geom_text(data = dados, aes(x, y, label = jogo, size = downloads), color = "black") +
-  scale_size_continuous(range = c(1.9, 4)) +
-  theme_void() +
-  theme(legend.position = "none", plot.margin = unit(c(0, 0, 0, 0), "cm")) +
-  coord_equal()
-
-widget <- girafe(
-  ggobj = p_int, width_svg = 9, height_svg = 6,
-  options = list(
-    opts_hover(css = "stroke:#222;stroke-width:3px;"),
-    opts_sizing(rescale = TRUE)
-  )
+viz <- list(
+  meta = list(
+    downloadsMin = min(dados$downloads),
+    downloadsMax = max(dados$downloads),
+    nota = "Passe o cursor por uma bolha pra ver o total de downloads."
+  ),
+  circulos = dados[, c("id", "jogo", "downloads", "x", "y", "radius", "cor")]
 )
 
-htmlwidgets::saveWidget(widget, file = "widget.html", selfcontained = FALSE)
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

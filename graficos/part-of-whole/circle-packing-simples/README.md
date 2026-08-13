@@ -1,11 +1,11 @@
 ---
-title: "Circle packing simples (packcircles + ggiraph)"
+title: "Circle packing simples"
 category: part-of-whole
 date: 2026-07-29
 source: "https://r-graph-gallery.com/307-add-space-in-circle-packing.html"
 interactive: true
 resumo: "Bolhas de tamanhos proporcionais a um valor, compactadas sem sobreposição num único nível, sem hierarquia entre elas."
-pacotes: ["packcircles", "ggplot2", "ggiraph"]
+pacotes: ["packcircles", "ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma bolha por categoria, sem agrupamento)"
 nivel: básico
 tags: ["interativo", "parte-do-todo", "proporção"]
@@ -61,11 +61,13 @@ polígono de N pontos por bolha, pronto para `geom_polygon()`. Multiplicar o
 raio por 0,95 antes de gerar os vértices abre um pequeno respiro entre bolhas
 vizinhas — sem isso, elas saem coladas umas nas outras.
 
-A versão interativa troca `geom_polygon()` por `geom_polygon_interactive()`
-(do `ggiraph`), que aceita `tooltip` e `data_id` como aesthetics adicionais —
-o resto do código de layout é idêntico ao da versão estática. `girafe()`
-transforma esse `ggplot` num widget HTML com hover nativo, sem precisar
-escrever JavaScript.
+A versão interativa é desenhada em D3, e o script em R exporta um `data.json`
+com o layout já calculado pelo `packcircles` (posição, raio e cor de cada
+bolha — a cor é lida de volta do próprio `ggplot_build()`, garantindo o mesmo
+gradiente `Spectral` do `output.png` sem recalcular a escala em JavaScript).
+Por cima disso, a versão interativa acrescenta o que a imagem não dá: as
+bolhas crescem da maior pra menor ao entrar na tela, e passar o cursor numa
+bolha destaca ela entre as outras e mostra o total de downloads.
 
 Dados fictícios: número de downloads (em milhares) de 24 jogos indie
 inventados, no lugar dos rótulos genéricos do exemplo original.
@@ -89,11 +91,13 @@ inventados, no lugar dos rótulos genéricos do exemplo original.
   limite exato do encaixe, sem margem. **Solução**: multiplicar
   `packing$radius` por um fator menor que 1 (ex: 0,95) antes de gerar os
   vértices.
-- **Problema**: no widget interativo, o tooltip mostra o texto errado. **Por
-  quê**: `dat.gg` tem várias linhas por bolha (uma por vértice do polígono),
-  todas compartilhando o mesmo `id` — indexar `dados$tooltip[id]` depende de
-  `id` bater exatamente com a ordem das linhas de `dados`. **Solução**: não
-  reordenar `dados` depois de rodar `circleProgressiveLayout()`.
+- **Problema**: a cor de uma bolha no `data.json` não bate com a mesma bolha
+  no `output.png`. **Por quê**: a cor de cada uma vem de reler o `fill`
+  resolvido pelo `ggplot_build()` (a rampa `Spectral` contínua não tem fórmula
+  fechada simples de reproduzir do zero), indexado pela coluna `group` — que
+  só coincide com o `id` de `dados` porque `id` é sequencial sem lacunas
+  (`1:24`). **Solução**: gerar `id` como `seq_len(nrow(dados))` logo antes de
+  montar o `data.json`, nunca a partir de um valor que possa ter buracos.
 
 ## Variações possíveis
 

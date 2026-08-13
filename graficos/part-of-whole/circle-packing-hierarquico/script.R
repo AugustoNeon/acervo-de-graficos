@@ -1,6 +1,7 @@
 # Libraries
 library(ggraph)
 library(igraph)
+library(jsonlite)
 
 # Dados ficticios: catalogo de streaming (midia > genero > titulo), horas
 # assistidas/ouvidas num mes ficticio -- no lugar do dataset real "flare"
@@ -71,122 +72,48 @@ p <- ggraph(mygraph, layout = "circlepack", weight = horas) +
 
 ggsave("output.png", plot = p, width = 7, height = 7, dpi = 150)
 
-# Versao interativa: circlepackeR permite clicar pra dar zoom num galho da
-# hierarquia (o ggraph estatico so mostra tudo de uma vez, sem navegacao)
-library(data.tree)
-library(circlepackeR)
-library(htmltools)
-
-# pathString usa os nomes originais (curtos) -- o data.tree aceita nomes
-# repetidos em galhos diferentes, entao aqui nem precisaria da unicidade
-# global exigida pelo grafo acima; mantida mesmo assim por consistencia
-dados$pathString <- paste("Catalogo", dados$midia, dados$genero, dados$titulo, sep = "/")
-populacao <- as.Node(dados)
-
-# width/height explicitos (em vez de deixar NULL) -- o widget calcula seu
-# proprio diametro como o MENOR entre largura e altura do container
-# (ver htmlwidgets/circlepackeR.js), entao uma altura fixa e razoavel evita
-# depender do fallback de altura do iframe do site.
+# ---------------------------------------------------------------------------
+# Versao interativa: desenhada em D3 (d3.hierarchy + d3.pack), com clique pra
+# dar zoom num galho -- a mesma navegacao que o circlepackeR dava, so que sem
+# as duas limitacoes dele (gradiente continuo de 2 cores em vez de uma cor por
+# nivel, folhas forcadas em branco pelo CSS do pacote) documentadas em
+# AGENTS.md "Licoes aprendidas".
 #
-# color_min/color_max sao os EXTREMOS de um gradiente continuo de 2 cores: o
-# widget nao aceita uma cor por nivel. Vao no tom certo (teal -> terracota) so
-# pra degradar bem caso o JS abaixo nao rode; as cores finais de cada nivel
-# quem manda sao o CSS e o JS.
-widget <- circlepackeR(
-  populacao,
-  size = "horas",
-  color_min = cor_nivel[["1"]],
-  color_max = cor_nivel[["3"]],
-  width = "100%",
-  height = 480
+# O layout em si (posicao/raio de cada circulo) NAO vem daqui: o pack do
+# ggraph e estocastico (duas chamadas com os mesmos dados dao arranjos
+# diferentes, por isso o set.seed acima so vale pro output.png) e a regra do
+# acervo pra grafico de rede/hierarquia e recalcular o layout no proprio D3
+# (mesmo padrao do modulo compartilhado de rede), nao tentar replicar posicao
+# a posicao. O que precisa vir do R e so a arvore (estrutura + valores) e a
+# paleta por nivel, pra manter a MESMA regra de cor dos dois lados.
+# ---------------------------------------------------------------------------
+midias <- factor(dados$midia, levels = unique(dados$midia))
+
+arvore_generos <- function(bloco_midia) {
+  generos <- factor(bloco_midia$genero, levels = unique(bloco_midia$genero))
+  unname(lapply(split(bloco_midia, generos), function(bloco_genero) {
+    list(
+      nome = as.character(bloco_genero$genero[1]),
+      filhos = unname(lapply(seq_len(nrow(bloco_genero)), function(i) {
+        list(nome = bloco_genero$titulo[i], valor = bloco_genero$horas[i])
+      }))
+    )
+  }))
+}
+
+arvore <- list(
+  nome = "Catalogo",
+  filhos = unname(lapply(split(dados, midias), function(bloco_midia) {
+    list(nome = as.character(bloco_midia$midia[1]), filhos = arvore_generos(bloco_midia))
+  }))
 )
 
-# O circlepackeR pinta os circulos por um gradiente continuo de DUAS cores
-# (dominio fixo de profundidade -1 a 5), e as folhas vem brancas do CSS do
-# proprio pacote -- nenhum parametro da funcao permite uma cor por nivel como
-# no grafico estatico. Duas camadas resolvem, aplicadas sobre o widget salvo:
-#
-# 1. CSS pra raiz (invisivel) e folhas -- estas nao tem cor inline, entao
-#    basta a regra normal; a raiz tem, por isso o !important.
-# margin: 0 auto no svg centraliza o desenho: o widget usa como diametro o
-# MENOR entre largura e altura do container, entao num container largo e baixo
-# o svg sai quadrado e sobra vazio de um lado so se nao centralizar
-folha_css <- tags$style(HTML(sprintf("
-  body { margin: 0; }
-  .circlepackeR > svg        { display: block; margin: 0 auto; }
-  .circlepackeR .node        { stroke: #1a1a1a; stroke-width: 0.6px; }
-  .circlepackeR .node--root  { fill: %s !important; stroke: %s; }
-  .circlepackeR .node--leaf  { fill: %s; }
-", cor_nivel[["0"]], cor_nivel[["0"]], cor_nivel[["3"]])))
+viz <- list(
+  meta = list(
+    paleta = as.list(cor_nivel),
+    nota = "Clique numa bolha pra ampliar; clique fora pra voltar."
+  ),
+  arvore = arvore
+)
 
-# 2. JS pros niveis do meio (midia/genero), que recebem cor inline do
-#    gradiente e por isso nao podem ser resolvidos por CSS. O d3 deixa o dado
-#    de cada circulo em `__data__`, entao da pra reler a profundidade e
-#    repintar. setInterval (e nao requestAnimationFrame) porque o widget
-#    renderiza depois desta tag, e um timer roda mesmo em aba fora de foco.
-#    A funcao de zoom do pacote so anima posicao/raio, nunca o preenchimento,
-#    logo repintar uma vez basta -- o clique-pra-ampliar continua igual.
-#
-# O mesmo script tambem conserta um segundo defeito do pacote: ele mede o
-# container UMA vez, no render, e o handler de resize dele e uma funcao VAZIA
-# -- ele nunca reage a mudancas de tamanho depois do primeiro desenho. Isso da
-# dois sintomas possiveis, dependendo de QUANDO a medicao acontece: se o
-# container ainda nao tem layout (diametro 0), o widget fica vazio pra sempre;
-# se o container tem um tamanho so PROVISORIO nesse instante (ex: o script da
-# pagina ainda vai ajustar a altura do iframe, ou uma fonte carrega por ultimo
-# e remexe o layout por alguns px), o SVG fica desenhado pro tamanho antigo e
-# sai desalinhado/cortado em relacao a caixa final -- intermitente, porque
-# depende de uma corrida contra esses outros ajustes de layout.
-#
-# Um ResizeObserver no proprio container resolve os dois de uma vez, no lugar
-# do polling anterior (que so tentava redesenhar enquanto o SVG media 0): o
-# primeiro callback do observer ja cobre 'container sem layout ainda' (o
-# ResizeObserver dispara de novo assim que o tamanho deixar de ser 0x0), e os
-# callbacks seguintes cobrem qualquer resize depois disso -- inclusive os que
-# a pagina do site faz depois do primeiro desenho. Redesenhar e seguro: o
-# renderValue do pacote limpa o container antes de desenhar de novo.
-nivel_js <- tags$script(HTML(sprintf("
-  (function () {
-    var cor = { 1: '%s', 2: '%s' };
-
-    function pintarNiveis(el) {
-      el.querySelectorAll('circle').forEach(function (c) {
-        var d = c.__data__;
-        if (d && cor[d.depth]) c.style.fill = cor[d.depth];
-      });
-    }
-
-    function redesenhar(el) {
-      var reg = (window.HTMLWidgets && HTMLWidgets.widgets || []).filter(
-        function (w) { return w.name === 'circlepackeR'; }
-      )[0];
-      var carga = document.querySelector('script[data-for=\"' + el.id + '\"]');
-      if (!reg || !carga) return;
-      var x = JSON.parse(carga.textContent).x;
-      reg.renderValue(el, x, reg.initialize(el, el.offsetWidth, el.offsetHeight));
-      pintarNiveis(el);
-    }
-
-    var el = document.querySelector('.circlepackeR');
-    if (!el || typeof ResizeObserver === 'undefined') return;
-
-    var pendente = null;
-    var ultimoW = 0;
-    var ultimoH = 0;
-    var ro = new ResizeObserver(function (entries) {
-      var caixa = entries[0].contentRect;
-      var w = Math.round(caixa.width);
-      var h = Math.round(caixa.height);
-      if (w <= 0 || h <= 0 || (w === ultimoW && h === ultimoH)) return;
-      ultimoW = w;
-      ultimoH = h;
-      clearTimeout(pendente);
-      pendente = setTimeout(function () { redesenhar(el); }, 60);
-    });
-    ro.observe(el);
-  })();
-", cor_nivel[["1"]], cor_nivel[["2"]])))
-
-# save_html (em vez de saveWidget) porque precisamos de CSS/JS proprios junto
-# do widget no mesmo arquivo -- mesmo padrao dos graficos de ggiraph do acervo
-save_html(tagList(folha_css, widget, nivel_js), file = "widget.html", libdir = "widget_files")
+jsonlite::write_json(viz, "data.json", auto_unbox = TRUE, digits = NA)

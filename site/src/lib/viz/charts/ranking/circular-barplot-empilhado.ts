@@ -25,6 +25,7 @@ interface Dados {
     /** De baixo pra cima na pilha */
     ordem: string[];
     rotulos: Record<string, string>;
+    nota?: string;
   };
   barras: { id: number; filial: string; regiao: string; total: number }[];
   segmentos: { id: number; categoria: string; receita: number }[];
@@ -318,6 +319,10 @@ const chart: VizChart = {
       .on('pointerleave', () => realcar(null))
       .on('focus', (_e, c) => realcar({ categoria: c }))
       .on('blur', () => realcar(null));
+
+    if (meta.nota) {
+      select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
+    }
 
     // --------------------------------------------------------------- entrada
     // As barras crescem do centro pra fora, escalonadas no sentido do circulo:

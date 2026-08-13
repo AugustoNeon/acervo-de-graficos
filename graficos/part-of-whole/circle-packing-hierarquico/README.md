@@ -1,11 +1,11 @@
 ---
-title: "Circle packing hierárquico (ggraph + circlepackeR)"
+title: "Circle packing hierárquico"
 category: part-of-whole
 date: 2026-07-29
 source: "https://r-graph-gallery.com/315-hide-first-level-in-circle-packing.html"
 interactive: true
 resumo: "Círculos aninhados dentro de círculos maiores, cada camada representando um nível de uma hierarquia, do todo até a menor subcategoria."
-pacotes: ["ggraph", "igraph", "data.tree", "circlepackeR", "htmltools"]
+pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "Uma hierarquia de categorias (vários níveis) + 1 variável numérica nas folhas"
 nivel: intermediário
 tags: ["interativo", "parte-do-todo", "hierarquia"]
@@ -69,12 +69,14 @@ círculos pai, sem precisar somar nada manualmente. Esconder a raiz é um
 truque visual, não uma opção do layout: ela recebe a mesma cor branca do
 fundo (`scale_fill_manual`), então ainda ocupa espaço mas fica invisível.
 
-A versão interativa usa outro pacote (`circlepackeR`), que espera os dados no
-formato de árvore do `data.tree` em vez de grafo — a mesma tabela original
-vira uma string de caminho (`"raiz/mídia/gênero/título"`) que
-`data.tree::as.Node()` converte em árvore. A interatividade aqui é de
-navegação: clicar num círculo dá zoom nele e revela os rótulos dos filhos;
-clicar fora volta pro nível anterior.
+A versão interativa é desenhada em D3, com o layout recalculado do zero por
+`d3.hierarchy()`+`d3.pack()` — o `circlepack` do `ggraph` é estocástico
+(duas rodadas com os mesmos dados dão arranjos diferentes), então não faz
+sentido tentar herdar a posição exata do R; o que o script exporta pro
+`data.json` é só a árvore (estrutura + valor de cada folha) e a paleta por
+profundidade, pra manter a mesma cor dos dois lados. A interatividade aqui é
+de navegação: clicar num círculo dá zoom nele (a área dele passa a preencher
+o espaço todo); clicar fora volta pra visão geral.
 
 Dados fictícios: um catálogo de streaming (Filmes, Séries, Música, Podcasts),
 cada um com 3 gêneros e 2 títulos por gênero, com horas assistidas/ouvidas
@@ -104,34 +106,27 @@ original.
   (ex: a mesma subcategoria repetida em dois grupos) colapsam num vértice só.
   **Solução**: usar nomes únicos em toda a árvore, concatenando com o nome do
   pai quando precisar repetir um rótulo em grupos diferentes.
-- **Problema**: no widget interativo, o gráfico nasce cortado ou com barra de
-  rolagem. **Por quê**: `circlepackeR` calcula o próprio diâmetro como o
-  menor valor entre a largura e a altura do espaço disponível — se um dos
-  dois não estiver bem definido, o diâmetro sai errado. **Solução**: passar
-  `width`/`height` explícitos na chamada de `circlepackeR()`, em vez de
-  depender do padrão. Num espaço largo e baixo o desenho sai quadrado e
-  encostado num lado: centralizar com `margin: 0 auto` no `<svg>`.
-
-- **Problema**: o widget interativo sai com uma paleta completamente diferente
-  da versão estática — tons pálidos nos anéis e círculos **brancos** nas
-  folhas. **Por quê**: são duas limitações somadas. `circlepackeR` aceita
-  apenas **duas** cores (`color_min`/`color_max`) e interpola entre elas numa
-  escala de profundidade fixa de −1 a 5; como cada nível ocupa só 1/6 dessa
-  escala, e a interpolação de matiz percorre no máximo 180° no total, dois
-  níveis vizinhos não conseguem ficar a mais de ~30° de matiz um do outro —
-  teal e dourado, por exemplo, são impossíveis de obter juntos. Além disso, o
-  CSS do próprio pacote pinta as folhas de branco
-  (`.node--leaf { fill: white }`), independentemente do gradiente.
-  **Solução**: sobrepor uma camada própria ao widget salvo — CSS resolve a raiz
-  e as folhas, e um `<script>` curto reaplica a cor dos níveis do meio lendo a
-  profundidade em `__data__` de cada círculo (o zoom do pacote só anima posição
-  e raio, nunca o preenchimento, então repintar uma vez basta). O importante é
-  a paleta viver num único lugar no código e alimentar as duas versões, em vez
-  de repetir os hexadecimais.
-- **Problema**: a raiz escondida aparece como um círculo branco visível.
-  **Por quê**: o fundo da página ou do card não é branco puro (ex: modo
-  escuro). **Solução**: usar a cor de fundo real como cor da raiz, em vez de
-  um branco fixo, ou trocar a técnica por um corte manual do primeiro nível.
+- **Problema**: a cor de um nível não bate entre o `output.png` e a versão
+  interativa. **Por quê**: são dois códigos em duas linguagens desenhando o
+  mesmo dado — se a paleta por profundidade for definida separadamente em
+  cada lado, a primeira mudança em um deles diverge do outro. **Solução**: a
+  paleta (`cor_nivel`) é definida uma única vez no `script.R` e exportada no
+  `data.json`; o D3 só lê `meta.paleta[profundidade]`, nunca embute um
+  hexadecimal próprio.
+- **Problema**: ao dar zoom numa bolha, as outras (fora do foco) vazam pra
+  fora do card do gráfico. **Por quê**: o SVG dos gráficos do site nasce com
+  `overflow: visible` por padrão (pensado pra rótulo de rede não cortar na
+  borda), e as bolhas fora do foco do zoom recebem coordenadas bem fora do
+  `viewBox` enquanto ficam "escondidas" atrás da bolha ampliada.
+  **Solução**: sobrescrever `overflow: hidden` direto no `<svg>` deste
+  gráfico.
+- **Problema**: a raiz escondida (nível 0) aparece como um círculo visível de
+  cor sólida. **Por quê**: a técnica antiga (herdada do widget) era pintar a
+  raiz da mesma cor do fundo — o que quebra em qualquer fundo que não seja
+  exatamente aquela cor (ex: modo escuro). **Solução**: no D3, a raiz
+  simplesmente não é desenhada (`root.descendants().filter(d => d.depth > 0)`)
+  — ela continua ocupando espaço no layout, mas nunca vira um `<circle>` na
+  tela, então não depende de acertar nenhuma cor de fundo.
 
 ## Variações possíveis
 
