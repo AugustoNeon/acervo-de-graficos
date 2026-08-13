@@ -1,55 +1,36 @@
 ---
-title: "Linha interativa com CSS customizado (ggiraph)"
+title: "Linha interativa com destaque por série"
 category: evolution
 date: 2026-07-24
 source: "https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html"
 interactive: true
-resumo: "Séries temporais em que a interação é definida por CSS puro, com quatro estilos de destaque alternáveis por botões."
-pacotes: ["ggplot2", "ggiraph", "tidyverse", "htmltools"]
+resumo: "Várias séries temporais na mesma tela, em que passar o cursor numa linha a destaca e apaga as demais."
+pacotes: ["ggplot2", "tidyverse", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
-tags: ["interativo", "temporal", "CSS"]
+tags: ["interativo", "temporal"]
 ---
 
 ## O que é
 
-Um gráfico de linhas comum, com uma diferença importante: ele é gerado como SVG em
-que **cada elemento carrega um identificador**, e o comportamento de hover, seleção
-e tooltip é definido por **CSS**, não por JavaScript escrito à mão.
-
-Na prática, isso significa que transformar um `ggplot2` em gráfico interativo custa
-trocar `geom_line()` por `geom_line_interactive()` e adicionar duas estéticas.
-
-Esta página mostra quatro tratamentos de interação sobre exatamente o mesmo
-gráfico, alternáveis pelos botões acima dele:
-
-1. **Hover simples** — realce ao passar o mouse, clique para fixar.
-2. **Destacar e apagar as outras** — a linha sob o cursor ganha destaque e as demais
-   são esmaecidas e dessaturadas.
-3. **Hover avançado** — preenchimento translúcido, traço tracejado e sombra, com
-   transição suave.
-4. **Tooltip e zoom** — tooltip estilizado, pontos que crescem, seleção múltipla,
-   zoom por rolagem e botão de exportar.
-
-**Para que serve**: mostrar como a escolha do CSS muda completamente a experiência
-de leitura, partindo do mesmo gráfico e dos mesmos dados.
+Um gráfico de linhas comum — várias séries temporais na mesma tela, uma cor por
+categoria — com um problema clássico quando o número de séries cresce: linhas se
+cruzam, cores próximas se confundem, e seguir uma categoria específica de ponta a
+ponta fica difícil só de olho. **Para que serve**: comparar a evolução de várias
+categorias ao longo do tempo, com a interação resolvendo exatamente o problema que
+a imagem estática não resolve — isolar uma série por vez.
 
 ## Quando usar (e quando evitar)
 
-**Use o tratamento 2 quando** houver muitas linhas sobrepostas — o clássico
-"espaguete". Esmaecer as demais é a forma mais eficaz de tornar um gráfico
-poluído legível sem remover dado nenhum.
+**Use quando** houver várias séries sobrepostas (o clássico "gráfico de
+espaguete") e a leitura precisar tanto da visão geral (todas as linhas juntas)
+quanto do detalhe de uma categoria por vez. Passar o cursor e apagar as demais é
+a forma mais direta de resolver isso sem remover nenhuma linha do gráfico.
 
-**Use o 4 quando** os valores exatos importarem e o leitor precisar investigar
-períodos específicos.
-
-**Use o 1 quando** quiser interatividade discreta, que não distraia.
-
-**Evite o 3 em uso sério**: sombras, tracejados e transições chamam atenção para o
-efeito, não para o dado. Ele está aqui como demonstração do que é possível.
-
-**Evite qualquer interatividade quando** o destino final for impressão ou PDF —
-nesse caso invista no gráfico estático.
+**Evite quando** houver só 2-3 séries — nesse caso todas já são legíveis de uma
+vez, e a interação vira complexidade sem ganho. Evite também qualquer
+interatividade quando o destino final for impressão ou PDF: sem clique ou hover,
+só a imagem estática (todas as linhas sobrepostas) fica disponível.
 
 ## Que dados você precisa
 
@@ -59,76 +40,74 @@ nesse caso invista no gráfico estático.
 
 Formato longo/tidy: uma linha por combinação tempo × categoria.
 
-Além disso, a interatividade exige duas estéticas: `data_id`, que agrupa os
-elementos que devem ser destacados juntos (aqui, a categoria), e `tooltip`, com o
-texto exibido — aceita HTML.
-
 ## Como ler o gráfico
 
 - **Eixo horizontal**: o tempo.
 - **Eixo vertical**: o valor do índice.
-- **Cor**: a categoria (país).
+- **Cor**: a categoria (país), repetida na legenda abaixo do gráfico.
 - **Cada linha** acompanha uma categoria ao longo do período.
 
-Passe o mouse sobre qualquer linha para destacá-la. Troque o estilo nos botões
-acima do gráfico e observe a diferença: o estilo 2 é o que mais ajuda quando as
-linhas se cruzam muito.
+Na versão interativa, passar o cursor numa linha (ou na legenda) a destaca e
+apaga as demais; um ponto acompanha a posição mais próxima do cursor e mostra o
+mês e o valor exato.
 
 ## Como foi feito
 
-O gráfico é construído uma única vez em `ggplot2`, usando
-`geom_line_interactive()` e `geom_point_interactive()`. Esses geoms se comportam
-como os normais quando o objeto é passado direto para `ggsave()` — as estéticas de
-interatividade são simplesmente ignoradas —, então o mesmo objeto serve para a
-imagem estática e para as quatro versões interativas, sem duplicar código.
+O gráfico estático vem de `ggplot2` comum (`geom_line()` + `geom_point()`), sem
+nada de especial — a técnica interessante está só na versão interativa.
 
-Cada estilo é o mesmo gráfico embrulhado em `girafe()` com um `girafe_options()`
-diferente: `opts_hover()`, `opts_hover_inv()` (que estiliza tudo que **não** está
-sob o cursor), `opts_tooltip()`, `opts_selection()` e `opts_zoom()`. Todos recebem
-CSS em texto.
+Essa página já teve uma versão anterior que mostrava **quatro tratamentos de
+interatividade via CSS puro** do `ggiraph` (hover simples, destacar+apagar,
+hover com sombra/tracejado, tooltip+zoom), alternáveis por um seletor — a
+"interatividade definida por CSS, não JavaScript" era o próprio assunto da
+página. Isso não tem equivalente em D3: lá, toda interatividade é código
+JavaScript por natureza, não existe um "modo CSS". A versão em D3 se concentra
+num único tratamento — destacar a série sob o cursor e apagar as demais —, que
+já era o mais indicado na prática entre os quatro (o README anterior já
+apontava isso: é o que mais ajuda quando as linhas se cruzam bastante).
 
-Os quatro widgets são reunidos num único arquivo com `htmltools::save_html()`, que
-aceita uma `tagList()` combinando vários widgets mais HTML, CSS e JS próprios — algo
-que `saveWidget()` não faz, por salvar apenas um widget por vez.
+Dois detalhes técnicos do módulo D3: (1) a linha visível tem só ~2px de
+espessura, um alvo de ponteiro pequeno demais — por cima de cada linha existe
+uma segunda linha invisível e bem mais larga, só para capturar o hover; (2) o
+ponto que acompanha o cursor usa `d3.bisector()` para achar, dentro da série
+sob o mouse, a data mais próxima da posição horizontal do cursor — sem isso o
+tooltip só conseguiria mostrar o valor do ponto exato onde o SVG foi clicado,
+não "o mês mais próximo de onde estou olhando".
 
-A barra de botões é JavaScript puro: cada painel fica oculto exceto o ativo,
-alternado por classe no clique.
-
-Dados fictícios: índice de sentimento econômico de 6 países ao longo de 24 meses,
-gerado como passeio aleatório com `set.seed(3311)`.
+Dados fictícios: índice de sentimento econômico de 6 países ao longo de 24
+meses, gerado como passeio aleatório com `set.seed(3311)`.
 
 ## Possíveis problemas pelo caminho
 
-- **Problema**: o hover destaca só um segmento da linha, não a série inteira. **Por
-  quê**: falta o `data_id`, ou ele está apontando para a observação em vez da
-  categoria. **Solução**: usar `data_id = categoria` — ele é o que agrupa os
-  elementos.
+- **Problema**: o hover não registra quase nunca, mesmo passando o cursor bem
+  em cima da linha. **Por quê**: o traço visível é fino (~2px) e a área
+  clicável de um `<path>` em SVG é literalmente o traço, sem nenhuma margem de
+  tolerância. **Solução**: desenhar uma segunda cópia do mesmo path, invisível
+  (`stroke: transparent`) e bem mais larga, só para receber os eventos de
+  ponteiro — a linha visível fica livre para ter a espessura que for melhor
+  visualmente.
 
-- **Problema**: `saveWidget()` não consegue salvar os quatro estilos juntos. **Por
-  quê**: ele aceita um widget por arquivo. **Solução**: usar
-  `htmltools::save_html()` com uma `tagList()`.
+- **Problema**: o tooltip mostra o valor de um mês qualquer, não o mais
+  próximo de onde o cursor está. **Por quê**: sem nenhum cálculo extra, o
+  único jeito de saber "qual ponto" seria o cursor estar exatamente em cima de
+  um `<circle>` — o que raramente acontece. **Solução**: converter a posição
+  horizontal do cursor de volta para uma data (`escalaX.invert()`) e usar
+  `d3.bisector()` pra achar o ponto da série mais próximo dessa data.
 
-- **Problema**: as dependências vão parar numa pasta `lib/` e o site não as
-  encontra. **Por quê**: é o padrão do `save_html()`. **Solução**: passar
-  `libdir = "widget_files"` explicitamente.
-
-- **Problema**: o CSS não surte efeito. **Por quê**: as regras são aplicadas a
-  classes geradas dinamicamente, e propriedades erradas para SVG não fazem nada —
-  em SVG a cor de preenchimento é `fill`, não `background-color`. **Solução**: usar
-  propriedades SVG (`fill`, `stroke`, `stroke-width`, `opacity`).
-
-- **Problema**: texto muito pequeno ou desproporcional no widget. **Por quê**:
-  `width_svg`/`height_svg` definem o sistema de coordenadas, e o SVG é reescalado
-  para caber no container. **Solução**: ajustar essas dimensões em vez do tamanho
-  da fonte.
+- **Problema**: um `Rplots.pdf` indesejado aparece na pasta junto do PNG.
+  **Por quê**: o plot foi deixado para imprimir sozinho no fim do script.
+  **Solução**: atribuir o gráfico a uma variável (`p <- ggplot(...) + ...`) e
+  passá-la explicitamente para `ggsave()`.
 
 ## Variações possíveis
 
-- Combinar `opts_hover()` com `opts_hover_inv()` para destacar e esmaecer ao mesmo
-  tempo — costuma ser o melhor resultado prático.
-- Usar `opts_selection(type = "multiple")` para permitir comparar categorias
-  escolhidas com clique.
-- Aplicar a mesma técnica a outros geoms: barras, dispersão e mapas aceitam as
-  versões `_interactive` da mesma forma.
-- Ligar vários gráficos pelo mesmo `data_id`, como em
+- Mostrar todas as linhas apagadas exceto uma selecionada por clique (em vez
+  de só hover), útil quando quem está lendo precisa "fixar" a comparação
+  antes de mover o cursor para ver os números.
+- Adicionar uma segunda camada de destaque por grupo (ex: países vizinhos),
+  quando as categorias tiverem uma hierarquia natural entre si.
+- Trocar o destaque por hover por um pequeno multiplo (`facet_wrap` no
+  estático, um painel por série no D3) quando o número de categorias for
+  grande demais até para o hover ajudar.
+- Ligar este gráfico a outro pelo mesmo identificador de categoria, como em
   [dashboard interativo: mapa + dispersão + barras](../../map/dashboard-inovacao-ggiraph).
