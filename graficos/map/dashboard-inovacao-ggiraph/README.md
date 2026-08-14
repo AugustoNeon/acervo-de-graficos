@@ -1,11 +1,11 @@
 ---
-title: "Dashboard interativo: mapa + dispersão + barras (ggiraph)"
+title: "Dashboard interativo: mapa + dispersão + barras"
 category: map
 date: 2026-07-27
 source: "https://r-graph-gallery.com/414-map-multiple-charts-in-ggiraph.html"
 interactive: true
 resumo: "Três gráficos diferentes ligados pela mesma chave: passar o mouse em um destaca o mesmo dado nos outros dois."
-pacotes: ["ggiraph", "patchwork", "sf", "spData", "dplyr"]
+pacotes: ["sf", "spData", "dplyr", "patchwork", "jsonlite", "d3"]
 dados: "geometria por país + 2 variáveis numéricas"
 nivel: avançado
 tags: ["interativo", "geoespacial", "dashboard"]
@@ -75,22 +75,38 @@ nos três. Troque para "Por continente" e o realce passa a atingir o bloco intei
 
 ## Como foi feito
 
-Cada painel é um `ggplot2` normal usando as versões interativas dos geoms
-(`geom_sf_interactive()`, `geom_point_interactive()`, `geom_col_interactive()`),
-todos com a estética `data_id` apontando para a mesma chave — é ela, e só ela, que
-cria a ligação.
+O gráfico é desenhado em D3, no próprio runtime do site — os três painéis (mapa,
+dispersão, ranking) moram no mesmo `<svg>`, cada um seu próprio sistema de eixos,
+mas todos lendo do mesmo array de países.
 
-Os três são combinados num único gráfico com o operador `/` e o `+` do `patchwork`:
-o mapa em cima ocupando a largura toda, dispersão e barras dividindo a linha de
-baixo.
+O `script.R` gera o `output.png` com `ggplot2`+`patchwork` normalmente e, à parte,
+exporta a geometria dos países como **GeoJSON** dentro do `data.json` — cada
+`feature` já carrega as duas variáveis (`investimento`, `inovacao`) nas próprias
+`properties`, então a dispersão e o ranking são derivados no D3 das mesmas
+`features` do mapa, sem duplicar o dado em arrays à parte. A geometria é
+simplificada no R (`sf::st_simplify()`) antes de exportar — o mapa não precisa da
+resolução de vértices que uma análise espacial exigiria, só da forma reconhecível
+de cada país, e isso corta bastante o tamanho do `data.json`.
 
-Os cinco estilos são o mesmo conjunto de painéis embrulhado em `girafe()` com
-`girafe_options()` diferentes. Os dois primeiros usam `data_id` distintos (país e
-continente); os outros três variam apenas o CSS. Todos são reunidos num arquivo só
-com `htmltools::save_html()`, e a troca é feita por JavaScript puro.
+O mapa usa `d3.geoNaturalEarth1()` (a projeção do próprio D3, sem depender da
+projeção que o `sf`/`ggplot2` escolheu) e `d3.geoPath()` pra converter a geometria
+em atributo `d` de `<path>` — o mesmo par que desenha qualquer mapa em D3, do mapa
+mais simples ao mais complexo.
 
-A imagem estática sai do mesmo objeto `patchwork` via `ggsave()` — fora do
-`girafe()`, as estéticas de interatividade são ignoradas.
+**A ligação entre os três painéis** (a técnica que dá nome ao gráfico) é uma
+função só, chamada no hover de qualquer elemento em qualquer painel: ela decide
+quais países "batem" com a chave do elemento sob o cursor (o próprio país, no modo
+"por país"; todo o continente, no modo "por continente") e aplica o estilo de
+destaque a esses elementos nos **três** painéis ao mesmo tempo — mapa, pontos e
+barras compartilham a mesma função de realce, só o array de elementos muda.
+
+Os "5 estilos" da versão anterior existiam porque a interatividade do `ggiraph`
+é só CSS — "interatividade via CSS, não JS" não é um conceito que existe em D3,
+onde toda interação já é JS (mesma situação, e mesma solução, do
+[linha interativa com CSS customizado](../../evolution/linha-interativa-ggiraph-css)).
+Os 5 modos viraram estados escolhidos por um seletor, cada um combinando uma chave
+de agrupamento (país ou continente) com um tratamento visual (cor sólida, glow,
+esmaecer o resto) — a mesma função de realce, parametrizada.
 
 Dados fictícios: investimento em P&D e índice de inovação por país
 (`set.seed(1414)`), gerados a partir de um valor base por continente mais ruído. A
@@ -98,35 +114,38 @@ geometria dos países é real; os valores, não.
 
 ## Possíveis problemas pelo caminho
 
-- **Problema**: o destaque não se propaga entre os painéis. **Por quê**: o
-  `data_id` difere entre eles — nomes escritos de forma diferente, ou tipos
-  diferentes (fator versus texto). **Solução**: garantir a mesma chave exata nos
-  três; é a causa mais comum, e falha silenciosamente.
+- **Problema**: o destaque não se propaga entre os painéis. **Por quê**: a chave
+  usada num painel não bate com a de outro — nomes escritos de forma diferente,
+  espaço a mais, maiúscula/minúscula. **Solução**: os três painéis precisam ler a
+  chave da mesma propriedade, sem transformação no meio do caminho; é a causa mais
+  comum de falha silenciosa nesse tipo de gráfico, em qualquer linguagem.
 
-- **Problema**: o arquivo do widget fica muito grande. **Por quê**: cada estilo
-  embute um SVG completo com todos os polígonos do mapa, e são cinco. **Solução**:
-  simplificar a geometria antes de plotar (`sf::st_simplify()`) ou reduzir o número
-  de estilos.
+- **Problema**: o arquivo de dado fica grande. **Por quê**: geometria de país em
+  resolução alta vira milhares de vértices por polígono. **Solução**: simplificar
+  antes de exportar (`sf::st_simplify()`, como já é feito aqui) — a diferença
+  visual em escala mundial é imperceptível, e o arquivo cai bastante de tamanho.
 
-- **Problema**: o mapa sai distorcido ou vazio. **Por quê**: sistema de coordenadas
-  ausente ou incompatível. **Solução**: conferir o CRS do objeto espacial e
-  reprojetar se necessário.
+- **Problema**: o mapa sai distorcido, cortado ou vazio. **Por quê**: no D3, isso
+  costuma ser a projeção (`d3.geoPath()`) sem uma geometria de referência pra
+  calcular escala/centro — `fitSize()` precisa da coleção de países inteira, não
+  de um único país. **Solução**: chamar `fitSize()` sempre com a `FeatureCollection`
+  completa, mesmo que o desenho seja de um subconjunto dela.
 
-- **Problema**: a legenda de um painel desalinha o conjunto. **Por quê**: o
-  `patchwork` reserva espaço por painel. **Solução**: recolher legendas repetidas
-  com `plot_layout(guides = "collect")` ou ajustar as proporções.
-
-- **Problema**: os polígonos ficam pesados no navegador. **Por quê**: geometria de
-  alta resolução vira milhares de vértices no SVG. **Solução**: simplificar a
-  geometria — a diferença visual em escala mundial é imperceptível.
+- **Problema**: o hover fica lento com muitos países. **Por quê**: o realce
+  reavalia todo o conjunto (mapa + dispersão + barras) a cada `pointerenter`.
+  **Solução**: pra um conjunto do tamanho de países do mundo (~175) não chega a
+  ser perceptível; se a entidade fosse muito mais numerosa (milhares), valeria
+  pré-indexar os elementos por chave num `Map` em vez de filtrar a seleção inteira
+  a cada hover.
 
 ## Variações possíveis
 
-- Trocar o `data_id` por outra chave de agrupamento (região, faixa de renda) e
-  obter um novo modo de leitura sem mexer nos gráficos.
-- Substituir um dos painéis por um histograma ou boxplot, mantendo a ligação.
-- Acrescentar seleção por clique (`opts_selection`) para fixar comparações em vez
-  de depender do hover.
+- Trocar a chave de agrupamento por outra coluna (região, faixa de renda) e obter
+  um novo modo de leitura sem mexer no desenho dos três painéis.
+- Substituir um dos painéis por um histograma ou boxplot, mantendo a ligação — a
+  função de realce não sabe nem precisa saber que tipo de gráfico está destacando.
+- Trocar o hover por seleção por clique, pra fixar uma comparação em vez de
+  depender do cursor continuar sobre o elemento.
 - Aplicar a mesma técnica sem mapa — a ligação funciona entre quaisquer gráficos,
   como em
   [linha interativa com CSS customizado](../../evolution/linha-interativa-ggiraph-css).
