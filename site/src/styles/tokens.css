@@ -1,26 +1,50 @@
 :root {
+  /* ------------------------------------------------------------------ mundo
+     "Caderno de campo": o acervo é um caderno de laboratório/naturalista.
+     Duas superfícies físicas cobrem o site inteiro — nunca uma terceira:
+
+       PAPEL   página de caderno (pauta quadriculada, régua vermelha de
+               margem) — onde se lê uma entrada. Cada gráfico é um espécime
+               colado nessa página.
+       MURAL   quadro de cortiça — onde se navega o acervo inteiro (home).
+               Os espécimes viram fichas-índice presas ao mural.
+
+     Nenhum texto de corpo fica direto sobre o mural (contraste de tinta
+     contra cortiça é ~1.9:1 — medido, reprovado); tudo que precisa ser lido
+     no mural mora numa ficha de papel/kraft por cima dele. */
+
+  --paper: oklch(0.985 0.006 240);
+  --paper-surface: oklch(0.965 0.01 230);
+  --paper-surface-hover: oklch(0.93 0.012 230);
+  --paper-grid-line: oklch(0.9 0.02 230);
+  /* régua de margem, à la caderno de laboratório/pautado — só decorativa */
+  --paper-margin: oklch(0.55 0.16 25);
+  /* etiqueta de espécime — cartolina kraft. Só leva --color-ink/-muted em
+     cima (13.4:1 / 5.7:1, medidos); --cat-ink nela cai a ~3.8:1 no matiz mais
+     fraco (evolution), abaixo de 4.5:1 — nunca usar texto de categoria aqui. */
+  --tag-stock: oklch(0.9 0.035 75);
+  --board: oklch(0.4 0.05 55);
+  --board-deep: oklch(0.32 0.045 55);
+
   /* ------------------------------------------------------------------ cor
-     Estratégia: paleta completa (full palette) — a cor carrega informação, não
-     decora. As oito categorias do acervo têm cada uma o seu matiz, e é ele que
-     identifica a categoria em toda a navegação: filtro, card, página.
+     Estratégia: paleta completa — a cor carrega informação (qual categoria),
+     não decora. As oito categorias têm cada uma o seu matiz; ele aparece como
+     tira de fita washi (marca de área), nunca como grande bloco de fundo —
+     o material do mundo é papel/cortiça, a cor é o que prende o espécime nele.
 
-     Os matizes têm L e C IGUAIS entre si, variando só o ângulo. Se cada um
-     pegasse o croma máximo do seu matiz no sRGB, o violeta (que chega a 0.29)
-     gritaria e o turquesa (que só chega a 0.085) sumiria — a interface passaria
-     a sugerir uma hierarquia entre categorias que não existe. Os ângulos também
-     evitam de propósito o vale de croma do ciano (~195-215).
+     Os matizes têm L e C IGUAIS entre si, variando só o ângulo, pra nenhum
+     matiz gritar mais que outro (evitado o vale de croma do ciano ~195-215).
+     Papéis, igual à paleta anterior — só a APLICAÇÃO mudou de bloco de fundo
+     pra objeto físico (fita/carimbo/rubrica):
 
-     Três papéis por categoria, porque num layout de fundo claro cor viva vem de
-     ÁREA, nunca de texto pequeno colorido — exigir 4.5:1 de um texto contra
-     quase-branco empurra qualquer matiz pro murcho:
+       --cat-X        fita/carimbo/pino — marca não-textual. 3:1 mínimo
+                      (medido: 3.32:1 no matiz mais fraco).
+       --cat-X-ink    texto (nome da categoria, tag ativa). Mínimo medido:
+                      4.94:1 contra --paper, 4.58:1 contra --cat-X-wash.
+       --cat-X-wash   grifo/realce translúcido atrás de texto pequeno.
 
-       --cat-X        marca não-textual (ponto, régua, bloco, acento). 3:1 basta,
-                      então é a variante mais viva. Mínimo medido: 3.04:1.
-       --cat-X-ink    texto. Mínimo medido: 4.52:1 contra fundo e superfície,
-                      e 4.58:1 sobre o -wash da própria categoria.
-       --cat-X-wash   fundo de área.
-
-     Valores derivados por busca no gamut sRGB, não escolhidos no olho. */
+     Valores herdados da paleta anterior (já verificados em sRGB) — o que
+     mudou no redesign é o material que a carrega, não os ângulos. */
 
   --cat-part-of-whole: oklch(0.62 0.108 28);
   --cat-ranking: oklch(0.62 0.108 70);
@@ -50,43 +74,47 @@
   --cat-network-wash: oklch(0.955 0.038 350);
 
   /* Fallback pra quando a categoria não resolve (categoria nova ainda sem
-     matiz). Cinza neutro, nunca uma das oito — emprestar a cor de outra
-     categoria seria pior que não ter cor. */
+     matiz). Cinza neutro, nunca uma das oito. */
   --cat-fallback: oklch(0.62 0 0);
   --cat-fallback-ink: oklch(0.44 0 0);
   --cat-fallback-wash: oklch(0.955 0 0);
 
-  /* Cor da categoria da página/card atual. Cada superfície redefine as três
-     locais (ver lib/categoria.ts) e todo o resto do CSS lê daqui — assim
-     nenhum componente precisa saber quais categorias existem. */
+  /* Cor da categoria da página/card atual — cada superfície redefine as três
+     locais (ver lib/categoria.ts). */
   --cat: var(--cat-fallback);
   --cat-ink: var(--cat-fallback-ink);
   --cat-wash: var(--cat-fallback-wash);
 
-  /* Neutros em croma 0 de propósito: são o palco de oito matizes diferentes e
-     de 22 gráficos com fundo branco. Qualquer tinta aqui favoreceria uma das
-     categorias e brigaria com os thumbnails. Off-white de verdade, não creme. */
-  --color-bg: oklch(0.985 0 0);
-  --color-surface: oklch(0.955 0 0);
-  --color-surface-hover: oklch(0.925 0 0);
-  --color-border: oklch(0.885 0 0);
-  --color-border-strong: oklch(0.72 0 0);
+  /* Papéis de interface que mantêm o nome antigo — 15 gráficos D3 em
+     lib/viz/charts/*.ts leem estes tokens em runtime (ver lib/viz/theme.ts);
+     os NOMES são contrato, só os valores mudam de mundo. */
+  --color-bg: var(--paper);
+  --color-surface: var(--paper-surface);
+  --color-surface-hover: var(--paper-surface-hover);
+  --color-border: oklch(0.82 0.015 235);
+  --color-border-strong: oklch(0.62 0.02 235);
 
-  --color-ink: oklch(0.19 0 0);
-  --color-ink-muted: oklch(0.46 0 0);
+  --color-ink: oklch(0.2 0.02 255);
+  --color-ink-muted: oklch(0.44 0.02 255);
 
-  /* Papéis de interface que não pertencem a categoria nenhuma (foco, seleção,
-     link dentro de texto corrido). */
-  --color-primary: var(--color-ink);
-  --color-primary-ink: oklch(0.985 0 0);
-  --color-focus-ring: oklch(0.19 0 0 / 0.55);
+  /* Tinta-tinteiro azul — grifo/link/foco, nunca a cor de uma categoria
+     (foco é papel do sistema, não do acervo). 9:1 medido contra --paper. */
+  --color-primary: oklch(0.4 0.15 258);
+  --color-primary-ink: oklch(0.99 0 0);
+  --color-focus-ring: oklch(0.4 0.15 258 / 0.55);
 
   /* ---------------------------------------------------------- tipografia
-     Fraunces (serifada variável) contra IBM Plex Sans — pareadas no eixo de
-     contraste serif/sans, não duas humanistas parecidas. */
-  --font-display: 'Fraunces Variable', ui-serif, Georgia, 'Times New Roman', serif;
-  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+     Bitter (slab) contra Public Sans (humanista) — o par de uma capa de guia
+     de campo (título robusto, entalhado) com o corpo de um relatório oficial
+     datilografado (Public Sans nasceu pro U.S. Web Design System, mesmo
+     registro de formulário/rótulo de espécime). Courier Prime é a máquina de
+     escrever do protocolo reproduzível — o código já é, literalmente, o
+     "como fazer de novo". Caveat é a letra da margem, só pra anotação solta,
+     nunca corpo de texto. */
+  --font-display: 'Bitter Variable', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-body: 'Public Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Courier Prime', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --font-hand: 'Caveat', cursive;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -94,18 +122,14 @@
   --text-lg: 1.25rem;
   --text-xl: 1.75rem;
   --text-2xl: 2.25rem;
-  /* Título de página de gráfico — antes era 2.25rem fixo, tamanho de
-     documentação. É onde se passa o tempo, então é onde a tipografia precisa
-     mandar. */
   --text-3xl: clamp(2.25rem, 1.5rem + 3vw, 4rem);
-  --text-display: clamp(2.75rem, 1.7rem + 4vw, 5.5rem);
+  --text-display: clamp(2.5rem, 1.6rem + 3.6vw, 5.25rem);
 
-  /* Piso de -0.04em: abaixo disso as letras se tocam e vira aperto, não design. */
-  --tracking-display: -0.035em;
-  --tracking-title: -0.02em;
+  --tracking-display: -0.015em;
+  --tracking-title: -0.008em;
 
-  --leading-tight: 1.05;
-  --leading-snug: 1.3;
+  --leading-tight: 1.08;
+  --leading-snug: 1.32;
   --leading-body: 1.6;
 
   /* Espaçamento — escala base 4pt */
@@ -119,21 +143,28 @@
   --space-2xl: 4rem;
   --space-3xl: 6rem;
 
-  /* Estrutura */
+  /* Estrutura — papel é reto. Raio quase nenhum, só o suficiente pra não
+     cortar a fibra do papel; --radius-sm continua servindo etiqueta/chip. */
   --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
+  --radius-md: 0.125rem;
+  --radius-tape: 2px;
   --measure: 68ch;
   --content-width: 76rem;
 
-  --shadow-sm: 0 1px 2px oklch(0.19 0 0 / 0.06), 0 1px 1px oklch(0.19 0 0 / 0.04);
-  --shadow-md: 0 8px 24px oklch(0.19 0 0 / 0.10), 0 2px 6px oklch(0.19 0 0 / 0.06);
+  /* Sombra com o matiz do mural (a luz que bate no papel preso é a mesma que
+     bate na cortiça) — nunca cinza/azulada neutra. */
+  --shadow-sm: 0 1px 2px oklch(0.32 0.045 55 / 0.14), 0 1px 1px oklch(0.32 0.045 55 / 0.08);
+  --shadow-md: 0 10px 24px oklch(0.32 0.045 55 / 0.22), 0 2px 8px oklch(0.32 0.045 55 / 0.14);
+  --shadow-lift: 0 22px 40px oklch(0.28 0.04 55 / 0.3), 0 6px 14px oklch(0.28 0.04 55 / 0.18);
 
-  /* ------------------------------------------------------------- movimento */
+  /* ------------------------------------------------------------- movimento
+     Sem bounce/elastic — o papel assenta, não pula. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
   --duration-slow: 520ms;
+  --duration-slower: 720ms;
 
   /* z-index — escala semântica */
   --z-dropdown: 10;

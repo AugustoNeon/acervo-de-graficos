@@ -13,30 +13,30 @@ const categories = [...new Set(entries.map((e) => e.data.category))].sort();
 const base = import.meta.env.BASE_URL;
 ---
 
-<Base title="Acervo de Gráficos">
-  <header class="masthead">
-    <div class="masthead-inner">
-      <h1>Um catálogo de gráficos em R, um de cada vez.</h1>
+<Base title="Acervo de Gráficos" surface="board">
+  <div class="mural">
+    <header class="masthead">
+      <span class="pin" aria-hidden="true"></span>
+      <h1>Um caderno de campo sobre gráficos em R.</h1>
       <p class="intro">
-        Um gráfico novo em R, de tempos em tempos, organizados por categoria conforme vão sendo feitos.
+        Um espécime novo de tempos em tempos — o que é, quando usar, como ler e o protocolo
+        completo pra reproduzir. Organizados por categoria, como gavetas de uma coleção.
       </p>
-    </div>
-  </header>
+    </header>
 
-  <main class="content">
-    <nav class="filters" aria-label="Filtrar por categoria">
-      <button type="button" class="filter is-active" data-filter="all">Todos<span>{entries.length}</span></button>
+    <nav class="drawer-tabs" aria-label="Filtrar por categoria">
+      <button type="button" class="tab is-active" data-filter="all">
+        Tudo<span>{entries.length}</span>
+      </button>
       {categories.map((category) => (
-        <button type="button" class="filter" data-filter={category} style={corDaCategoria(category)}>
-          <i class="filter-dot" aria-hidden="true"></i>
-          {category}
-          <span>{entries.filter((e) => e.data.category === category).length}</span>
+        <button type="button" class="tab" data-filter={category} style={corDaCategoria(category)}>
+          {category}<span>{entries.filter((e) => e.data.category === category).length}</span>
         </button>
       ))}
     </nav>
 
     {entries.length > 0 ? (
-      <div class="grid" id="grid">
+      <div class="board-grid" id="grid">
         {entries.map((entry, i) => {
           const [category, slug] = entry.id.split('/');
           return (
@@ -48,37 +48,58 @@ const base = import.meta.env.BASE_URL;
               interactive={entry.data.interactive}
               thumbnail={`${base}/graficos/${category}/${slug}/output.png`}
               resumo={entry.data.resumo}
+              id={entry.id}
               index={i}
+              featured={i === 0}
             />
           );
         })}
       </div>
     ) : (
-      <p class="empty">Nenhum gráfico ainda — o primeiro está a caminho.</p>
+      <p class="note">Nenhum espécime ainda — o primeiro está a caminho.</p>
     )}
 
     {entries.length < 6 && (
-      <p class="coming-soon">
-        {entries.length} gráfico{entries.length === 1 ? '' : 's'} até agora — novos chegam aos poucos, quase todo dia.
+      <p class="note">
+        {entries.length} espécime{entries.length === 1 ? '' : 's'} até agora — novos entram no
+        caderno aos poucos, quase todo dia.
       </p>
     )}
-  </main>
+  </div>
 </Base>
 
 <style>
-  .masthead {
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--space-2xl) var(--space-md) var(--space-xl);
-  }
-
-  .masthead-inner {
+  .mural {
     max-width: var(--content-width);
     margin-inline: auto;
+    padding: var(--space-2xl) var(--space-md) var(--space-3xl);
+  }
+
+  .masthead {
+    position: relative;
+    max-width: 42rem;
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg) var(--space-lg) var(--space-xl);
+    background: var(--paper);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-0.6deg);
+  }
+
+  .pin {
+    position: absolute;
+    top: -0.65rem;
+    left: 2.25rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, oklch(0.98 0 0), var(--color-primary) 62%, oklch(0.24 0.1 258) 100%);
+    box-shadow: 0 3px 5px oklch(0.2 0.02 255 / 0.35);
   }
 
   h1 {
     font-size: var(--text-display);
-    max-width: 18ch;
+    max-width: 16ch;
     letter-spacing: var(--tracking-display);
     line-height: var(--leading-tight);
   }
@@ -91,113 +112,100 @@ const base = import.meta.env.BASE_URL;
     line-height: var(--leading-snug);
   }
 
-  .content {
-    max-width: var(--content-width);
-    margin-inline: auto;
-    padding: var(--space-xl) var(--space-md) var(--space-3xl);
-  }
-
-  .filters {
+  .drawer-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2xs);
-    margin-bottom: var(--space-lg);
+    align-items: flex-end;
+    gap: 0.35rem;
+    margin-bottom: var(--space-xl);
     position: sticky;
-    top: 0;
-    background: color-mix(in oklch, var(--color-bg) 92%, transparent);
-    backdrop-filter: blur(6px);
-    padding-block: var(--space-sm);
+    top: var(--space-sm);
     z-index: var(--z-sticky);
   }
 
-  .filter {
+  .tab {
     display: inline-flex;
     align-items: center;
-    gap: 0.45em;
-    padding: 0.5em 0.9em;
-    border-radius: 999px;
+    gap: 0.5em;
+    padding: 0.55em 0.95em 0.5em;
+    background: var(--paper-surface);
     border: 1px solid var(--color-border);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-ink-muted);
-    transition: background var(--duration-fast) var(--ease-out-expo),
-      color var(--duration-fast) var(--ease-out-expo),
-      border-color var(--duration-fast) var(--ease-out-expo);
-  }
-
-  /* O ponto é a cor viva da categoria; o rótulo fica em texto legível. Assim o
-     filtro usa exatamente o mesmo par de sinais do card, e a correspondência
-     entre chip e grade se lê sem precisar de rótulo extra. */
-  .filter-dot {
-    width: 0.5em;
-    height: 0.5em;
-    border-radius: 50%;
-    background: var(--cat);
-    flex: none;
-  }
-
-  .filter span {
+    border-top: 3px solid var(--cat, var(--color-border-strong));
     font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: inherit;
-    opacity: 0.7;
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--ease-out-expo),
+      background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo);
   }
 
-  .filter:hover {
-    border-color: var(--cat, var(--color-border-strong));
+  .tab span {
+    font-size: var(--text-xs);
+    opacity: 0.65;
+  }
+
+  .tab:hover {
+    transform: translateY(-3px);
     color: var(--color-ink);
   }
 
-  .filter.is-active {
-    background: var(--cat-wash);
-    border-color: var(--cat);
-    color: var(--cat-ink);
+  .tab.is-active {
+    background: var(--paper);
+    color: var(--cat-ink, var(--color-ink));
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
   }
 
-  .filter.is-active .filter-dot {
-    background: var(--cat-ink);
+  .tab[data-filter='all'].is-active {
+    border-top-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
-  /* "Todos" não é categoria nenhuma, então não empresta matiz de ninguém. */
-  .filter[data-filter='all'].is-active {
-    background: var(--color-ink);
-    border-color: var(--color-ink);
-    color: var(--color-primary-ink);
-  }
-
-  .grid {
+  .board-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-lg) var(--space-md);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-auto-flow: dense;
+    gap: var(--space-xl) var(--space-lg);
   }
 
-  .grid :global(.card[hidden]) {
+  .board-grid :global(.specimen[hidden]) {
     display: none;
   }
 
-  .empty,
-  .coming-soon {
-    color: var(--color-ink-muted);
+  .note {
+    color: var(--paper);
     font-size: var(--text-sm);
     margin-top: var(--space-lg);
+    font-family: var(--font-mono);
   }
 
   @media (max-width: 40rem) {
+    .mural {
+      padding: var(--space-lg) var(--space-sm) var(--space-2xl);
+    }
+
     .masthead {
-      padding: var(--space-xl) var(--space-sm) var(--space-lg);
+      padding: var(--space-md) var(--space-md) var(--space-lg);
+    }
+
+    .drawer-tabs {
+      position: static;
     }
   }
 </style>
 
 <script>
   const grid = document.getElementById('grid');
-  const filters = document.querySelectorAll<HTMLButtonElement>('.filter');
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.tab');
 
-  filters.forEach((button) => {
+  tabs.forEach((button) => {
     button.addEventListener('click', () => {
       const target = button.dataset.filter;
-      filters.forEach((b) => b.classList.toggle('is-active', b === button));
-      grid?.querySelectorAll<HTMLElement>('.card').forEach((card) => {
+      tabs.forEach((b) => b.classList.toggle('is-active', b === button));
+      grid?.querySelectorAll<HTMLElement>('.specimen').forEach((card) => {
         const show = target === 'all' || card.dataset.category === target;
         card.hidden = !show;
       });

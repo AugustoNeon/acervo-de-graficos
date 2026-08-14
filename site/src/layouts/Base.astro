@@ -1,18 +1,24 @@
 ---
-import '@fontsource-variable/fraunces';
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource-variable/bitter';
+import '@fontsource-variable/public-sans';
+import '@fontsource/courier-prime/400.css';
+import '@fontsource/courier-prime/700.css';
+import '@fontsource/caveat/500.css';
+import '@fontsource/caveat/600.css';
 import '../styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
+  /** Qual superfície física do mundo esta página é — ver styles/global.css. */
+  surface?: 'paper' | 'board';
 }
 
-const { title, description = 'Um catálogo de gráficos em R, um de cada vez.' } = Astro.props;
+const {
+  title,
+  description = 'Um catálogo de gráficos em R, um de cada vez.',
+  surface = 'paper',
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -25,7 +31,25 @@ const { title, description = 'Um catálogo de gráficos em R, um de cada vez.' }
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body>
+  <body data-surface={surface}>
+    <!--
+      THESIS: o acervo é um caderno de campo, não uma vitrine de produto — cada
+      gráfico é um espécime datado, não um card de SaaS. Recusa a grade de
+      cards idêntica e o fundo neutro "documentação técnica".
+      OWN-WORLD: papel quadriculado com régua de margem vermelha (leitura) e
+      quadro de cortiça (navegação); categoria = fita washi/carimbo, nunca
+      bloco de fundo; Bitter (slab) + Public Sans + Courier Prime + Caveat.
+      STORY: o visitante folheia um caderno de laboratório real — entende o
+      que é um tipo de gráfico, quando usar, como foi feito, e sai com o
+      protocolo (código) pra reproduzir.
+      FIRST VIEWPORT: mural — ficha-card de título presa no topo, abas de
+      categoria como divisórias de gaveta, espécimes-índice espalhados e
+      levemente inclinados abaixo, o mais recente maior.
+      FORM: "caderno de campo" — direção atribuída (índice 3 da lista própria,
+      roll de direção), confirmada pelo usuário sobre 3 desafiantes do catálogo.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with
+      the finish review, the verdict, and DESIGN.md.
+    -->
     <slot />
   </body>
 </html>

@@ -13,8 +13,43 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-body);
   color: var(--color-ink);
-  background: var(--color-bg);
   font-kerning: normal;
+  min-height: 100vh;
+}
+
+/* -------------------------------------------------------------- superfícies
+   O site inteiro é uma destas duas — nunca as duas ao mesmo tempo. Base.astro
+   estampa o atributo a partir da prop `surface`; ver docs de tokens.css pro
+   porquê de não haver uma terceira superfície ou texto direto sobre --board. */
+
+/* Nota: uma textura de ruído via SVG feTurbulence em background-image foi
+   tentada aqui e removida — o Chromium falha em repintar alguns ladrilhos
+   dela em páginas longas (blocos inteiros do grid somem ao rolar, confirmado
+   isolando a camada). Gradientes simples não têm esse problema. */
+
+body[data-surface='paper'] {
+  background-color: var(--paper);
+  background-image:
+    /* pauta quadriculada */
+    repeating-linear-gradient(var(--paper-grid-line) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, var(--paper-grid-line) 0 1px, transparent 1px 28px),
+    /* régua de margem — só em telas largas o bastante pra não brigar com o conteúdo */
+    linear-gradient(90deg, transparent 0 4.75rem, oklch(0.55 0.16 25 / 0.55) 4.75rem calc(4.75rem + 1px), transparent calc(4.75rem + 1px));
+}
+
+@media (max-width: 60rem) {
+  body[data-surface='paper'] {
+    background-image:
+      repeating-linear-gradient(var(--paper-grid-line) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, var(--paper-grid-line) 0 1px, transparent 1px 24px);
+  }
+}
+
+body[data-surface='board'] {
+  background-color: var(--board);
+  background-image:
+    radial-gradient(ellipse at 50% -10%, oklch(0.46 0.05 55 / 0.5), transparent 55%),
+    radial-gradient(ellipse at 50% 110%, var(--board-deep), transparent 60%);
 }
 
 img, svg, video, iframe {
@@ -50,9 +85,10 @@ button {
   outline-offset: 2px;
 }
 
+/* Grifo de marca-texto, não bloco sólido — a tinta continua legível por baixo. */
 ::selection {
-  background: var(--color-primary);
-  color: var(--color-primary-ink);
+  background: oklch(0.86 0.15 95 / 0.6);
+  color: var(--color-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,9 +1,5 @@
 # Product
 
-## Register
-
-product
-
 ## Users
 
 Por enquanto, só o próprio Augusto — uma ferramenta pessoal de consulta pra navegar e comparar os gráficos R que ele vai adicionando ao longo do tempo. Está sendo construída sabendo que vai virar um portfólio compartilhável no futuro, então a qualidade visual não deve ser tratada como descartável mesmo enquanto o uso é só interno.
@@ -12,19 +8,19 @@ Por enquanto, só o próprio Augusto — uma ferramenta pessoal de consulta pra 
 
 Ser um **acervo de referência sobre tipos de gráfico que dá pra criar** — não uma vitrine de resultados nem um log técnico pessoal. Cada entrada responde, pra quem chega de fora: o que é esse gráfico, pra que serve, quando usar e quando evitar, que dado ele exige, como lê-lo, como foi construído, que armadilhas esperar e como reproduzir (código completo na página). Organizado por categoria. Sucesso = alguém que nunca viu aquele tipo de gráfico entende se ele serve pro problema que tem em mãos, e consegue reproduzir.
 
-## Register
-
-Este é um acervo autoral que vira portfólio — o design **é** parte do produto, não só serve a ele. Trate como `brand`, não como `product`: a página pode ter presença visual própria, não precisa desaparecer atrás da tarefa.
-
 ## Brand Personality
 
-Editorial / tipográfico com **cor e movimento assumidos**: tipografia grande como protagonista, layout com respiro tipo revista de dados — mas a cor é viva e o movimento é parte do material, não enfeite aplicado no fim. Os gráficos continuam sendo o elemento visual mais forte da página; a diferença é que a UI ao redor deixou de ser neutra por medo de competir com eles.
+Este é um acervo autoral que vira portfólio — o design **é** parte do produto, não só serve a ele. A página tem presença visual própria, não precisa desaparecer atrás da tarefa.
 
-> **Mudou em 2026-07-31.** A versão anterior pedia "fundo claro/neutro, decoração mínima" e estratégia de cor contida. O resultado ficou apagado demais na prática — pedido explícito do usuário por cores mais vivas nos gráficos e por movimento no site inteiro. Se algo neste repositório ainda assumir o visual contido, está desatualizado.
+Desde o redesign de 2026-08-14, o mundo visual é o **"caderno de campo"**: um caderno de laboratório/naturalista, não um site de produto. Decisão completa e sistema visual (paleta, tipografia, materiais, motion) em [DESIGN.md](DESIGN.md) — não duplicar aqui.
+
+> **Histórico:** a versão de 2026-07-21 pedia "fundo claro/neutro, decoração mínima"; a de 2026-07-31 reagiu contra isso pedindo cor viva e movimento, mas ainda dentro do vocabulário de "site de produto" (cards, filtros, tokens neutros com sotaque de cor). O redesign de 2026-08-14 foi além: trocou o **mundo** inteiro, a pedido explícito do usuário ("redesign TOTAL", "irreconhecível"), não só a paleta em cima da mesma estrutura.
 
 ## Anti-references
 
 O r-graph-gallery.com original: sidebar de categorias à esquerda, fundo branco genérico, grid de cards padrão, estética de tutorial/documentação técnica. O site precisa ser claramente diferente na execução visual — a organização por categoria é reaproveitada (é útil pra navegação), mas o visual é autoral.
+
+Também evitar, desde o redesign de 2026-08-14: o próprio visual anterior do site (cards uniformes, fundo neutro com sotaque de cor) — virou o segundo anti-reference, não só o r-graph-gallery.com original.
 
 ## Design Principles
 

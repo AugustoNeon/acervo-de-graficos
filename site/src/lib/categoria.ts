@@ -1,12 +1,14 @@
 /**
  * Cor da categoria.
  *
- * Cada categoria do acervo tem o seu matiz (ver tokens.css). Em vez de espalhar
- * `if categoria === 'network'` pelos componentes, cada superfície declara de
- * qual categoria ela é redefinindo `--cat`/`--cat-ink`/`--cat-wash` localmente,
- * e todo o CSS abaixo dela lê essas três. Assim nenhum componente precisa saber
- * quais categorias existem, e acrescentar uma categoria nova é acrescentar três
- * tokens no tokens.css — nada mais.
+ * Cada categoria do acervo tem o seu matiz (ver tokens.css) — no mundo do
+ * "caderno de campo" ele vira fita washi/carimbo em cima do espécime, nunca
+ * um bloco de fundo. Em vez de espalhar `if categoria === 'network'` pelos
+ * componentes, cada superfície declara de qual categoria ela é redefinindo
+ * `--cat`/`--cat-ink`/`--cat-wash` localmente, e todo o CSS abaixo dela lê
+ * essas três. Assim nenhum componente precisa saber quais categorias existem,
+ * e acrescentar uma categoria nova é acrescentar três tokens no tokens.css —
+ * nada mais.
  */
 
 /** Categorias que já têm matiz próprio em tokens.css. */
