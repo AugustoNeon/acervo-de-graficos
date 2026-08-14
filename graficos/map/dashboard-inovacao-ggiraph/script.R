@@ -70,6 +70,10 @@ ggsave("output.png", plot = combo, width = 11, height = 9, dpi = 150)
 # ---------------------------------------------------------------------------
 world_exportavel <- world |>
   select(nome = name_long, continente = continent, investimento = investimento_pd, inovacao = indice_inovacao) |>
+  # Fiji cruza o antimeridiano (~180deg); sem isso o anel salta de +180 pra
+  # -180 e desenha uma reta atravessando o mapa inteiro. st_wrap_dateline()
+  # corta a geometria em pedacos validos dos dois lados da linha.
+  st_wrap_dateline(options = c("WRAPDATELINE=YES", "DATELINEOFFSET=10")) |>
   st_simplify(dTolerance = 0.15, preserveTopology = TRUE)
 
 caminho_geojson <- tempfile(fileext = ".geojson")
@@ -81,6 +85,14 @@ st_write(
 )
 mapa_geojson <- jsonlite::fromJSON(caminho_geojson, simplifyVector = FALSE)
 unlink(caminho_geojson)
+
+# Nota: o GeoJSON que o sf/GDAL escreve aqui sai com o enrolamento dos aneis
+# INCONSISTENTE entre paises (uns anti-horario, outros horario -- nao existe
+# flag do GDAL que resolva isso pra esse dataset, RFC7946=YES incluido, foi
+# testado). O d3-geo (client-side) e sensivel a isso pro clipping esferico;
+# a correcao mora no proprio modulo D3 (corrigirEnrolamento() em
+# dashboard-inovacao-ggiraph.ts), nao aqui -- ver AGENTS.md "Licoes
+# aprendidas" 2026-08-14 pro raciocinio completo.
 
 viz <- list(
   meta = list(
