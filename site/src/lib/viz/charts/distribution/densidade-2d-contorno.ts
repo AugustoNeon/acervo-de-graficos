@@ -21,9 +21,9 @@ import {
   axisBottom,
   axisLeft,
   pointer,
-  type Selection,
 } from 'd3';
 import { DURATION, EASE_STATE, garantirEstadoFinal } from '../../motion';
+import { estilarEixo } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Ponto {
@@ -96,11 +96,6 @@ const chart: VizChart = {
 
     const eixoXSel = g.append('g').attr('transform', `translate(0,${alturaUtil})`);
     const eixoYSel = g.append('g');
-    const estilarEixo = (sel: Selection<SVGGElement, unknown, null, undefined>) => {
-      sel.select('.domain').attr('stroke', theme.border);
-      sel.selectAll('.tick line').attr('stroke', theme.border);
-      sel.selectAll('text').attr('fill', theme.inkMuted).attr('font-family', theme.fontMono).attr('font-size', px(11));
-    };
 
     // Rótulos "x"/"y" — mesma leitura minimalista do output.png (theme_minimal).
     svg
@@ -150,8 +145,8 @@ const chart: VizChart = {
 
     calcularContornos(niveisAtual);
     redesenhar();
-    estilarEixo(eixoXSel.call(axisBottom(x).ticks(6).tickSizeOuter(0)));
-    estilarEixo(eixoYSel.call(axisLeft(y).ticks(6).tickSizeOuter(0)));
+    estilarEixo(eixoXSel.call(axisBottom(x).ticks(6).tickSizeOuter(0)), theme, px);
+    estilarEixo(eixoYSel.call(axisLeft(y).ticks(6).tickSizeOuter(0)), theme, px);
 
     // ------------------------------------------------------------- hover
     const overlay = g

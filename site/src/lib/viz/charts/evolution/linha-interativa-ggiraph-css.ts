@@ -10,7 +10,6 @@
 
 import {
   select,
-  scaleUtc,
   scaleLinear,
   line,
   axisBottom,
@@ -19,10 +18,10 @@ import {
   pointer,
   zoom,
   zoomIdentity,
-  type Selection,
   type ScaleTime,
 } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal } from '../../motion';
+import { escalaTemporalUtc, estilarEixo, estilarGrade, formatarDataUtc } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Ponto {
@@ -78,13 +77,15 @@ const chart: VizChart = {
     const paises = [...porPais.keys()];
     const entradas = [...porPais.entries()];
 
-    // scaleUtc (nao scaleTime): as datas vem do data.json como "AAAA-MM-DD",
-    // que o JS parseia como meia-noite UTC -- usar uma escala UTC evita todo
-    // um genero de bug de fuso horario (eixo/ticks/format calculando no fuso
-    // local do navegador, ver AGENTS.md "Licoes aprendidas" 2026-07-21).
-    const x = scaleUtc()
-      .domain([Math.min(...pontos.map((d) => +d.data)), Math.max(...pontos.map((d) => +d.data))])
-      .range([MARGEM.esq, VB_W - MARGEM.direita]);
+    // escalaTemporalUtc (nao scaleTime): as datas vem do data.json como
+    // "AAAA-MM-DD", que o JS parseia como meia-noite UTC -- usar uma escala
+    // UTC evita todo um genero de bug de fuso horario (eixo/ticks/format
+    // calculando no fuso local do navegador, ver AGENTS.md "Licoes
+    // aprendidas" 2026-07-21).
+    const x = escalaTemporalUtc(
+      [Math.min(...pontos.map((d) => +d.data)), Math.max(...pontos.map((d) => +d.data))],
+      [MARGEM.esq, VB_W - MARGEM.direita]
+    );
     const y = scaleLinear()
       .domain([Math.min(...pontos.map((d) => d.indice)), Math.max(...pontos.map((d) => d.indice))])
       .nice()
@@ -125,34 +126,20 @@ const chart: VizChart = {
     const gradeYSel = svg.append('g').attr('transform', `translate(${MARGEM.esq},0)`);
     const gradeXSel = svg.append('g').attr('transform', `translate(0,${VB_H - MARGEM.baixo})`);
 
-    const estilarGrade = (sel: Selection<SVGGElement, unknown, null, undefined>) => {
-      sel.select('.domain').remove();
-      sel.selectAll('.tick line').attr('stroke', theme.border).attr('stroke-opacity', 0.6);
-    };
-    estilarGrade(gradeYSel.call(axisLeft(y).ticks(5).tickSize(-larguraUtil).tickFormat(() => '')));
-    estilarGrade(gradeXSel.call(axisBottom(x).ticks(6).tickSize(-alturaUtil).tickFormat(() => '')));
+    estilarGrade(gradeYSel.call(axisLeft(y).ticks(5).tickSize(-larguraUtil).tickFormat(() => '')), theme);
+    estilarGrade(gradeXSel.call(axisBottom(x).ticks(6).tickSize(-alturaUtil).tickFormat(() => '')), theme);
 
     // ---------------------------------------------------------------- eixos
     // tickFormat customizado: o default do d3-axis so tem nomes de mes em
     // ingles (sem locale pt-BR embutido) -- timeZone:'UTC' pelo mesmo motivo
-    // do tooltip (as datas sao meia-noite UTC).
-    const formatarTick = (d: Date) =>
-      d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    // do tooltip (as datas sao meia-noite UTC), ja embutido em formatarDataUtc.
+    const formatarTick = (d: Date) => formatarDataUtc(d);
 
     const eixoXSel = svg.append('g').attr('transform', `translate(0,${VB_H - MARGEM.baixo})`);
     const eixoYSel = svg.append('g').attr('transform', `translate(${MARGEM.esq},0)`);
 
-    const estilarEixo = (sel: Selection<SVGGElement, unknown, null, undefined>) => {
-      sel.select('.domain').attr('stroke', theme.border);
-      sel.selectAll('.tick line').attr('stroke', theme.border);
-      sel
-        .selectAll('text')
-        .attr('fill', theme.inkMuted)
-        .attr('font-family', theme.fontMono)
-        .attr('font-size', px(11));
-    };
-    estilarEixo(eixoXSel.call(axisBottom(x).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)));
-    estilarEixo(eixoYSel.call(axisLeft(y).ticks(5).tickSizeOuter(0)));
+    estilarEixo(eixoXSel.call(axisBottom(x).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)), theme, px);
+    estilarEixo(eixoYSel.call(axisLeft(y).ticks(5).tickSizeOuter(0)), theme, px);
 
     // ---------------------------------------------------------------- linhas
     const gerarLinhaCom = (xEsc: ScaleTime<number, number>) =>
@@ -245,8 +232,8 @@ const chart: VizChart = {
         linhas.attr('d', ([, pts]) => gerar(pts));
         alvosHover.attr('d', ([, pts]) => gerar(pts));
         pontosSel.attr('cx', (d) => xAtual(d.data));
-        estilarEixo(eixoXSel.call(axisBottom(xAtual).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)));
-        estilarGrade(gradeXSel.call(axisBottom(xAtual).ticks(6).tickSize(-alturaUtil).tickFormat(() => '')));
+        estilarEixo(eixoXSel.call(axisBottom(xAtual).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)), theme, px);
+        estilarGrade(gradeXSel.call(axisBottom(xAtual).ticks(6).tickSize(-alturaUtil).tickFormat(() => '')), theme);
       });
 
     const overlayZoom = svg
@@ -273,8 +260,7 @@ const chart: VizChart = {
       return +dataAlvo - +antes.data < +depois.data - +dataAlvo ? antes : depois;
     };
 
-    const rotuloData = (d: Date) =>
-      d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const rotuloData = (d: Date) => formatarDataUtc(d);
 
     overlayZoom
       .on('pointermove', (evento: PointerEvent) => {

@@ -9,8 +9,9 @@
  * bisector comum sobre a série (suavizada ou não) atualmente visível.
  */
 
-import { select, scaleUtc, scaleLinear, area, line, axisBottom, axisLeft, bisector, pointer, brushX, type ScaleTime, type Selection } from 'd3';
+import { select, scaleLinear, area, line, axisBottom, axisLeft, pointer, bisector, brushX } from 'd3';
 import { DURATION, EASE_ENTER, garantirEstadoFinal } from '../../motion';
+import { escalaTemporalUtc, estilarEixo, estilarGrade, formatarDataUtc } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Ponto {
@@ -60,7 +61,7 @@ const chart: VizChart = {
     // vertical ao recortar um intervalo, mas manter fixo evita que a curva
     // "pule" de forma e continua batendo com o output.png, que mostra a
     // série inteira.
-    const xBase = scaleUtc().domain(dominioX).range([0, larguraUtil]);
+    const xBase = escalaTemporalUtc(dominioX, [0, larguraUtil]);
     const yFoco = scaleLinear().domain(dominioY).range([FOCO_ALTURA, 0]);
     const yCtx = scaleLinear().domain(dominioY).range([CTX_ALTURA, 0]);
 
@@ -71,8 +72,7 @@ const chart: VizChart = {
       .attr('viewBox', `0 0 ${VB_W} ${VB_H}`)
       .attr('aria-hidden', 'true');
 
-    const formatarTick = (d: Date) =>
-      d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+    const formatarTick = (d: Date) => formatarDataUtc(d, { month: 'short', year: '2-digit' });
 
     // ------------------------------------------------------------- média móvel
     // Janela à direita (trailing), com janela crescente no início da série —
@@ -96,12 +96,8 @@ const chart: VizChart = {
 
     const gradeYSel = gFoco.append('g');
     const gradeXSel = gFoco.append('g').attr('transform', `translate(0,${FOCO_ALTURA})`);
-    const estilarGrade = (sel: Selection<SVGGElement, unknown, null, undefined>) => {
-      sel.select('.domain').remove();
-      sel.selectAll('.tick line').attr('stroke', theme.border).attr('stroke-opacity', 0.6);
-    };
-    estilarGrade(gradeYSel.call(axisLeft(yFoco).ticks(5).tickSize(-larguraUtil).tickFormat(() => '')));
-    estilarGrade(gradeXSel.call(axisBottom(xFoco).ticks(6).tickSize(-FOCO_ALTURA).tickFormat(() => '')));
+    estilarGrade(gradeYSel.call(axisLeft(yFoco).ticks(5).tickSize(-larguraUtil).tickFormat(() => '')), theme);
+    estilarGrade(gradeXSel.call(axisBottom(xFoco).ticks(6).tickSize(-FOCO_ALTURA).tickFormat(() => '')), theme);
 
     const clipId = `serie-temporal-clip-${Math.random().toString(36).slice(2)}`;
     svg
@@ -130,11 +126,6 @@ const chart: VizChart = {
 
     const eixoXFocoSel = gFoco.append('g').attr('transform', `translate(0,${FOCO_ALTURA})`);
     const eixoYFocoSel = gFoco.append('g');
-    const estilarEixo = (sel: Selection<SVGGElement, unknown, null, undefined>) => {
-      sel.select('.domain').attr('stroke', theme.border);
-      sel.selectAll('.tick line').attr('stroke', theme.border);
-      sel.selectAll('text').attr('fill', theme.inkMuted).attr('font-family', theme.fontMono).attr('font-size', px(11));
-    };
 
     // Crosshair + ponto ativo: leitura data/valor sob o cursor.
     const crosshair = gFoco
@@ -156,8 +147,7 @@ const chart: VizChart = {
       .attr('pointer-events', 'none');
 
     const acharPonto = bisector<PontoLido, Date>((d) => d.data).left;
-    const rotuloData = (d: Date) =>
-      d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const rotuloData = (d: Date) => formatarDataUtc(d, { day: '2-digit', month: 'short', year: 'numeric' });
 
     const overlayFoco = gFoco
       .append('rect')
@@ -213,7 +203,7 @@ const chart: VizChart = {
       .attr('stroke-width', px(1));
 
     const eixoXCtxSel = gCtx.append('g').attr('transform', `translate(0,${CTX_ALTURA})`);
-    estilarEixo(eixoXCtxSel.call(axisBottom(xBase).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)));
+    estilarEixo(eixoXCtxSel.call(axisBottom(xBase).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)), theme, px);
 
     // ----------------------------------------------------------------- brush
     const brush = brushX<unknown>()
@@ -239,10 +229,10 @@ const chart: VizChart = {
     function redesenharFoco(): void {
       areaSel.attr('d', areaFoco(suave));
       linhaSel.attr('d', linhaFoco(suave));
-      estilarGrade(gradeXSel.call(axisBottom(xFoco).ticks(6).tickSize(-FOCO_ALTURA).tickFormat(() => '')));
-      estilarEixo(eixoXFocoSel.call(axisBottom(xFoco).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)));
+      estilarGrade(gradeXSel.call(axisBottom(xFoco).ticks(6).tickSize(-FOCO_ALTURA).tickFormat(() => '')), theme);
+      estilarEixo(eixoXFocoSel.call(axisBottom(xFoco).ticks(6).tickSizeOuter(0).tickFormat(formatarTick)), theme, px);
     }
-    estilarEixo(eixoYFocoSel.call(axisLeft(yFoco).ticks(5).tickSizeOuter(0)));
+    estilarEixo(eixoYFocoSel.call(axisLeft(yFoco).ticks(5).tickSizeOuter(0)), theme, px);
     redesenharFoco();
 
     // --------------------------------------------------------- controle de média
