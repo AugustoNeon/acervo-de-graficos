@@ -1,14 +1,14 @@
 ---
-title: "Densidade 2D (stat_density_2d)"
+title: "Densidade 2D em bandas de contorno"
 category: distribution
 date: 2026-07-23
 source: "https://www.data-to-viz.com/graph/density2d.html"
-interactive: false
-resumo: "Mapa de calor de onde os pontos se concentram, no lugar de um gráfico de dispersão com sobreposição demais."
-pacotes: ["ggplot2", "hrbrthemes"]
+interactive: true
+resumo: "Bandas de contorno mostrando onde os pontos se concentram, no lugar de um gráfico de dispersão com sobreposição demais."
+pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "duas variáveis numéricas (uma linha por observação)"
 nivel: básico
-tags: ["estático", "densidade", "distribuição"]
+tags: ["interativo", "densidade", "distribuição"]
 ---
 
 ## O que é
@@ -58,49 +58,72 @@ terceira variável.
 
 ## Como foi feito
 
-`stat_density_2d()` faz a estimativa por kernel e devolve a superfície pronta para
-o `ggplot2`. Com `geom = "polygon"` e `aes(fill = after_stat(density))`, as faixas
-saem preenchidas em vez de apenas contornadas.
+O gráfico é desenhado em D3, no próprio runtime do site — não existe um widget R
+pronto pra esse tipo de mapa, então tanto a miniatura quanto a versão interativa
+calculam sua própria estimativa de densidade, cada uma com seu método:
 
-O parâmetro que mais muda o resultado é o número de níveis (`bins` ou `n`): poucos
-níveis simplificam demais, muitos criam ruído visual.
+- **`output.png`**: `stat_density_2d()` (que usa `MASS::kde2d()` por baixo) com
+  `geom = "polygon"` e `contour = TRUE` devolve bandas preenchidas prontas para o
+  `ggplot2` — cada banda é o contorno de um nível de igual densidade, como as
+  curvas de nível de um mapa topográfico.
+- **Versão interativa**: `d3.contourDensity()` recalcula as bandas do zero, a
+  partir dos mesmos pontos brutos exportados no `data.json` — o R não exporta a
+  geometria pronta porque bandas de contorno podem ter furos (uma banda mais densa
+  "vazada" dentro de uma menos densa), estrutura incômoda de serializar de forma
+  genérica. A paridade visual entre as duas vem de usarem a mesma paleta
+  (`YlOrRd`, sequencial) e a mesma família de técnica — não de desenhar
+  pixel-a-pixel a mesma geometria calculada duas vezes por algoritmos diferentes.
 
-A paleta é `scale_fill_distiller(palette = "YlOrRd")`, sequencial — apropriada para
-uma grandeza que só cresce, como densidade.
+O controle deslizante muda `.thresholds(n)` do `d3.contourDensity()` — o mesmo
+parâmetro "número de níveis" citado acima, agora ajustável em tempo real: poucos
+níveis simplificam demais, muitos criam ruído visual. Passar o cursor sobre o
+gráfico faz um teste de ponto-dentro-de-polígono (regra par-ímpar, a mesma que o
+`fill-rule` padrão do SVG usa) contra cada banda, da mais densa pra menos densa,
+pra achar qual nível está sob o cursor.
 
 Dados fictícios: quatro agrupamentos gaussianos gerados com `rnorm()` e
 `set.seed(2026)`, escolhidos para que os múltiplos picos ficassem visíveis.
 
-Existe uma versão tridimensional e interativa da mesma distribuição em
+Existe uma versão tridimensional da mesma distribuição em
 [superfície 3D de densidade](../superficie-3d-densidade) — mesmos dados, outra
 forma de olhar.
 
 ## Possíveis problemas pelo caminho
 
-- **Problema**: `aes(fill = ..density..)` gera aviso de sintaxe obsoleta. **Por
-  quê**: a notação `..variavel..` foi substituída no ggplot2 moderno. **Solução**:
-  usar `aes(fill = after_stat(density))`.
-
 - **Problema**: a densidade "vaza" para fora da região onde existem dados. **Por
   quê**: a estimativa por kernel espalha massa em torno de cada ponto, inclusive
-  para além do limite observado. **Solução**: recortar com
-  `coord_cartesian()` ou reduzir a largura de banda; e ter em mente que a suavidade
-  das bordas é artefato do método, não do dado.
+  para além do limite observado. **Solução**: reduzir a largura de banda
+  (`bandwidth()` no D3, `h` no `MASS::kde2d()`); e ter em mente que a suavidade das
+  bordas é artefato do método, não do dado.
 
 - **Problema**: aparecem picos onde há pouquíssimas observações. **Por quê**: com
   poucos dados a estimativa é instável. **Solução**: aumentar a amostra ou trocar
   por um gráfico de dispersão.
 
-- **Problema**: as cores não distinguem nada — quase tudo sai no mesmo tom. **Por
-  quê**: há uma concentração muito dominante que comprime o resto da escala.
-  **Solução**: usar uma transformação (raiz ou log) na escala de preenchimento.
+- **Problema**: as bandas mais externas desaparecem ao aumentar muito o número de
+  níveis. **Por quê**: com muitos níveis, os intervalos de densidade entre um e
+  outro ficam finos demais pra sobrar espaço visível nas regiões de baixa
+  densidade. **Solução**: não é um bug — é o próprio trade-off que o controle
+  deslizante existe pra deixar explorar; comece de novo com poucos níveis pra
+  reancorar a leitura.
+
+- **Problema**: o hover não encontra nenhuma banda mesmo com o cursor visivelmente
+  dentro de uma. **Por quê**: o teste par-ímpar depende de os polígonos estarem
+  fechados e sem auto-interseção — um contorno degenerado (raro, mas possível em
+  bandas muito finas) pode confundir a contagem de cruzamentos. **Solução**:
+  aumentar levemente o `bandwidth()` costuma resolver, suavizando a banda o
+  suficiente pra evitar geometria degenerada.
 
 ## Variações possíveis
 
-- Trocar `geom = "polygon"` por contornos em linha, resultado mais leve e discreto.
-- Sobrepor os pontos originais com `geom_point(alpha = 0.1)`, unindo a visão geral
-  e o dado bruto.
-- Usar `geom_hex()` ou `geom_bin2d()`, que contam observações em células em vez de
-  estimar uma superfície contínua — menos suave, mais fiel ao dado.
-- Separar em painéis por categoria com `facet_wrap()` para comparar distribuições
-  entre grupos.
+- Sobrepor os pontos originais com opacidade baixa, unindo a visão geral da
+  densidade e o dado bruto.
+- Colorir por grupo em vez de por densidade — várias distribuições sobrepostas,
+  cada uma com um matiz e as bandas mais externas com bastante transparência.
+- Adicionar um segundo controle pra largura de banda (`bandwidth()`), ao lado do
+  de número de níveis — juntos, os dois parâmetros que mais mudam o resultado da
+  estimativa ficam exploráveis em tempo real.
+- Trocar os poucos toques finais que ainda mudam entre uma execução e outra por
+  algo determinístico visualmente — por exemplo, fixar o domínio da escala de cor
+  em vez de recalculá-lo a cada nível, pra que a cor de uma banda específica não
+  mude de tom ao mover o controle deslizante.
