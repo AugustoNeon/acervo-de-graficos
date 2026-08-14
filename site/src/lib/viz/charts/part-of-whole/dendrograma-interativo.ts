@@ -11,8 +11,20 @@
  */
 
 import { select, hierarchy, tree, linkHorizontal, type HierarchyNode, type Selection } from 'd3';
-import { DURATION, EASE_STATE, garantirEstadoFinal } from '../../motion';
+import { EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
 import type { DrawContext, VizChart } from '../../types';
+
+/**
+ * Duração/curva da ramificação (abrir/fechar um nó) — mais lenta e com
+ * deceleração mais pronunciada que o padrão `DURATION.base`/`EASE_STATE` de
+ * mudança de estado instantânea (filtro, troca de série): aqui o movimento É
+ * o conteúdo, o galho crescendo, então merece ser visto, não só confirmado.
+ * `EASE_ENTER` (exponencial) desacelera mais no final do que `EASE_STATE`
+ * (cúbica) — a diferença fica clara bem no fim do movimento, quando o galho
+ * "assenta" devagar em vez de simplesmente parar.
+ */
+const DURACAO_RAMIFICACAO = 640;
+const JANELA_CASCATA = 300;
 
 interface No {
   nome: string;
@@ -94,8 +106,15 @@ const chart: VizChart = {
       return `<strong>${d.data.nome}</strong><br>${folhas} valor(es) de quebra`;
     };
 
-    const aplicar = <E extends Element, D>(sel: Selection<E, D, any, any>, transicionar: boolean) =>
-      transicionar ? sel.transition().duration(DURATION.base).ease(EASE_STATE) : sel;
+    const aplicar = <E extends Element, D>(
+      sel: Selection<E, D, any, any>,
+      transicionar: boolean,
+      atraso?: (d: D, i: number) => number
+    ) => {
+      if (!transicionar) return sel;
+      const t = sel.transition().duration(DURACAO_RAMIFICACAO).ease(EASE_ENTER);
+      return atraso ? t.delay(atraso) : t;
+    };
 
     let escala = 1;
     const px = (v: number) => v * escala;
@@ -132,7 +151,8 @@ const chart: VizChart = {
         .append('path')
         .attr('d', () => linkGen({ source: origemLink, target: origemLink }));
 
-      aplicar(linkEnter.merge(linkSel), transicionar)
+      const atrasoLink = (_d: unknown, i: number) => stagger(i, links.length, JANELA_CASCATA);
+      aplicar(linkEnter.merge(linkSel), transicionar, atrasoLink)
         .attr('d', linkGen)
         .attr('stroke-width', px(1.5));
 
@@ -175,15 +195,16 @@ const chart: VizChart = {
         .attr('stroke', theme.bg)
         .style('opacity', 0);
 
+      const atrasoNo = (_d: Ponto, i: number) => stagger(i, nos.length, JANELA_CASCATA);
       const nodeMerge = nodeEnter.merge(nodeSel);
-      aplicar(nodeMerge, transicionar).attr('transform', (d) => `translate(${d.y},${d.x})`);
+      aplicar(nodeMerge, transicionar, atrasoNo).attr('transform', (d) => `translate(${d.y},${d.x})`);
 
       nodeMerge
         .select<SVGCircleElement>('circle')
         .attr('fill', (d) => (d._children ? theme.primary : theme.bg))
         .attr('stroke', theme.primary)
         .call((sel) =>
-          aplicar(sel, transicionar)
+          aplicar(sel, transicionar, atrasoNo)
             .attr('r', (d) => px(d._children ? 6 : d.children ? 5 : 3.5))
             .attr('stroke-width', px(1.5))
         );
@@ -195,7 +216,7 @@ const chart: VizChart = {
         .attr('font-size', px(12))
         .attr('stroke-width', px(3))
         .text((d) => d.data.nome)
-        .style('opacity', 1);
+        .call((sel) => aplicar(sel, transicionar, atrasoNo).style('opacity', 1));
 
       aplicar(nodeSel.exit(), transicionar)
         .attr('transform', `translate(${source.y},${source.x})`)
@@ -213,7 +234,7 @@ const chart: VizChart = {
 
     atualizar(raiz, animate);
     if (animate) {
-      garantirEstadoFinal(DURATION.base + 250, () => {
+      garantirEstadoFinal(DURACAO_RAMIFICACAO + JANELA_CASCATA + 250, () => {
         // Nada a forcar aqui alem do que a transicao ja aplica -- a rede de
         // seguranca existe pro caso do rAF nunca avancar (renderer sem
         // composicao), garantindo que o layout final seja o mesmo aplicado
