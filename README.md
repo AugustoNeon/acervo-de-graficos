@@ -2,6 +2,10 @@
 
 Galeria pessoal de gráficos em R. O objetivo é adicionar gráficos novos periodicamente, aprendendo diferentes tipos de visualização e construindo uma referência reutilizável de código.
 
+## Site
+
+O acervo navegável, publicado a partir de `site/`: **[augustoneon.github.io/acervo-de-graficos](https://augustoneon.github.io/acervo-de-graficos/)**
+
 ## Estrutura
 
 ```
