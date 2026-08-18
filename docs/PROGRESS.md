@@ -6,6 +6,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 | Data       | Categoria | Gráfico | Pasta | Fonte |
 |------------|-----------|---------|-------|-------|
+| 2026-08-18 | part-of-whole | Barplot agrupado e empilhado (switcher de 3 estados, D3) | [graficos/part-of-whole/barplot-agrupado-empilhado](../graficos/part-of-whole/barplot-agrupado-empilhado) | [r-graph-gallery.com/barplot](https://r-graph-gallery.com/barplot.html) |
 | 2026-08-18 | ranking | Lollipop chart com detalhamento por plataforma (D3) | [graficos/ranking/lollipop-streaming](../graficos/ranking/lollipop-streaming) | [r-graph-gallery.com/lollipop-plot](https://r-graph-gallery.com/lollipop-plot.html) |
 | 2026-08-18 | ranking | Barplot clássico: cinco variações (switcher animado, D3) | [graficos/ranking/barplot-classico](../graficos/ranking/barplot-classico) | [r-graph-gallery.com/barplot](https://r-graph-gallery.com/barplot.html) |
 | 2026-08-18 | evolution | Bolhas animadas estilo Gapminder (D3) | [graficos/evolution/bolhas-animadas-planetas](../graficos/evolution/bolhas-animadas-planetas) | [r-graph-gallery.com/271](https://r-graph-gallery.com/271-ggplot2-animated-gif-chart-with-gganimate.html) |
