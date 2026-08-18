@@ -99,6 +99,9 @@ Adicionado em 2026-07-29 (circle packing hierárquico — `graficos/part-of-whol
 - `circlepackeR` (só GitHub, não está no CRAN): `remotes::install_github("jeromefroe/circlepackeR")`. Widget interativo de circle packing hierárquico com zoom por clique, construído sobre um objeto `data.tree::Node`. Calcula o próprio diâmetro como o menor valor entre largura e altura do container (`Math.min(rect.width, rect.height)` no JS do widget) — passar `width`/`height` explícitos em vez de deixar `NULL` evita depender do tamanho padrão do container.
 - `ggraph`/`igraph` já estavam no projeto desde 2026-07-21 (ver início desta seção) — só precisaram ser reinstalados nesta máquina nova.
 
+Adicionado em 2026-08-18 (radar chart com múltiplos grupos — `graficos/ranking/radar-multiplos-grupos`):
+- `fmsb` (CRAN) — `radarchart()`, radar/spider chart em grafismo base do R (sem widget). Exige que as duas primeiras linhas do `data.frame` sejam o máximo e o mínimo de cada coluna (define a escala dos eixos).
+
 Adicionado em 2026-08-14 (migração D3 do heatmap com clustering — `graficos/correlation/heatmap-clustering-heatmaply`):
 - `pheatmap` (CRAN) — heatmap com clustering hierárquico em base graphics/grid, sem widget. `pheatmap(..., filename="output.png")` desenha direto num PNG (sem `webshot2`/pandoc) e a chamada devolve os objetos `hclust` (`$tree_row`/`$tree_col`) usados no clustering — reaproveitados pra montar a versão D3 sem recalcular nem tentar reproduzir a reordenação de outra biblioteca. Substituiu `heatmaply`+`plotly`+`hrbrthemes` (que ainda podem estar instalados, mas não são mais usados por nenhum gráfico do acervo).
 
