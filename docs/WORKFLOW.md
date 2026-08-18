@@ -102,10 +102,12 @@ Se o site (`site/`) já estiver montado, rode `npm run dev` dentro de `site/` e 
 
 ## 9. Commitar
 
-**Importante**: quem faz `git commit`/`git push` é sempre o usuário, nunca a IA (ver `AGENTS.md`). No fim da sessão, a IA deve te dar os comandos prontos pra copiar, algo como:
+**Importante**: a IA pode rodar `git add`/`git commit`/`git merge` neste projeto; só o `git push` é sempre do usuário (ver `AGENTS.md`). No fim da sessão, a IA commita o que mudou e entrega o comando de push pronto pra copiar, algo como:
 ```powershell
 git add graficos/<categoria>/<slug> docs/PROGRESS.md
 git commit -m "add: <nome do gráfico> (<categoria>)"
+```
+```powershell
 git push
 ```
 
