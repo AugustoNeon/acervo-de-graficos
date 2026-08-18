@@ -149,6 +149,7 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
      outros controles — a cor ativa é a da categoria da página. */
   .viz :global(.viz-slider) {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: var(--space-2xs);
@@ -173,6 +174,30 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     width: min(14rem, 40vw);
     accent-color: var(--cat);
     cursor: pointer;
+  }
+
+  /* Botão de play/pause — mesma família visual dos outros controles. */
+  .viz :global(.viz-slider-play) {
+    padding: 0.35em 0.8em;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-slider-play:hover) {
+    border-color: var(--cat);
+    color: var(--color-ink);
+  }
+
+  .viz :global(.viz-slider-play[aria-pressed='true']) {
+    background: var(--cat-wash);
+    border-color: var(--cat);
+    color: var(--cat-ink);
   }
 
   .viz :global(.viz-nota) {
