@@ -105,6 +105,9 @@ Adicionado em 2026-08-18 (radar chart com múltiplos grupos — `graficos/rankin
 Adicionado em 2026-08-14 (migração D3 do heatmap com clustering — `graficos/correlation/heatmap-clustering-heatmaply`):
 - `pheatmap` (CRAN) — heatmap com clustering hierárquico em base graphics/grid, sem widget. `pheatmap(..., filename="output.png")` desenha direto num PNG (sem `webshot2`/pandoc) e a chamada devolve os objetos `hclust` (`$tree_row`/`$tree_col`) usados no clustering — reaproveitados pra montar a versão D3 sem recalcular nem tentar reproduzir a reordenação de outra biblioteca. Substituiu `heatmaply`+`plotly`+`hrbrthemes` (que ainda podem estar instalados, mas não são mais usados por nenhum gráfico do acervo).
 
+Adicionado em 2026-08-18 (ridgeline plot — `graficos/distribution/ridgeline-avaliacoes-bairros`):
+- `ggridges` (CRAN) — `geom_density_ridges_gradient()`, ridgeline/joyplot em cima do `ggplot2`. Instalado com `New-Item` da pasta pessoal (`R_LIBS_USER`) antes, mesma receita do topo desta seção — nesta máquina o R já é instalado no perfil do usuário, então nem sempre é necessário, mas não custa garantir.
+
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
 
 ### Instalando pacotes adicionais
