@@ -6,6 +6,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 | Data       | Categoria | Gráfico | Pasta | Fonte |
 |------------|-----------|---------|-------|-------|
+| 2026-08-18 | ranking | Barplot clássico: cinco variações (switcher animado, D3) | [graficos/ranking/barplot-classico](../graficos/ranking/barplot-classico) | [r-graph-gallery.com/barplot](https://r-graph-gallery.com/barplot.html) |
 | 2026-08-18 | evolution | Bolhas animadas estilo Gapminder (D3) | [graficos/evolution/bolhas-animadas-planetas](../graficos/evolution/bolhas-animadas-planetas) | [r-graph-gallery.com/271](https://r-graph-gallery.com/271-ggplot2-animated-gif-chart-with-gganimate.html) |
 | 2026-08-18 | correlation | Superfície 3D de interação (rgl) | [graficos/correlation/superficie-3d-interacao](../graficos/correlation/superficie-3d-interacao) | [r-graph-gallery.com/167](https://r-graph-gallery.com/167-animated-3d-plot-imagemagick.html) |
 | 2026-08-18 | ranking | Radar chart com múltiplos grupos (fmsb + D3) | [graficos/ranking/radar-multiplos-grupos](../graficos/ranking/radar-multiplos-grupos) | [r-graph-gallery.com/143](https://r-graph-gallery.com/143-spider-chart-with-saveral-individuals.html) |
