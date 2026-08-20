@@ -12,6 +12,7 @@
 
 import { select, scaleSqrt } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Circulo {
@@ -109,17 +110,12 @@ const chart: VizChart = {
     };
 
     bolhas
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar(d.id);
-        tooltip.show(`<strong>${d.jogo}</strong><br>${d.downloads} mil downloads`, evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) =>
         tooltip.show(`<strong>${d.jogo}</strong><br>${d.downloads} mil downloads`, evento)
       )
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(root, { selecao: bolhas, chaveDe: (d) => String(d.id) }, (chave) => realcar(Number(chave)), () => realcar(null));
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);

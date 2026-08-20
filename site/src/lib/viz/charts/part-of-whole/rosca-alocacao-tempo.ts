@@ -11,6 +11,7 @@
 
 import { select, pie, arc } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Fatia {
@@ -98,15 +99,20 @@ const chart: VizChart = {
     };
 
     fatiasSel
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        select(this).transition().duration(DURATION.fast).ease(EASE_STATE).attr('d', gerarArcoSalto);
-        tooltip.show(conteudoTooltip(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', function () {
-        select(this).transition().duration(DURATION.fast).ease(EASE_STATE).attr('d', gerarArco);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(
+      root,
+      { selecao: fatiasSel, chaveDe: (d) => d.data.categoria },
+      (categoria) =>
+        fatiasSel
+          .transition()
+          .duration(DURATION.fast)
+          .ease(EASE_STATE)
+          .attr('d', (d) => (d.data.categoria === categoria ? gerarArcoSalto(d) : gerarArco(d))),
+      () => fatiasSel.transition().duration(DURATION.fast).ease(EASE_STATE).attr('d', gerarArco)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);

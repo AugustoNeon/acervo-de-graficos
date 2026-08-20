@@ -24,6 +24,7 @@ import {
 } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Celula {
@@ -146,12 +147,8 @@ const chart: VizChart = {
       .attr('data-interactive', '')
       .attr('fill', (c) => paletaPlataformas[c.plataforma] ?? theme.primary)
       .attr('rx', px(2))
-      .on('pointerenter', (_evento, c) => realcar(c.plataforma))
       .on('pointermove', (evento: PointerEvent, c: Celula) => tooltip.show(conteudoTooltip(c), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     function realcar(plataforma: string | null) {
       realceAtivo = plataforma;
@@ -212,7 +209,7 @@ const chart: VizChart = {
     aplicarEstado('agrupado', false);
 
     const legenda = select(root).append('div').attr('class', 'viz-legenda');
-    legenda
+    const legendaBotoes = legenda
       .selectAll('button')
       .data(plataformas)
       .join('button')
@@ -220,9 +217,17 @@ const chart: VizChart = {
       .attr('data-interactive', '')
       .html(
         (p) => `<span class="viz-swatch" style="background:${paletaPlataformas[p]}"></span>${p}`
-      )
-      .on('pointerenter', (_e, p) => realcar(p))
-      .on('pointerleave', () => realcar(null));
+      );
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: rects, chaveDe: (c: Celula) => c.plataforma },
+        { selecao: legendaBotoes, chaveDe: (p: string) => p },
+      ],
+      realcar,
+      () => realcar(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
