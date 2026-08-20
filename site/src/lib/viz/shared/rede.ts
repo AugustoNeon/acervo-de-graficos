@@ -49,6 +49,7 @@ import {
   type SimulationNodeDatum,
 } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../motion';
+import { tornarFixavel } from './interacao';
 import type { DrawContext, VizChart } from '../types';
 
 export interface EstiloAresta {
@@ -186,9 +187,15 @@ export function redeChart({ label, aspectRatio = 1 }: OpcoesRede): VizChart {
         })
       );
 
-      // Realce ligado: o mesmo no acende em todos os paineis.
-      const realcarTudo = (id: string | null) => montados.forEach((m) => m.realcar(id));
-      montados.forEach((m) => m.aoFocar(realcarTudo));
+      // Realce ligado: o mesmo no acende em todos os paineis. Clicar num no
+      // fixa o realce (em todos os paineis ao mesmo tempo) ate um novo
+      // clique nele ou um clique fora do grafico.
+      tornarFixavel(
+        root,
+        montados.map((m) => ({ selecao: m.circulos, chaveDe: (n: { id: string }) => n.id })),
+        (id) => montados.forEach((m) => m.realcar(id)),
+        () => montados.forEach((m) => m.realcar(null))
+      );
 
       const controles = select(root).append('div').attr('class', 'viz-controles');
       controles
@@ -220,8 +227,8 @@ interface OpcoesPainel {
 
 interface PainelMontado {
   realcar(id: string | null): void;
-  /** Registra quem avisar quando o ponteiro entra/sai de um no deste painel. */
-  aoFocar(callback: (id: string | null) => void): void;
+  /** Selecao dos nos deste painel — usada por fora pra fixar o realce entre paineis. */
+  circulos: Selection<SVGCircleElement, No, any, any>;
   restaurar(): void;
 }
 
@@ -462,18 +469,12 @@ function montarPainel({
       .attr('opacity', (n) => (!perto || perto.has(n.id) ? 1 : 0.25));
   };
 
-  let avisar: (id: string | null) => void = () => {};
-
+  // Realce (hover puro e fixar por clique) e amarrado por fora, no nivel do
+  // redeChart — precisa enxergar os circulos de TODOS os paineis pra fixar
+  // em conjunto. Aqui so cuida do tooltip, que e sempre por-painel.
   circulos
-    .on('pointerenter', (evento: PointerEvent, n) => {
-      avisar(n.id);
-      tooltip.show(n.titulo, evento);
-    })
     .on('pointermove', (evento: PointerEvent, n) => tooltip.show(n.titulo, evento))
-    .on('pointerleave', () => {
-      avisar(null);
-      tooltip.hide();
-    });
+    .on('pointerleave', () => tooltip.hide());
 
   // ----------------------------------------------------------------- arrasto
   circulos.call(
@@ -579,9 +580,7 @@ function montarPainel({
 
   return {
     realcar,
-    aoFocar: (callback) => {
-      avisar = callback;
-    },
+    circulos,
     restaurar,
   };
 }
