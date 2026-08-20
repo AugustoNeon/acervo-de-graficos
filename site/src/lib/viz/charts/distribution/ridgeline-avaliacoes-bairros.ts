@@ -5,9 +5,10 @@
  * Não existe widget R pronto pra ridgeline, então o R só exporta as notas
  * brutas por bairro (mesmas que geraram o `output.png`) — o D3 recalcula sua
  * própria estimativa de densidade (kernel gaussiano, largura de banda de
- * Silverman por bairro) em vez de importar a curva já calculada pelo
- * `ggridges`. A paridade visual vem da mesma família de técnica (KDE +
- * gradiente de cor pela nota), não de reimportar a curva exata.
+ * Silverman por bairro, ver `shared/densidade.ts`) em vez de importar a curva
+ * já calculada pelo `ggridges`. A paridade visual vem da mesma família de
+ * técnica (KDE + gradiente de cor pela nota), não de reimportar a curva
+ * exata.
  *
  * Cada faixa é desenhada em coordenadas absolutas (sem `<g transform>` por
  * linha) de propósito: o gradiente horizontal usa `gradientUnits="userSpaceOnUse"`
@@ -15,9 +16,10 @@
  * exigiria realinhar o gradiente a cada uma.
  */
 
-import { select, scaleLinear, scaleBand, scaleSequential, interpolateRdYlGn, axisBottom, axisLeft, mean, deviation, bisector, area, curveBasis } from 'd3';
+import { select, scaleLinear, scaleBand, scaleSequential, interpolateRdYlGn, axisBottom, axisLeft, area, curveBasis } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE } from '../../motion';
 import { estilarEixo, estilarGrade } from '../../shared/cartesiano';
+import { estimarDensidade, densidadeEm } from '../../shared/densidade';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Bairro {
@@ -35,29 +37,6 @@ const VB_H = 640;
 const MARGEM = { topo: 50, dir: 24, baixo: 44, esq: 148 };
 const OVERLAP = 2.3;
 const N_AMOSTRAS = 200;
-
-function kernelGaussiano(bw: number) {
-  const c = 1 / (bw * Math.sqrt(2 * Math.PI));
-  return (v: number) => c * Math.exp(-0.5 * (v / bw) ** 2);
-}
-
-function estimarDensidade(valores: number[], xs: number[]): [number, number][] {
-  const dp = deviation(valores) ?? 1;
-  const bw = Math.max(1.06 * dp * valores.length ** -0.2, 0.15);
-  const kernel = kernelGaussiano(bw);
-  return xs.map((x) => [x, mean(valores, (v) => kernel(x - v)) ?? 0]);
-}
-
-const bisectorX = bisector<[number, number], number>((d) => d[0]).left;
-
-function densidadeEm(curva: [number, number][], x: number): number {
-  const i = bisectorX(curva, x);
-  const a = curva[Math.max(0, i - 1)];
-  const b = curva[Math.min(curva.length - 1, i)];
-  if (!a || !b || a === b) return b?.[1] ?? 0;
-  const t = (x - a[0]) / (b[0] - a[0] || 1);
-  return a[1] + (b[1] - a[1]) * t;
-}
 
 const chart: VizChart = {
   aspectRatio: VB_W / VB_H,
