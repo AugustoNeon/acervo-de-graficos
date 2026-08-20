@@ -22,7 +22,7 @@ O `README.md` de cada gráfico **é a página pública dele no site**, não anot
 
 ## Git e commits
 
-A IA **pode** rodar `git add`, `git commit` e `git merge` neste projeto. O que continua sendo só do usuário é o **`git push`** pro repositório público (https://github.com/AugustoNeon/acervo-de-graficos.git) — no fim de cada sessão onde algo mudou, a IA commita e entrega o comando de push pronto pra ele rodar.
+A IA **pode** rodar `git add`, `git commit`, `git merge` e também `git push` pro repositório público (https://github.com/AugustoNeon/acervo-de-graficos.git) neste projeto — permissão de push confirmada pelo usuário mais de uma vez (2026-08-13, 2026-08-18, 2026-08-20), sem precisar perguntar antes de cada push. A única condição inegociável: nenhum commit pode mostrar autoria da Claude (sem trailer `Co-Authored-By`, sem outra menção a Claude/Anthropic) — o histórico público deve parecer só do usuário (`AugustoNeon`).
 
 Trabalhar direto na `main`: **não criar branch nova** pra cada mudança. Se por algum motivo uma branch existir, o caminho é mergear na `main`, não acumular branches paralelas.
 
