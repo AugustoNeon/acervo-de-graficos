@@ -15,6 +15,7 @@
 
 import { select } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Grupo {
@@ -188,24 +189,13 @@ const chart: VizChart = {
     };
 
     vertices
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        realcar(d.g.nome);
-        tooltip.show(`${eixos[d.i]}: <strong>${d.g.valores[d.i]}</strong> — ${d.g.nome}`, evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) =>
         tooltip.show(`${eixos[d.i]}: <strong>${d.g.valores[d.i]}</strong> — ${d.g.nome}`, evento)
       )
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
-
-    poligonos
-      .on('pointerenter', (_evento, g) => realcar(g.nome))
-      .on('pointerleave', () => realcar(null));
+      .on('pointerleave', () => tooltip.hide());
 
     // --------------------------------------------------------------- legenda
-    select(root)
+    const legendaSel = select(root)
       .append('div')
       .attr('class', 'viz-legenda')
       .selectAll('button')
@@ -214,10 +204,19 @@ const chart: VizChart = {
       .attr('type', 'button')
       .attr('data-interactive', '')
       .html((g) => `<span class="viz-swatch" style="background:${g.cor}"></span>${g.nome}`)
-      .on('pointerenter', (_e, g) => realcar(g.nome))
-      .on('pointerleave', () => realcar(null))
       .on('focus', (_e, g) => realcar(g.nome))
       .on('blur', () => realcar(null));
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: vertices, chaveDe: (d: { g: { nome: string } }) => d.g.nome },
+        { selecao: poligonos, chaveDe: (g: { nome: string }) => g.nome },
+        { selecao: legendaSel, chaveDe: (g: { nome: string }) => g.nome },
+      ],
+      realcar,
+      () => realcar(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);

@@ -17,6 +17,7 @@
 import { select, scaleBand, scaleLinear, axisBottom, axisLeft, type Selection, type Transition } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Genero {
@@ -107,35 +108,52 @@ const chart: VizChart = {
       .attr('fill', (d) => meta.paletaGeneros[d.genero] ?? theme.primary)
       .attr('rx', px(3))
       .attr('stroke', 'none')
-      .on('pointerenter', function (_evento, d) {
-        const geo = geometriaAtual.get(d.genero);
-        if (!geo) return;
-        const cresc = px(6);
-        // Transição nomeada ("hover"): aplicarEstado() anima x/y/width/height
-        // do MESMO <rect> numa transição sem nome — sem nomes distintos, a
-        // segunda .transition() cancela a primeira mesmo sem sobrepor os
-        // mesmos atributos, e a barra congela a meio caminho do estado.
-        const t = select(this).raise().transition('hover').duration(DURATION.fast).ease(EASE_STATE);
-        if (geo.horizontal) t.attr('width', geo.width + cresc);
-        else t.attr('y', geo.y - cresc).attr('height', geo.height + cresc);
-        t.attr('stroke', theme.ink).attr('stroke-width', px(2));
-      })
       .on('pointermove', (evento: PointerEvent, d: Genero) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', function (_evento, d) {
-        const geo = geometriaAtual.get(d.genero);
-        if (geo) {
-          select(this)
-            .transition('hover')
-            .duration(DURATION.fast)
-            .ease(EASE_STATE)
-            .attr('x', geo.x)
-            .attr('y', geo.y)
-            .attr('width', geo.width)
-            .attr('height', geo.height)
-            .attr('stroke', 'none');
-        }
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    // Transição nomeada ("hover"): aplicarEstado() anima x/y/width/height do
+    // MESMO <rect> numa transição sem nome — sem nomes distintos, a segunda
+    // .transition() cancela a primeira mesmo sem sobrepor os mesmos
+    // atributos, e a barra congela a meio caminho do estado.
+    function realcarBarra(foco: string) {
+      rects
+        .transition('hover')
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('x', (d) => geometriaAtual.get(d.genero)?.x ?? 0)
+        .attr('y', (d) => {
+          const geo = geometriaAtual.get(d.genero);
+          if (!geo) return 0;
+          return d.genero === foco && !geo.horizontal ? geo.y - px(6) : geo.y;
+        })
+        .attr('width', (d) => {
+          const geo = geometriaAtual.get(d.genero);
+          if (!geo) return 0;
+          return d.genero === foco && geo.horizontal ? geo.width + px(6) : geo.width;
+        })
+        .attr('height', (d) => {
+          const geo = geometriaAtual.get(d.genero);
+          if (!geo) return 0;
+          return d.genero === foco && !geo.horizontal ? geo.height + px(6) : geo.height;
+        })
+        .attr('stroke', (d) => (d.genero === foco ? theme.ink : 'none'))
+        .attr('stroke-width', (d) => (d.genero === foco ? px(2) : null));
+      rects.filter((d) => d.genero === foco).raise();
+    }
+
+    function limparBarras() {
+      rects
+        .transition('hover')
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('x', (d) => geometriaAtual.get(d.genero)?.x ?? 0)
+        .attr('y', (d) => geometriaAtual.get(d.genero)?.y ?? 0)
+        .attr('width', (d) => geometriaAtual.get(d.genero)?.width ?? 0)
+        .attr('height', (d) => geometriaAtual.get(d.genero)?.height ?? 0)
+        .attr('stroke', 'none');
+    }
+
+    tornarFixavel(root, { selecao: rects, chaveDe: (d: Genero) => d.genero }, realcarBarra, limparBarras);
 
     function posicionarErro(transicao: boolean) {
       const bw = xBand.bandwidth();
@@ -195,6 +213,12 @@ const chart: VizChart = {
 
     function aplicarEstado(id: EstadoId, transicao: boolean) {
       estadoAtual = id;
+      // Cancela qualquer transicao 'hover' (do realce por clique) em voo:
+      // nomes diferentes nao se cancelam sozinhos, e as duas mexem em
+      // x/y/width/height do mesmo <rect> — sem isso, uma troca de estado
+      // logo depois de fixar uma barra podia deixar a geometria presa a
+      // meio caminho entre os dois layouts.
+      rects.interrupt('hover');
       const horizontal = id === 'horizontal';
       const ordem = id === 'basico' ? ordemBasica : ordemDesc;
       xBand.domain(horizontal ? [] : ordem);

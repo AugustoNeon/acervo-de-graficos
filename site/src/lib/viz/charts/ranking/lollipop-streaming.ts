@@ -12,6 +12,7 @@
 import { select, scaleBand, scaleLinear, axisBottom, axisLeft, type Selection, type Transition } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo, estilarGrade } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Plataforma {
@@ -129,33 +130,42 @@ const chart: VizChart = {
 
     function conteudoHover(sel: Selection<SVGCircleElement, Item, SVGGElement, unknown>) {
       sel
-        // Transições nomeadas ("hover"): aplicarOrdem() anima cx/cy/r e
-        // y1/y2/x2 numa transição sem nome — sem nomes distintos, uma nova
-        // .transition() no mesmo elemento cancela a anterior mesmo em
-        // atributos diferentes, e o item congela a meio caminho do reordenar.
-        .on('pointerenter', function (_evento, d) {
-          const geo = geometria.get(d.genero);
-          if (!geo) return;
-          select(this).raise().transition('hover').duration(DURATION.fast).ease(EASE_STATE).attr('r', geo.r + px(3));
-          linhas
-            .filter((dd) => dd.genero === d.genero)
-            .transition('hover')
-            .duration(DURATION.fast)
-            .attr('stroke-width', px(3.6));
-        })
         .on('pointermove', (evento: PointerEvent, d: Item) => tooltip.show(conteudoTooltip(d), evento))
-        .on('pointerleave', function (_evento, d) {
-          const geo = geometria.get(d.genero);
-          if (geo) select(this).transition('hover').duration(DURATION.fast).ease(EASE_STATE).attr('r', geo.r);
-          linhas
-            .filter((dd) => dd.genero === d.genero)
-            .transition('hover')
-            .duration(DURATION.fast)
-            .attr('stroke-width', px(2.2));
-          tooltip.hide();
-        });
+        .on('pointerleave', () => tooltip.hide());
     }
     conteudoHover(pontos);
+
+    // Transições nomeadas ("hover"): aplicarOrdem() anima cx/cy/r e y1/y2/x2
+    // numa transição sem nome — sem nomes distintos, uma nova .transition()
+    // no mesmo elemento cancela a anterior mesmo em atributos diferentes, e
+    // o item congela a meio caminho do reordenar.
+    function realcarPonto(foco: string) {
+      pontos
+        .transition('hover')
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('r', (d) => {
+          const geo = geometria.get(d.genero);
+          if (!geo) return 0;
+          return d.genero === foco ? geo.r + px(3) : geo.r;
+        });
+      pontos.filter((d) => d.genero === foco).raise();
+      linhas
+        .transition('hover')
+        .duration(DURATION.fast)
+        .attr('stroke-width', (d) => (d.genero === foco ? px(3.6) : px(2.2)));
+    }
+
+    function limparPontos() {
+      pontos
+        .transition('hover')
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('r', (d) => geometria.get(d.genero)?.r ?? 0);
+      linhas.transition('hover').duration(DURATION.fast).attr('stroke-width', px(2.2));
+    }
+
+    tornarFixavel(root, { selecao: pontos, chaveDe: (d: Item) => d.genero }, realcarPonto, limparPontos);
 
     function desenharEixoY(transicao: boolean) {
       const sel = transicao ? eixoEsqSel.transition().duration(DURATION.slow).ease(EASE_STATE) : eixoEsqSel;
@@ -166,6 +176,11 @@ const chart: VizChart = {
 
     function aplicarOrdem(nova: Ordem, transicao: boolean) {
       ordemAtual = nova;
+      // Mesma cautela do barplot classico: cancela a transicao 'hover' (raio
+      // do ponto fixado por clique) em voo antes de reordenar, senao as duas
+      // transicoes disputam o mesmo atributo 'r' e o ponto pode ficar preso
+      // a meio caminho quando a reordenacao acontece logo depois de fixar.
+      pontos.interrupt('hover');
       const lista = [...itens].sort((a, b) => (nova === 'desc' ? b.horas - a.horas : a.horas - b.horas));
       yBand.domain(lista.map((d) => d.genero));
 
