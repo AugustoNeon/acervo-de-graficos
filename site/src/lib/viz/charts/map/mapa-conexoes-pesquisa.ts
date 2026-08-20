@@ -16,6 +16,7 @@
 import { select, geoNaturalEarth1, geoPath, scaleLinear, scaleSqrt, line as d3line } from 'd3';
 import { DURATION, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { corrigirEnrolamento, type GeoFeatureCollection } from '../../shared/mapa';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Cidade {
@@ -200,29 +201,41 @@ const chart: VizChart = {
       rotasSel.attr('stroke-opacity', (d) => opacidadeRota(d.pesquisadores)).attr('stroke-width', (d) => larguraRota(d.pesquisadores));
       cidadesSel.attr('fill-opacity', 0.85);
       rotulosSel.attr('font-weight', 600).attr('fill', theme.inkMuted).attr('opacity', 1);
-      tooltip.hide();
     }
 
+    // Uma unica chave compartilhada entre rotas e cidades (prefixada por
+    // tipo) pra que fixar por clique funcione entre as duas selecoes ao
+    // mesmo tempo — clicar numa rota ou na cidade que ela liga fixa o mesmo
+    // realce.
+    const realcar = (chave: string) => {
+      if (chave.startsWith('rota:')) realcarRota(Number(chave.slice(5)));
+      else realcarCidade(chave.slice('cidade:'.length));
+    };
+
     rotasSel
-      .on('pointerenter', function (_evento, d) {
-        realcarRota(d.rota_id);
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         tooltip.show(
           `<strong>${d.origem}</strong> × <strong>${d.destino}</strong><br>${d.pesquisadores} pesquisadores/ano<br>origem: ${d.regiao_origem}`,
           evento
         );
       })
-      .on('pointerleave', limpar);
+      .on('pointerleave', () => tooltip.hide());
 
     cidadesSel
-      .on('pointerenter', function (_evento, d) {
-        realcarCidade(d.nome);
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         tooltip.show(`<strong>${d.nome}</strong><br>${d.total} pesquisadores/ano (total nas rotas)`, evento);
       })
-      .on('pointerleave', limpar);
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: rotasSel, chaveDe: (d: RotaSegmento) => `rota:${d.rota_id}` },
+        { selecao: cidadesSel, chaveDe: (d: Cidade) => `cidade:${d.nome}` },
+      ],
+      realcar,
+      limpar
+    );
 
     // -------------------------------------------------------------- entrada
     if (animate) {

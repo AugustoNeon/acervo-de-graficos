@@ -30,6 +30,7 @@ import {
 import { DURATION, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import { corrigirEnrolamento, type GeoFeatureCollection } from '../../shared/mapa';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Propriedades {
@@ -227,7 +228,6 @@ const chart: VizChart = {
       paisesSel.interrupt().attr('fill', (d) => cor(d.properties.investimento)).attr('stroke', theme.bg).style('filter', null).attr('opacity', 1);
       pontosSel.interrupt().attr('fill', COR_PONTO).style('filter', null).attr('opacity', 1);
       barrasSel.interrupt().attr('fill', COR_PONTO).style('filter', null).attr('opacity', 1);
-      tooltip.hide();
     };
 
     const realcar = (chave: string) => {
@@ -251,16 +251,22 @@ const chart: VizChart = {
     const conteudoTooltip = (p: Propriedades) =>
       `<strong>${p.nome}</strong><br>P&D: US$ ${p.investimento} bi<br>Inovação: ${p.inovacao}`;
 
-    [
-      { sel: paisesSel },
-      { sel: pontosSel },
-      { sel: barrasSel },
-    ].forEach(({ sel }) => {
-      sel
-        .on('pointerenter', (_e: PointerEvent, d: Feature) => realcar(chaveDe(d.properties)))
-        .on('pointermove', (evento: PointerEvent, d: Feature) => tooltip.show(conteudoTooltip(d.properties), evento))
-        .on('pointerleave', aplicarNeutro);
-    });
+    const aoMoverPonteiro = (evento: PointerEvent, d: Feature) => tooltip.show(conteudoTooltip(d.properties), evento);
+    const aoSair = () => tooltip.hide();
+    paisesSel.on('pointermove', aoMoverPonteiro).on('pointerleave', aoSair);
+    pontosSel.on('pointermove', aoMoverPonteiro).on('pointerleave', aoSair);
+    barrasSel.on('pointermove', aoMoverPonteiro).on('pointerleave', aoSair);
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: paisesSel, chaveDe: (d: Feature) => chaveDe(d.properties) },
+        { selecao: pontosSel, chaveDe: (d: Feature) => chaveDe(d.properties) },
+        { selecao: barrasSel, chaveDe: (d: Feature) => chaveDe(d.properties) },
+      ],
+      realcar,
+      aplicarNeutro
+    );
 
     // -------------------------------------------------------------- seletor
     const controles = select(root).append('div').attr('class', 'viz-controles');

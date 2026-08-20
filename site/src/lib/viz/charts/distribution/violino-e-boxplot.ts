@@ -33,6 +33,7 @@ import {
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import { estimarDensidade } from '../../shared/densidade';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Provedor {
@@ -171,15 +172,10 @@ const chart: VizChart = {
     }
 
     grupos
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        realcar(d.provedor);
-        tooltip.show(conteudoTooltip(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(root, { selecao: grupos, chaveDe: (d) => d.provedor }, realcar, () => realcar(null));
 
     const gerarArea = d3area<[number, number]>().curve(curveBasis);
 

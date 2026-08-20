@@ -34,6 +34,7 @@ import {
 } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Equipe {
@@ -212,15 +213,15 @@ const chart: VizChart = {
     }
 
     grupos
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        realcar(grupos, d.equipe);
-        tooltip.show(conteudoTooltipCaixa(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltipCaixa(d), evento))
-      .on('pointerleave', () => {
-        realcar(grupos, null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(
+      root,
+      { selecao: grupos, chaveDe: (d) => d.equipe },
+      (foco) => realcar(grupos, foco),
+      () => realcar(grupos, null)
+    );
 
     // --------------------------------------------------------------- desenho
     function aplicarEstado(id: EstadoId, transicao: boolean) {

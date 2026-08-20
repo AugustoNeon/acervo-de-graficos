@@ -12,6 +12,7 @@
 
 import { select, scaleBand, scaleDiverging, interpolatePuOr } from 'd3';
 import { DURATION, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Celula {
@@ -147,23 +148,33 @@ const chart: VizChart = {
 
     // -------------------------------------------------------------- hover
     const OPACIDADE_APAGADA = 0.25;
+    const chaveDe = (d: Celula) => `${d.var1}__${d.var2}`;
+
+    const realcar = (chave: string) => {
+      const [var1, var2] = chave.split('__');
+      const iVar1 = indice.get(var1)!;
+      const iVar2 = indice.get(var2)!;
+      celulasSel.attr('opacity', (o) => {
+        const oi = indice.get(o.var1)!;
+        const oj = indice.get(o.var2)!;
+        const envolvido = oi === iVar1 || oi === iVar2 || oj === iVar1 || oj === iVar2;
+        return envolvido ? 1 : OPACIDADE_APAGADA;
+      });
+      rotulosLinha
+        .attr('font-weight', (_r, i) => (i === iVar1 || i === iVar2 ? 700 : 400))
+        .attr('fill', (_r, i) => (i === iVar1 || i === iVar2 ? theme.ink : theme.inkMuted));
+      rotulosColuna
+        .attr('font-weight', (_c, i) => (i === iVar1 || i === iVar2 ? 700 : 400))
+        .attr('fill', (_c, i) => (i === iVar1 || i === iVar2 ? theme.ink : theme.inkMuted));
+    };
+
+    const limpar = () => {
+      celulasSel.attr('opacity', 1);
+      rotulosLinha.attr('font-weight', 400).attr('fill', theme.inkMuted);
+      rotulosColuna.attr('font-weight', 400).attr('fill', theme.inkMuted);
+    };
+
     celulasSel
-      .on('pointerenter', function (_evento, d) {
-        const iVar1 = indice.get(d.var1)!;
-        const iVar2 = indice.get(d.var2)!;
-        celulasSel.attr('opacity', (o) => {
-          const oi = indice.get(o.var1)!;
-          const oj = indice.get(o.var2)!;
-          const envolvido = oi === iVar1 || oi === iVar2 || oj === iVar1 || oj === iVar2;
-          return envolvido ? 1 : OPACIDADE_APAGADA;
-        });
-        rotulosLinha
-          .attr('font-weight', (_r, i) => (i === iVar1 || i === iVar2 ? 700 : 400))
-          .attr('fill', (_r, i) => (i === iVar1 || i === iVar2 ? theme.ink : theme.inkMuted));
-        rotulosColuna
-          .attr('font-weight', (_c, i) => (i === iVar1 || i === iVar2 ? 700 : 400))
-          .attr('fill', (_c, i) => (i === iVar1 || i === iVar2 ? theme.ink : theme.inkMuted));
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         const significativo = d.p_valor < ALFA;
         tooltip.show(
@@ -175,12 +186,9 @@ const chart: VizChart = {
           evento
         );
       })
-      .on('pointerleave', () => {
-        celulasSel.attr('opacity', 1);
-        rotulosLinha.attr('font-weight', 400).attr('fill', theme.inkMuted);
-        rotulosColuna.attr('font-weight', 400).attr('fill', theme.inkMuted);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(root, { selecao: celulasSel, chaveDe }, realcar, limpar);
 
     // -------------------------------------------------------------- entrada
     if (animate) {

@@ -22,6 +22,7 @@ import { select, scaleLinear, axisBottom, axisLeft, bin as d3bin, max as d3max, 
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo, estilarGrade } from '../../shared/cartesiano';
 import { estimarDensidade } from '../../shared/densidade';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Dados {
@@ -120,17 +121,6 @@ const chart: VizChart = {
         .attr('y', alturaUtil)
         .attr('height', 0);
 
-      entrando
-        .on('pointerenter', function (evento: PointerEvent, b) {
-          select(this).transition('hover').duration(DURATION.fast).ease(EASE_STATE).attr('fill', theme.accent);
-          tooltip.show(conteudoTooltip(b.x0 ?? 0, b.x1 ?? 0, b.length), evento);
-        })
-        .on('pointermove', (evento: PointerEvent, b) => tooltip.show(conteudoTooltip(b.x0 ?? 0, b.x1 ?? 0, b.length), evento))
-        .on('pointerleave', function () {
-          select(this).transition('hover').duration(DURATION.fast).ease(EASE_STATE).attr('fill', theme.primary);
-          tooltip.hide();
-        });
-
       const saindo = barras.exit();
       if (transicao) {
         saindo
@@ -151,6 +141,27 @@ const chart: VizChart = {
         .attr('width', (b) => Math.max(x(b.x1 ?? 0) - x(b.x0 ?? 0) - gap, 0))
         .attr('y', (b) => y(b.length))
         .attr('height', (b) => alturaUtil - y(b.length));
+
+      // Numero de bins muda a cada arrasto do slider — re-vincula em cima da
+      // selecao INTEIRA (nao so das barras que acabaram de entrar) a cada
+      // redesenho; `tornarFixavel` e' seguro de chamar de novo (troca o
+      // listener de "clicar fora" antigo pelo novo, sem acumular) e o
+      // namespace do evento faz o d3 substituir o handler em vez de duplicar.
+      const chaveDaBarra = (b: (typeof bins)[number]) => `${b.x0}_${b.x1}`;
+      todas
+        .on('pointermove', (evento: PointerEvent, b) => tooltip.show(conteudoTooltip(b.x0 ?? 0, b.x1 ?? 0, b.length), evento))
+        .on('pointerleave', () => tooltip.hide());
+      tornarFixavel(
+        root,
+        { selecao: todas, chaveDe: chaveDaBarra },
+        (chave) =>
+          todas
+            .transition('foco')
+            .duration(DURATION.fast)
+            .ease(EASE_STATE)
+            .attr('fill', (b) => (chaveDaBarra(b) === chave ? theme.accent : theme.primary)),
+        () => todas.transition('foco').duration(DURATION.fast).ease(EASE_STATE).attr('fill', theme.primary)
+      );
 
       const pontosCurva: [number, number][] = curvaDensidade.map(([v, d]) => [v, d * idades.length * larguraBin]);
       let caminhoCurva = gCurva.select<SVGPathElement>('path.curva-densidade');

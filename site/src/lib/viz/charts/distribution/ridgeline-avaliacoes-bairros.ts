@@ -20,6 +20,7 @@ import { select, scaleLinear, scaleBand, scaleSequential, interpolateRdYlGn, axi
 import { DURATION, EASE_ENTER, EASE_STATE } from '../../motion';
 import { estilarEixo, estilarGrade } from '../../shared/cartesiano';
 import { estimarDensidade, densidadeEm } from '../../shared/densidade';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Bairro {
@@ -124,23 +125,26 @@ const chart: VizChart = {
       return `<strong>${bairro}</strong><br>nota ≈ ${notaCursor.toFixed(1)} · densidade ≈ ${d.toFixed(3)}`;
     }
 
+    function realcar(foco: string) {
+      faixas.transition('realce').duration(DURATION.fast).attr('opacity', (b) => (b === foco ? 1 : 0.4));
+      faixas.filter((b) => b === foco).raise();
+      faixas.selectAll('path').transition('realce-traco').duration(DURATION.fast).attr('stroke', (b) => (b === foco ? theme.ink : theme.bg));
+    }
+    function limpar() {
+      faixas.transition('realce').duration(DURATION.fast).attr('opacity', 1);
+      faixas.selectAll('path').transition('realce-traco').duration(DURATION.fast).attr('stroke', theme.bg);
+    }
+
     faixas
-      .on('pointerenter', function () {
-        faixas.transition('realce').duration(DURATION.fast).attr('opacity', 0.4);
-        select(this).raise().transition('realce').duration(DURATION.fast).attr('opacity', 1);
-        select(this).select('path').transition('realce-traco').duration(DURATION.fast).attr('stroke', theme.ink);
-      })
       .on('pointermove', function (evento: PointerEvent, bairro: string) {
         const rectSvg = (svg.node() as SVGSVGElement).getBoundingClientRect();
         const xLocal = ((evento.clientX - rectSvg.left) / rectSvg.width) * VB_W - MARGEM.esq;
         const notaCursor = Math.min(notaMax, Math.max(notaMin, x.invert(xLocal)));
         tooltip.show(conteudoTooltip(bairro, notaCursor), evento);
       })
-      .on('pointerleave', function () {
-        faixas.transition('realce').duration(DURATION.fast).attr('opacity', 1);
-        faixas.selectAll('path').transition('realce-traco').duration(DURATION.fast).attr('stroke', theme.bg);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(root, { selecao: faixas, chaveDe: (b: string) => b }, realcar, limpar);
 
     estilarEixo(g.append('g').attr('transform', `translate(0,${alturaUtil})`).call(axisBottom(x).ticks(6).tickSizeOuter(0)), theme, px);
 

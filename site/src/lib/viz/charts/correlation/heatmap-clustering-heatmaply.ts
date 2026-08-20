@@ -14,6 +14,7 @@
 
 import { select, scaleBand, scaleLinear, scaleSequential, interpolateMagma, pointer } from 'd3';
 import { DURATION, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Celula {
@@ -191,24 +192,31 @@ const chart: VizChart = {
 
     // -------------------------------------------------------------- hover
     const OPACIDADE_APAGADA = 0.35;
+    const chaveDe = (d: Celula) => `${d.linha}_${d.coluna}`;
+
+    const realcar = (chave: string) => {
+      const [linha, coluna] = chave.split('_').map(Number);
+      celulasSel.attr('opacity', (o) => (o.linha === linha || o.coluna === coluna ? 1 : OPACIDADE_APAGADA));
+      rotulosLinha.attr('font-weight', (_r, i) => (i === linha ? 700 : 400)).attr('fill', (_r, i) => (i === linha ? theme.ink : theme.inkMuted));
+      rotulosColuna.attr('font-weight', (_c, i) => (i === coluna ? 700 : 400)).attr('fill', (_c, i) => (i === coluna ? theme.ink : theme.inkMuted));
+    };
+
+    const limpar = () => {
+      celulasSel.attr('opacity', 1);
+      rotulosLinha.attr('font-weight', 400).attr('fill', theme.inkMuted);
+      rotulosColuna.attr('font-weight', 400).attr('fill', theme.inkMuted);
+    };
+
     celulasSel
-      .on('pointerenter', function (_evento, d) {
-        celulasSel.attr('opacity', (o) => (o.linha === d.linha || o.coluna === d.coluna ? 1 : OPACIDADE_APAGADA));
-        rotulosLinha.attr('font-weight', (_r, i) => (i === d.linha ? 700 : 400)).attr('fill', (_r, i) => (i === d.linha ? theme.ink : theme.inkMuted));
-        rotulosColuna.attr('font-weight', (_c, i) => (i === d.coluna ? 700 : 400)).attr('fill', (_c, i) => (i === d.coluna ? theme.ink : theme.inkMuted));
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         tooltip.show(
           `<strong>${meta.linhas[d.linha]}</strong> · ${meta.colunas[d.coluna]}<br>valor: <strong>${d.valor}</strong>`,
           evento
         );
       })
-      .on('pointerleave', () => {
-        celulasSel.attr('opacity', 1);
-        rotulosLinha.attr('font-weight', 400).attr('fill', theme.inkMuted);
-        rotulosColuna.attr('font-weight', 400).attr('fill', theme.inkMuted);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(root, { selecao: celulasSel, chaveDe }, realcar, limpar);
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
