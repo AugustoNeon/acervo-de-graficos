@@ -12,6 +12,7 @@
 import { select, scaleLog, scaleLinear, scaleSqrt, axisBottom, axisLeft } from 'd3';
 import { DURATION, EASE_STATE, EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo, estilarGrade } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface SerieAno {
@@ -157,9 +158,7 @@ const chart: VizChart = {
     }
 
     // --------------------------------------------------------------- realce
-    let focoAtual: Foco = null;
     const realcar = (foco: Foco) => {
-      focoAtual = foco;
       bolhas
         .transition()
         .duration(DURATION.fast)
@@ -178,18 +177,11 @@ const chart: VizChart = {
     };
 
     bolhas
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        realcar(d.setor);
-        tooltip.show(conteudoTooltip(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', () => {
-        realcar(focoAtual && bolhas.data().some((d) => d.setor === focoAtual) ? focoAtual : null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     // --------------------------------------------------------------- legenda
-    select(root)
+    const legendaBotoes = select(root)
       .append('div')
       .attr('class', 'viz-legenda')
       .selectAll('button')
@@ -198,10 +190,21 @@ const chart: VizChart = {
       .attr('type', 'button')
       .attr('data-interactive', '')
       .html((setor) => `<span class="viz-swatch" style="background:${paleta[setor]}"></span>${setor}`)
-      .on('pointerenter', (_e, setor) => realcar(setor))
-      .on('pointerleave', () => realcar(null))
       .on('focus', (_e, setor) => realcar(setor))
       .on('blur', () => realcar(null));
+
+    // Clicar numa bolha ou na legenda fixa o setor (as duas apontam pra
+    // mesma chave, entao clicar em qualquer uma fixa igual). Foco de teclado
+    // (focus/blur acima) continua so hover, sem participar do fixar.
+    tornarFixavel(
+      root,
+      [
+        { selecao: bolhas, chaveDe: (d: Planeta) => d.setor },
+        { selecao: legendaBotoes, chaveDe: (s: string) => s },
+      ],
+      (chave) => realcar(chave),
+      () => realcar(null)
+    );
 
     // -------------------------------------------------------- play + régua
     const controles = select(root).append('div').attr('class', 'viz-slider');

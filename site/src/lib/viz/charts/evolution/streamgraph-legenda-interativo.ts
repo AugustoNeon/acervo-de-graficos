@@ -13,6 +13,7 @@
 
 import { select, area, scaleLinear, pointer, bisector } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Faixa {
@@ -150,11 +151,8 @@ const chart: VizChart = {
     const acharAno = bisector((a: number) => a).center;
 
     camadas
-      .on('pointerenter', (_e: PointerEvent, f) => {
-        realcar(f.grupo);
-        cursor.attr('opacity', 0.45);
-      })
       .on('pointermove', function (evento: PointerEvent, f) {
+        cursor.attr('opacity', 0.45);
         const [mx] = pointer(evento, g.node());
         const ano = Math.round(x.invert(mx));
         const serie = valoresPorGrupo.get(f.grupo)!;
@@ -168,13 +166,12 @@ const chart: VizChart = {
         );
       })
       .on('pointerleave', () => {
-        realcar(null);
         cursor.attr('opacity', 0);
         tooltip.hide();
       });
 
     // ---------------------------------------------------------------- legenda
-    select(root)
+    const legendaSel = select(root)
       .append('div')
       .attr('class', 'viz-legenda')
       .selectAll('button')
@@ -185,10 +182,18 @@ const chart: VizChart = {
       .html(
         (gr) => `<span class="viz-swatch" style="background:${paleta[gr]}"></span>${rotulos[gr]}`
       )
-      .on('pointerenter', (_e, gr) => realcar(gr))
-      .on('pointerleave', () => realcar(null))
       .on('focus', (_e, gr) => realcar(gr))
       .on('blur', () => realcar(null));
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: camadas, chaveDe: (f: { grupo: string }) => f.grupo },
+        { selecao: legendaSel, chaveDe: (gr: string) => gr },
+      ],
+      realcar,
+      () => realcar(null)
+    );
 
     // ---------------------------------------------------------------- entrada
     // A pilha nasce como uma linha no eixo central e se abre faixa por faixa,
