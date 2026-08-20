@@ -13,6 +13,7 @@
 
 import { select, scalePoint } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface No {
@@ -162,32 +163,18 @@ const chart: VizChart = {
     };
 
     noG
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar({ no: d.name });
-        tooltip.show(tooltipNo(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(tooltipNo(d), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     arcos
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar({ no: d.source });
-        tooltip.show(`${d.source} &rarr; ${d.target}`, evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(`${d.source} &rarr; ${d.target}`, evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     // --------------------------------------------------------------- legenda
     // Em HTML, fora do SVG: texto num viewBox que cresce com o dado encolhe
     // junto e fica ilegivel (mesmo defeito ja catalogado pra este grafico no
     // AGENTS.md, agora resolvido de raiz).
-    select(root)
+    const legendaSel = select(root)
       .append('div')
       .attr('class', 'viz-legenda')
       .selectAll('button')
@@ -196,10 +183,27 @@ const chart: VizChart = {
       .attr('type', 'button')
       .attr('data-interactive', '')
       .html(([grupo, cor]) => `<span class="viz-swatch" style="background:${cor}"></span>${grupo}`)
-      .on('pointerenter', (_e, [grupo]) => realcar({ grupo }))
-      .on('pointerleave', () => realcar(null))
       .on('focus', (_e, [grupo]) => realcar({ grupo }))
       .on('blur', () => realcar(null));
+
+    // Chave prefixada por tipo (no vs. grupo) pra unificar os tres alvos —
+    // clicar num circulo, num arco ou na legenda todos fixam pelo mesmo
+    // mecanismo, cada um contribuindo a chave que faz sentido pra si.
+    const chaveDoNo = (nome: string) => `no:${nome}`;
+    const chaveDoGrupo = (grupo: string) => `grupo:${grupo}`;
+    const focoDaChave = (chave: string): Foco =>
+      chave.startsWith('no:') ? { no: chave.slice(3) } : { grupo: chave.slice(6) };
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: noG, chaveDe: (d: No) => chaveDoNo(d.name) },
+        { selecao: arcos, chaveDe: (d: Aresta) => chaveDoNo(d.source) },
+        { selecao: legendaSel, chaveDe: ([grupo]: [string, string]) => chaveDoGrupo(grupo) },
+      ],
+      (chave) => realcar(focoDaChave(chave)),
+      () => realcar(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);

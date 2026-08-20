@@ -24,6 +24,7 @@ import {
   type HierarchyNode,
 } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface No {
@@ -219,26 +220,22 @@ const chart: VizChart = {
       `<strong>${d.data.nome}</strong><br>grupo ${d.parent?.data.nome ?? '—'}<br>valor ${(d.data.valor ?? 0).toFixed(2)}`;
 
     pontos
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar(d.data.nome);
-        tooltip.show(conteudoTooltip(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     rotulos
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar(d.data.nome);
-        tooltip.show(conteudoTooltip(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(conteudoTooltip(d), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: pontos, chaveDe: (d: Ponto) => d.data.nome },
+        { selecao: rotulos, chaveDe: (d: Ponto) => d.data.nome },
+      ],
+      realcar,
+      () => realcar(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
