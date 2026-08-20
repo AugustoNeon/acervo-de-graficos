@@ -2,6 +2,8 @@
 
 Galeria pessoal de gráficos em R. O objetivo é adicionar gráficos novos periodicamente, aprendendo diferentes tipos de visualização e construindo uma referência reutilizável de código.
 
+Projeto inspirado e baseado no [R Graph Gallery](https://r-graph-gallery.com/), replicando e adaptando exemplos de lá com dados fictícios próprios.
+
 ## Site
 
 O acervo navegável, publicado a partir de `site/`: **[augustoneon.github.io/acervo-de-graficos](https://augustoneon.github.io/acervo-de-graficos/)**
