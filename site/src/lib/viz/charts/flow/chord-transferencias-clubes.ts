@@ -15,6 +15,7 @@
 import { select, chordDirected, ribbonArrow, arc } from 'd3';
 import type { Chord, ChordGroup, ChordSubgroup } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface No {
@@ -173,14 +174,6 @@ const chart: VizChart = {
     };
 
     arcos
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcarNo(d.index);
-        const { enviou, recebeu } = totalPorNo(d.index);
-        tooltip.show(
-          `<strong>${nomes[d.index]}</strong><br>Enviou <strong>${enviou}</strong> · Recebeu <strong>${recebeu}</strong>`,
-          evento
-        );
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         const { enviou, recebeu } = totalPorNo(d.index);
         tooltip.show(
@@ -188,29 +181,39 @@ const chart: VizChart = {
           evento
         );
       })
-      .on('pointerleave', () => {
-        realcarNo(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     fitas
-      .on('pointerenter', function (evento: PointerEvent, d) {
-        realcarFita(d);
-        tooltip.show(
-          `${nomes[d.source.index]} &rarr; ${nomes[d.target.index]}<br><strong>${d.source.value}</strong> jogadores`,
-          evento
-        );
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         tooltip.show(
           `${nomes[d.source.index]} &rarr; ${nomes[d.target.index]}<br><strong>${d.source.value}</strong> jogadores`,
           evento
         );
       })
-      .on('pointerleave', () => {
-        realcarFita(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    // Chave prefixada por tipo pra unificar arco (no) e fita (aresta) num so
+    // estado de fixar por clique — cada um tem seu proprio realce interno
+    // (realcarNo/realcarFita), mas so um pode estar fixado por vez.
+    const chaveDoNo = (i: number) => `no:${i}`;
+    const chaveDaFita = (d: Chord) => `fita:${d.source.index}-${d.target.index}`;
+    tornarFixavel(
+      root,
+      [
+        { selecao: arcos, chaveDe: (d: ChordGroup) => chaveDoNo(d.index) },
+        { selecao: fitas, chaveDe: chaveDaFita },
+      ],
+      (chave) => {
+        if (chave.startsWith('no:')) {
+          realcarNo(Number(chave.slice(3)));
+        } else {
+          const [si, ti] = chave.slice(5).split('-').map(Number);
+          const alvo = fitas.data().find((f) => f.source.index === si && f.target.index === ti) ?? null;
+          realcarFita(alvo);
+        }
+      },
+      () => realcarNo(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);

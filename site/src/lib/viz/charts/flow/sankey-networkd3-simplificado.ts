@@ -12,6 +12,7 @@
 import { select } from 'd3';
 import { sankey, sankeyLinkHorizontal, type SankeyNode, type SankeyLink } from 'd3-sankey';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface No {
@@ -158,32 +159,26 @@ const chart: VizChart = {
     };
 
     noG
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar(d.name);
-        tooltip.show(tooltipNo(d), evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => tooltip.show(tooltipNo(d), evento))
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     linksSel
-      .on('pointerenter', (evento: PointerEvent, d) => {
-        realcar((d.source as NoSankey).name);
-        const origem = (d.source as NoSankey).name;
-        const destino = (d.target as NoSankey).name;
-        tooltip.show(`${origem} &rarr; ${destino}<br><strong>${d.value}</strong>`, evento);
-      })
       .on('pointermove', (evento: PointerEvent, d) => {
         const origem = (d.source as NoSankey).name;
         const destino = (d.target as NoSankey).name;
         tooltip.show(`${origem} &rarr; ${destino}<br><strong>${d.value}</strong>`, evento);
       })
-      .on('pointerleave', () => {
-        realcar(null);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: noG, chaveDe: (d: NoSankey) => d.name },
+        { selecao: linksSel, chaveDe: (d: LinkSankey) => (d.source as NoSankey).name },
+      ],
+      realcar,
+      () => realcar(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
