@@ -31,6 +31,15 @@ Registro do que já foi instalado/configurado nesta máquina, para não reinstal
   via `locale -a`, não precisa instalar nada). Vale conferir o `data.json`
   gerado (`python3 -c "import json; print(json.load(open('data.json')))"`)
   em qualquer gráfico novo com texto acentuado antes de aceitar como pronto.
+- **Sem acesso de rede a `r-graph-gallery.com`/`data-to-viz.com`** — o proxy
+  de saída bloqueia os dois domínios (confirmado via `curl` E via `WebFetch`,
+  não é limitação de uma ferramenta só). Isso muda o processo do
+  [WORKFLOW.md](WORKFLOW.md): não dá pra abrir a página de origem pra
+  conferir a técnica/variações antes de replicar — o gráfico precisa ser
+  montado de memória (conhecimento geral de tipos de gráfico + o que já foi
+  visto de outras sessões), e o campo `source` do frontmatter fica sem
+  conferência contra a URL real. Avise no README/PROGRESS.md quando isso
+  acontecer, pra o usuário saber que aquele link específico não foi validado.
 - **Sem Chrome/Edge instalado**, mas o **Chromium do Playwright já vem
   pronto** em `/opt/pw-browsers/chromium` (ver `CLAUDE.md` da raiz). Serve
   tanto pro papel do `webshot2`/`CHROMOTE_CHROME` (thumbnail de widget sem
