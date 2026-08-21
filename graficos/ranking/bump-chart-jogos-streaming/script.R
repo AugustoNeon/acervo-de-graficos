@@ -42,9 +42,14 @@ dados_longo <- expand.grid(jogo = jogos, mes = seq_len(n_meses)) |>
   mutate(rank = rank(-pontuacao, ties.method = "first")) |>
   ungroup()
 
-# Paleta categorica (uma cor por jogo) -- "Pastel2" ainda nao usada em
-# nenhum outro grafico do acervo.
-cores <- setNames(brewer.pal(n_jogos, "Pastel2"), jogos)
+# Paleta categorica (uma cor por jogo). Pastel2 (usada numa primeira versao)
+# saiu clara demais pra linhas finas de 1.3pt -- baixo contraste contra o
+# fundo branco, dificil de distinguir uma linha da outra. "Set1" tem
+# contraste bem mais alto (e o proposito dela: ColorBrewer a descreve como
+# "printer-friendly, colorblind-friendly"), mas seu amarelo padrao (indice 6)
+# e o oposto disso -- quase invisivel no branco. Pulamos o amarelo e o cinza
+# (indice 9, se confunde com a grade) e ficamos com os 7 tons mais escuros.
+cores <- setNames(brewer.pal(9, "Set1")[c(1, 2, 3, 4, 5, 7, 8)], jogos)
 
 rotulos_pontas <- dados_longo |> filter(mes %in% c(1, n_meses))
 
