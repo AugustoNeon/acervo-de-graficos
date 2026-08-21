@@ -4,6 +4,49 @@
 
 Registro do que já foi instalado/configurado nesta máquina, para não reinstalar à toa em sessões futuras.
 
+## Ambiente Linux (sessão remota / Claude Code na nuvem)
+
+> As seções abaixo ("R", caminhos `C:\...`, PowerShell) descrevem as máquinas
+> Windows do usuário. Sessões rodando neste ambiente remoto (Ubuntu 24.04, sem
+> GUI) são uma máquina **diferente** — nada de `Program Files`/`AppData`, e o
+> R não vem pré-instalado.
+
+- **Instalação do R**: `sudo apt-get install -y r-base-core r-cran-<pacote>`.
+  O Ubuntu empacota várias centenas de pacotes CRAN pré-compilados como
+  `r-cran-*` (`apt-cache search "^r-cran-"` lista os disponíveis) — bem mais
+  rápido que `install.packages()` puxando do CRAN e compilando na hora (que
+  também funciona, mas sem `sudo` grava em `~/R/...` e demora bastante mais
+  pra pacotes com código C/C++, como `sf`/`igraph`). Confira o pacote `r-cran-`
+  antes de cair pro `install.packages()`. `Rscript`/`R` já entram no `PATH` do
+  jeito que o apt instala — sem caminho fixo pra descobrir feito no Windows.
+- **`sudo apt-get update` pode falhar parcialmente** (algumas PPAs de terceiros
+  fora do ar, ex: `deadsnakes`/`ondrej`) sem impedir o resto — os repositórios
+  `archive.ubuntu.com` principais continuam funcionando; não é bloqueante.
+- **Locale**: a sessão nasce em `LC_ALL=POSIX`/`C` (não UTF-8) por padrão.
+  Rodar `Rscript` assim faz qualquer string com acento ou caractere especial
+  (nomes com "ç"/"ã", ou um separador como "·") sair **corrompida** no
+  `data.json`/`output.png` — sem nenhum erro, silenciosamente (bytes UTF-8
+  válidos reinterpretados um a um). Sempre rodar com locale UTF-8 explícito:
+  `LANG=C.UTF-8 LC_ALL=C.UTF-8 Rscript script.R` (`C.utf8` já vem disponível
+  via `locale -a`, não precisa instalar nada). Vale conferir o `data.json`
+  gerado (`python3 -c "import json; print(json.load(open('data.json')))"`)
+  em qualquer gráfico novo com texto acentuado antes de aceitar como pronto.
+- **Sem Chrome/Edge instalado**, mas o **Chromium do Playwright já vem
+  pronto** em `/opt/pw-browsers/chromium` (ver `CLAUDE.md` da raiz). Serve
+  tanto pro papel do `webshot2`/`CHROMOTE_CHROME` (thumbnail de widget sem
+  equivalente `ggplot2`) quanto pra verificar visualmente a versão D3
+  interativa de um gráfico novo — sem precisar de `chromote`/R nenhum,
+  basta um script Node com `require('playwright')` (o pacote fica em
+  `/opt/node22/lib/node_modules/playwright`, fora do `node_modules` do
+  projeto — `require()` do caminho absoluto funciona, `import` ESM não
+  resolve sem esse caminho completo). Ver primeiro uso em
+  [graficos/flow/alluvial-trajetoria-eleitoral](../graficos/flow/alluvial-trajetoria-eleitoral).
+- **`site/node_modules` não existe** até rodar `npm install` dentro de
+  `site/` (mesmo aviso já registrado em "Lições aprendidas" do
+  [AGENTS.md](../AGENTS.md) pra worktrees novos) — e `npx astro check`
+  pede `@astrojs/check`+`typescript` na primeira vez (`npm install -D
+  @astrojs/check typescript`) antes de rodar sem prompt interativo.
+
 ## R
 
 > **O caminho do R muda de máquina pra máquina — sempre confira antes de usar.**
@@ -109,6 +152,9 @@ Adicionado em 2026-08-18 (ridgeline plot — `graficos/distribution/ridgeline-av
 - `ggridges` (CRAN) — `geom_density_ridges_gradient()`, ridgeline/joyplot em cima do `ggplot2`. Instalado com `New-Item` da pasta pessoal (`R_LIBS_USER`) antes, mesma receita do topo desta seção — nesta máquina o R já é instalado no perfil do usuário, então nem sempre é necessário, mas não custa garantir.
 
 > Nota: `pandoc` **não está instalado** nesta máquina. `htmlwidgets::saveWidget(..., selfcontained = TRUE)` depende dele e falha sem — use `selfcontained = FALSE` (gera uma pasta `<nome>_files/` ao lado do HTML com as dependências, precisa manter as duas juntas).
+
+Adicionado em 2026-08-21 (diagrama aluvial — `graficos/flow/alluvial-trajetoria-eleitoral`, ambiente Linux):
+- `ggalluvial` (`r-cran-ggalluvial` via apt) — `geom_alluvium()`/`geom_stratum()`, diagrama aluvial de eixos discretos em cima do `ggplot2`.
 
 ### Instalando pacotes adicionais
 
