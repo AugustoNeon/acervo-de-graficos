@@ -165,6 +165,10 @@ Adicionado em 2026-08-18 (ridgeline plot — `graficos/distribution/ridgeline-av
 Adicionado em 2026-08-21 (diagrama aluvial — `graficos/flow/alluvial-trajetoria-eleitoral`, ambiente Linux):
 - `ggalluvial` (`r-cran-ggalluvial` via apt) — `geom_alluvium()`/`geom_stratum()`, diagrama aluvial de eixos discretos em cima do `ggplot2`.
 
+Adicionado em 2026-08-21 (mapa hexagonal — `graficos/map/mapa-hexbin-avistamentos-aves`, ambiente Linux):
+- `maps` (`r-cran-maps` via apt, geralmente já vem como dependência transitiva de outro pacote) — base de dados de contorno de país/estado (`world`, `usa`, `france`...) embutida no próprio pacote, sem precisar de shapefile/GeoJSON externo nem acesso à internet. `ggplot2::map_data("world", region = "<país>")` usa essa base por baixo. Resolve offline o mesmo problema que motivaria `geobr`/`rnaturalearth` (indisponíveis neste ambiente — ver "Ambiente Linux" acima) pra qualquer país/região que já exista na base `world` do `maps`.
+- `hexbin` (`r-cran-hexbin` via apt) — motor de binning hexagonal por trás do `ggplot2::geom_hex()`. Sozinho (sem `ggplot2`) só é útil pra reconstruir a geometria de um hexágono já calculado (`hexbin::hexcoords()`) — ver "Lições aprendidas" em [AGENTS.md](../AGENTS.md) pra fórmula exata (`dx = width/2, dy = height/sqrt(3)/2`, não documentada, lida do código-fonte de `ggplot2:::GeomHex`).
+
 ### Instalando pacotes adicionais
 
 Gráficos diferentes no R Graph Gallery podem pedir pacotes extras (ex: `treemapify`, `ggalluvial`, `circlize`, `sf` para mapas, `networkD3`, `viridis`, `patchwork`). Antes de rodar um script novo, olhe os `library(...)` no topo e instale o que faltar:
