@@ -5,7 +5,7 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/328-hexbin-map-of-the-usa.html"
 interactive: true
 resumo: "Avistamentos de aves migratórias reportados no Brasil, agregados em células hexagonais coloridas pela quantidade — a densidade real por região, em vez de um ponto por avistamento."
-pacotes: ["ggplot2", "maps", "hexbin", "sf", "RColorBrewer", "jsonlite", "d3"]
+pacotes: ["ggplot2", "maps", "hexbin", "sf", "rnaturalearthdata", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis numéricas de coordenada (longitude, latitude), uma linha por evento/observação"
 nivel: intermediário
 tags: ["interativo", "densidade", "hexbin"]
@@ -50,10 +50,13 @@ antes.
   cobrindo a mesma área real.
 - **Cor**: quantos avistamentos caíram naquela célula. Mais escuro = mais
   avistamentos.
+- **Linha fina entre hexágonos**: fronteira estadual — deixa dá pra situar
+  cada aglomerado num estado, sem precisar decorar a geografia do Brasil.
+- **Sigla (ex: "SP", "BA")**: o estado, marcada no centroide dele.
 - **Ausência de hexágono**: nenhum avistamento reportado ali — não significa
   "zero aves", só "zero avistamentos DESTE app nessa célula".
 
-Passe o cursor num hexágono pra ver a contagem exata.
+Passe o cursor num hexágono pra ver a contagem exata e o estado onde ele está.
 
 ## Como foi feito
 
@@ -63,10 +66,13 @@ cor pra células muito densas não ofuscarem todo o resto — sem isso, os 4-5
 hexágonos dos pontos-quentes ficariam saturados e o resto do mapa sairia
 quase todo branco) e `coord_quickmap()` por cima do contorno do Brasil (via
 `maps::map_data("world", region = "Brazil")`, dado que já vem embutido no
-pacote `maps`, sem precisar baixar shapefile nenhum).
+pacote `maps`, sem precisar baixar shapefile nenhum) e das fronteiras
+estaduais (via `rnaturalearthdata::states50`, a malha Admin-1 do Natural
+Earth em 1:50m, também embutida no pacote — inclui nome, sigla e centroide
+de cada estado prontos, sem precisar calcular nada).
 
 A versão interativa **não recalcula o binning do zero** — ela lê de volta a
-própria célula que o `ggplot2` já calculou (`ggplot_build(p)$data[[2]]`: centro,
+própria célula que o `ggplot2` já calculou (`ggplot_build(p)$data[[i]]`: centro,
 contagem e cor final de cada hexágono) e o formato exato de UM hexágono
 (`hexbin::hexcoords()`, os 6 vértices em torno do centro, iguais pra toda a
 grade). O D3 só projeta longitude/latitude pra pixel — com a mesma correção
@@ -74,7 +80,10 @@ de aspecto do `coord_quickmap()` (1° de longitude vale `cos(latitude média)`
 vezes 1° de latitude em distância real) — e desenha cada hexágono nesse
 ponto. Sem esse reaproveitamento, reproduzir a MESMA grade (mesmo `bins`,
 mesmo alinhamento) numa segunda implementação em D3 arriscaria uma grade
-sutilmente diferente da estática.
+sutilmente diferente da estática. Em qual estado cada hexágono cai também é
+resolvido **uma vez só no R** (`sf::st_join()`, ponto-em-polígono contra o
+mesmo contorno estadual) e exportado pronto — o tooltip da versão
+interativa só exibe o resultado, não recalcula.
 
 Dados fictícios: ~2500 avistamentos de aves migratórias (`set.seed(6114)`)
 concentrados em 5 áreas úmidas/estuários reais onde observação de aves
@@ -104,6 +113,15 @@ geográfico nenhum).
   assimétrica (poucas células com centenas de pontos, a maioria com 1-5).
   **Solução**: `trans = "sqrt"` no `scale_fill_distiller()` comprime a
   ponta alta da escala sem esconder o contraste na ponta baixa.
+
+- **Problema**: `sf::st_join()` (o teste ponto-em-polígono pra descobrir o
+  estado de cada hexágono) falhava com `Loop 0 is not valid: Edge 58 has
+  duplicate vertex with edge 74`. **Por quê**: a malha 1:50m do Natural
+  Earth tem pelo menos um anel com vértice duplicado (auto-interseção) —
+  inofensivo pra só DESENHAR o polígono, mas o motor de geometria esférica
+  (`s2`) que o `sf` usa por padrão pra testes topológicos é mais rígido e
+  rejeita. **Solução**: `sf::st_make_valid()` no polígono dos estados antes
+  do `st_join()` — corrige o anel sem mudar a forma visível.
 
 ## Variações possíveis
 
