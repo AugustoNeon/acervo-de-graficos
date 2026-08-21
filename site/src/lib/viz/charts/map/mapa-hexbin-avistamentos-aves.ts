@@ -33,6 +33,7 @@ interface Hexagono {
   y: number;
   contagem: number;
   cor: string;
+  estado: string | null;
 }
 
 interface Offset {
@@ -40,9 +41,17 @@ interface Offset {
   y: number;
 }
 
+interface RotuloEstado {
+  sigla: string;
+  x: number;
+  y: number;
+}
+
 interface Dados {
   meta: { nota?: string };
   brasil: Record<string, PontoContorno[]>;
+  estados: Record<string, PontoContorno[]>;
+  rotulosEstado: RotuloEstado[];
   hexagonos: Hexagono[];
   offsetsHexagono: Offset[];
 }
@@ -56,7 +65,7 @@ const chart: VizChart = {
   label: 'Mapa hexagonal de densidade: avistamentos de aves migratórias reportados no Brasil, agregados por célula geográfica.',
 
   draw({ root, data, width, theme, tooltip, animate }: DrawContext) {
-    const { meta, brasil, hexagonos, offsetsHexagono } = data as Dados;
+    const { meta, brasil, estados, rotulosEstado, hexagonos, offsetsHexagono } = data as Dados;
     const contornos = Object.values(brasil);
 
     const lons = contornos.flatMap((poly) => poly.map((p) => p.long));
@@ -89,12 +98,22 @@ const chart: VizChart = {
     const gContorno = svg.append('g');
     contornos.forEach((poly) => {
       const d = poly.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.long)},${y(p.lat)}`).join('') + 'Z';
-      gContorno
+      gContorno.append('path').attr('d', d).attr('fill', theme.surface).attr('stroke', 'none');
+    });
+
+    // ------------------------------------------------------ fronteiras estaduais
+    // Pedido do usuário: dar orientação de "em qual estado eu tô olhando"
+    // sem depender só do contorno do país inteiro. Fica entre o contorno e os
+    // hexágonos -- mais discreto que a borda do país, mas visível nos vãos.
+    const gEstados = svg.append('g');
+    Object.values(estados).forEach((poly) => {
+      const d = poly.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.long)},${y(p.lat)}`).join('') + 'Z';
+      gEstados
         .append('path')
         .attr('d', d)
-        .attr('fill', theme.surface)
+        .attr('fill', 'none')
         .attr('stroke', theme.border)
-        .attr('stroke-width', px(0.6));
+        .attr('stroke-width', px(0.4));
     });
 
     // ------------------------------------------------------------ hexagonos
@@ -111,6 +130,39 @@ const chart: VizChart = {
       .attr('stroke', theme.bg)
       .attr('stroke-width', px(0.8))
       .attr('data-interactive', '');
+
+    // Contorno do país de novo, por cima dos hexágonos -- mesma ideia do
+    // estático (a borda externa precisa se destacar das internas).
+    const gContornoTopo = svg.append('g');
+    contornos.forEach((poly) => {
+      const d = poly.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.long)},${y(p.lat)}`).join('') + 'Z';
+      gContornoTopo
+        .append('path')
+        .attr('d', d)
+        .attr('fill', 'none')
+        .attr('stroke', theme.borderStrong)
+        .attr('stroke-width', px(0.7));
+    });
+
+    // Siglas dos estados, por cima de tudo -- halo com a cor do fundo pra
+    // continuar legível mesmo sobre uma célula bem escura.
+    const rotulosEstadoSel = svg
+      .append('g')
+      .selectAll('text')
+      .data(rotulosEstado)
+      .join('text')
+      .attr('x', (d) => x(d.x))
+      .attr('y', (d) => y(d.y))
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-family', theme.fontBody)
+      .attr('font-weight', 700)
+      .attr('font-size', px(9.5))
+      .attr('fill', theme.ink)
+      .attr('paint-order', 'stroke')
+      .attr('stroke', theme.bg)
+      .attr('stroke-width', px(2.5))
+      .text((d) => d.sigla);
 
     // --------------------------------------------------------------- legenda
     const contagens = hexagonos.map((h) => h.contagem).sort((a, b) => a - b);
@@ -187,7 +239,8 @@ const chart: VizChart = {
 
     hexSel
       .on('pointermove', (evento: PointerEvent, d) => {
-        tooltip.show(`<strong>${d.contagem}</strong> avistamento${d.contagem === 1 ? '' : 's'}`, evento);
+        const local = d.estado ? ` — ${d.estado}` : '';
+        tooltip.show(`<strong>${d.contagem}</strong> avistamento${d.contagem === 1 ? '' : 's'}${local}`, evento);
       })
       .on('pointerleave', () => tooltip.hide());
 
@@ -203,11 +256,13 @@ const chart: VizChart = {
     }
 
     // --------------------------------------------------------------- entrada
-    // Contorno aparece primeiro (fundo geográfico), os hexágonos entram por
-    // cima crescendo do centro pra fora, em leve cascata -- acompanha a
-    // leitura "primeiro o mapa, depois os dados sobre ele".
+    // Fundo geográfico (país + fronteiras estaduais) aparece primeiro, os
+    // hexágonos entram por cima crescendo do centro pra fora em leve cascata,
+    // e o contorno/siglas de cima fecham a entrada por último -- acompanha a
+    // leitura "primeiro o mapa, depois os dados sobre ele, depois os rótulos".
     if (animate) {
       gContorno.attr('opacity', 0).transition().duration(DURATION.base).attr('opacity', 1);
+      gEstados.attr('opacity', 0).transition().duration(DURATION.base).attr('opacity', 1);
 
       hexSel
         .attr('transform', (d) => `translate(${x(d.x)},${y(d.y)}) scale(0) translate(${-x(d.x)},${-y(d.y)})`)
@@ -217,9 +272,16 @@ const chart: VizChart = {
         .ease(EASE_ENTER)
         .attr('transform', (d) => `translate(${x(d.x)},${y(d.y)}) scale(1) translate(${-x(d.x)},${-y(d.y)})`);
 
-      garantirEstadoFinal(220 + 520 + DURATION.base + 250, () => {
+      const atrasoRotulos = 220 + 520 + DURATION.base * 0.6;
+      gContornoTopo.attr('opacity', 0).transition().delay(atrasoRotulos).duration(DURATION.base).attr('opacity', 1);
+      rotulosEstadoSel.attr('opacity', 0).transition().delay(atrasoRotulos).duration(DURATION.base).attr('opacity', 1);
+
+      garantirEstadoFinal(atrasoRotulos + DURATION.base + 250, () => {
         gContorno.interrupt().attr('opacity', 1);
+        gEstados.interrupt().attr('opacity', 1);
         hexSel.interrupt().attr('transform', null);
+        gContornoTopo.interrupt().attr('opacity', 1);
+        rotulosEstadoSel.interrupt().attr('opacity', 1);
       });
     }
   },
