@@ -5,7 +5,7 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/wordcloud.html"
 interactive: true
 resumo: "46 termos fictícios extraídos de avaliações de um app bancário, com o tamanho de cada palavra pela frequência de menção."
-pacotes: ["wordcloud", "RColorBrewer"]
+pacotes: ["wordcloud"]
 dados: "1 variável textual (palavra) + 1 numérica (frequência)"
 nivel: básico
 tags: ["interativo", "texto", "frequência"]
@@ -52,10 +52,12 @@ alguma ferramenta de processamento de texto antes de chegar no gráfico).
 
 - **Tamanho da palavra**: frequência de menção — quanto maior, mais vezes
   apareceu no texto de origem.
-- **Cor**: nesta versão, o sentimento associado à palavra (positivo,
-  negativo ou neutro) — não é um padrão universal de nuvem de palavras, é
-  uma escolha específica deste gráfico (a versão clássica costuma colorir
-  só pela própria frequência, sem uma dimensão a mais).
+- **Cor**: nesta versão, o sentimento associado à palavra — verde para
+  positivo, vermelho para negativo, azul para neutro — não é um padrão
+  universal de nuvem de palavras, é uma escolha específica deste gráfico
+  (a versão clássica costuma colorir só pela própria frequência, sem uma
+  dimensão a mais). A mesma paleta vale no `output.png` e na versão
+  interativa.
 - **Posição/rotação**: não codificam nada — são só o resultado de um
   algoritmo de encaixe tentando aproveitar o espaço sem sobrepor palavras.
 
@@ -65,14 +67,21 @@ alguma ferramenta de processamento de texto antes de chegar no gráfico).
 espiral a partir do centro, com detecção de colisão pra não sobrepor
 palavras) e desenha direto — não existe um parâmetro pra pedir o resultado
 sem desenhar. `scale` controla o tamanho da maior/menor palavra,
-`rot.per` a fração de palavras giradas 90°.
+`rot.per` a fração de palavras giradas 90°. A cor de cada palavra vem de
+`colors = cores_sentimento[dados$sentimento]` combinado com
+`ordered.colors = TRUE` — sem esse parâmetro, o `wordcloud()` reinterpreta
+o vetor de cores como uma RAMPA por frequência (o comportamento padrão,
+pensado pra colorir por frequência, não por categoria arbitrária).
 
 Dados fictícios: frequência de 46 termos comuns em avaliações de um app
 bancário fictício (`set.seed(6289)`), seguindo uma distribuição tipo Zipf
 (poucas palavras muito frequentes, cauda longa de palavras citadas poucas
 vezes — o padrão estatístico real de frequência de palavras em texto
 livre), com cada termo também classificado manualmente como
-positivo/negativo/neutro.
+positivo/negativo/neutro. A paleta por sentimento é definida **uma vez só**
+numa variável e usada tanto no `output.png` quanto exportada pro
+`data.json` da versão interativa — nunca repetir o hexadecimal em dois
+lugares, pra as duas versões nunca divergirem de cor por acidente.
 
 A versão interativa NÃO reaproveita o layout do R (ele não é exportável) —
 calcula o próprio, do zero, com o pacote `d3-cloud` (mesma família de
@@ -83,6 +92,24 @@ num sentimento na legenda isola aquele grupo.
 
 ## Possíveis problemas pelo caminho
 
+- **Problema**: a miniatura do gráfico na galeria (`output.png`) mostra uma
+  cor pra cada palavra, mas a versão interativa colore as mesmas palavras
+  de forma diferente — mesmo as duas estando "certas" isoladamente, a
+  divergência lê como bug pra quem vê a miniatura antes de clicar.
+  **Por quê**: cada versão calculou sua própria paleta separadamente (uma
+  por frequência, outra por sentimento), sem garantir que as duas
+  concordassem. **Solução**: definir a paleta **uma única vez** (uma
+  variável no R) e alimentar tanto o `output.png` quanto o `data.json`
+  exportado com ela — nunca decidir a cor de cada versão de forma
+  independente, mesmo quando as duas usam bibliotecas diferentes.
+- **Problema**: passar um vetor de cores do mesmo tamanho que as palavras
+  pro `wordcloud()` não gera o resultado esperado — as cores saem
+  embaralhadas ou aplicadas por faixa de frequência, não por palavra.
+  **Por quê**: por padrão, `wordcloud()` trata o vetor `colors` como uma
+  RAMPA (interpolada pela frequência), não como uma cor fixa por palavra.
+  **Solução**: passar `ordered.colors = TRUE` junto — só assim o vetor de
+  cores é pareado 1 a 1 com `words`/`freq`, na mesma ordem em que foram
+  passados.
 - **Problema**: um campo extra e inesperado (`_row`) aparece em cada
   entrada do JSON exportado, sem ter sido pedido em lugar nenhum do código.
   **Por quê**: indexar um vetor NOMEADO por um vetor de chaves

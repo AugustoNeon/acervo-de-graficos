@@ -1,6 +1,5 @@
 # Libraries
 library(wordcloud)
-library(RColorBrewer)
 library(jsonlite)
 
 # Dados 100% ficticios: frequencia de palavras em avaliacoes de um app
@@ -54,9 +53,14 @@ dados <- data.frame(
 )
 
 # Paleta trocada em relacao ao original (paleta padrao "Dark2"/preto do
-# tutorial) -- sequencial, intensidade acompanhando a frequencia
-paleta_nome <- "YlGnBu"
-cores_freq <- rev(brewer.pal(8, paleta_nome))
+# tutorial) -- por SENTIMENTO, nao por frequencia, e definida UMA VEZ SO
+# aqui pra alimentar tanto o estatico quanto a versao interativa (nunca
+# repetir hexadecimais nas duas versoes -- ver AGENTS.md "Licoes
+# aprendidas", 2026-07-29: divergencia de paleta entre output.png e
+# interativa le como bug pro usuario, mesmo com as duas "corretas"
+# isoladamente). Cores vivas e bem contrastantes entre si (pedido do
+# usuario), no lugar do "Dark2" mais pastel usado antes.
+cores_sentimento <- c(positivo = "#2CA02C", negativo = "#E4572E", neutro = "#1F77B4")
 
 set.seed(6289) # wordcloud() tem aleatoriedade propria no posicionamento;
 # fixar de novo aqui garante um layout reproduzivel entre execucoes
@@ -65,7 +69,7 @@ par(mar = c(0, 0, 0, 0), bg = "white")
 wordcloud(
   words = dados$palavra, freq = dados$frequencia,
   min.freq = 1, max.words = n, random.order = FALSE, rot.per = 0.15,
-  colors = cores_freq, scale = c(4.2, 0.7)
+  colors = cores_sentimento[dados$sentimento], ordered.colors = TRUE, scale = c(4.2, 0.7)
 )
 dev.off()
 
@@ -80,7 +84,7 @@ dev.off()
 viz <- list(
   meta = list(
     dominioFrequencia = c(min(dados$frequencia), max(dados$frequencia)),
-    paletaSentimento = as.list(setNames(brewer.pal(3, "Dark2"), c("positivo", "negativo", "neutro"))),
+    paletaSentimento = as.list(cores_sentimento),
     nota = "Passe o cursor numa palavra pra ver a frequência e o sentimento; clique num sentimento pra isolar o grupo."
   ),
   palavras = dados
