@@ -1,0 +1,208 @@
+---
+import { formatDate } from '../lib/format';
+import { corDaCategoria } from '../lib/categoria';
+import { tiltFor } from '../lib/tilt';
+
+interface Props {
+  href: string;
+  title: string;
+  category: string;
+  date: Date;
+  interactive: boolean;
+  thumbnail: string;
+  resumo: string;
+  id: string;
+  /** Posição na grade — alimenta o atraso escalonado da entrada. */
+  index?: number;
+  /** A entrada mais recente ganha o espaço maior no mural, como a página que
+      acabou de ser presa por cima das outras. */
+  featured?: boolean;
+}
+
+const {
+  href,
+  title,
+  category,
+  date,
+  interactive,
+  thumbnail,
+  resumo,
+  id,
+  index = 0,
+  featured = false,
+} = Astro.props;
+
+const tilt = tiltFor(id);
+---
+
+<a
+  class="specimen"
+  class:list={{ 'is-featured': featured }}
+  href={href}
+  data-category={category}
+  style={`${corDaCategoria(category)} --i: ${index}; --tilt: ${tilt}deg;`}
+>
+  <span class="tape" aria-hidden="true"></span>
+  <div class="specimen-photo">
+    <img src={thumbnail} alt="" loading="lazy" decoding="async" />
+    {interactive && <span class="stamp">interativo</span>}
+  </div>
+  <div class="specimen-label">
+    <span class="specimen-category">{category}</span>
+    <h3 class="specimen-title">{title}</h3>
+    <p class="specimen-resumo">{resumo}</p>
+    <span class="specimen-date">{formatDate(date)}</span>
+  </div>
+</a>
+
+<style>
+  .specimen {
+    --lift: 0deg;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--color-ink);
+    background: var(--paper-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2xs) var(--space-2xs) var(--space-sm);
+    box-shadow: var(--shadow-md);
+    transform: rotate(var(--tilt));
+    transition: transform var(--duration-base) var(--ease-out-expo),
+      box-shadow var(--duration-base) var(--ease-out-expo);
+  }
+
+  .specimen:hover,
+  .specimen:focus-visible {
+    transform: rotate(0deg) translateY(-0.25rem) scale(1.015);
+    box-shadow: var(--shadow-lift);
+    z-index: var(--z-dropdown);
+  }
+
+  .specimen.is-featured {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  /* Fita washi presa no canto — o sinal de categoria vira objeto, não bloco
+     de fundo. Pontas em bisel simulam o corte/rasgo da fita. */
+  .tape {
+    position: absolute;
+    top: -0.6rem;
+    left: 1.1rem;
+    width: 4.75rem;
+    height: 1.6rem;
+    background: linear-gradient(
+      100deg,
+      color-mix(in oklch, var(--cat) 78%, transparent) 0%,
+      color-mix(in oklch, var(--cat) 62%, transparent) 100%
+    );
+    clip-path: polygon(6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%, 0 50%);
+    transform: rotate(-7deg);
+    box-shadow: 0 2px 4px oklch(0.2 0.02 255 / 0.18);
+  }
+
+  .specimen-photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--paper);
+    border: 1px solid var(--color-border);
+  }
+
+  .is-featured .specimen-photo {
+    aspect-ratio: 16 / 10;
+  }
+
+  .specimen-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .stamp {
+    position: absolute;
+    bottom: var(--space-2xs);
+    right: var(--space-2xs);
+    padding: 0.2em 0.6em;
+    border: 1.5px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    background: color-mix(in oklch, var(--paper) 80%, transparent);
+    transform: rotate(-3deg);
+  }
+
+  .specimen-label {
+    padding-top: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+
+  .specimen-category {
+    align-self: flex-start;
+    padding: 0.1em 0.5em;
+    background: var(--cat-wash);
+    color: var(--cat-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .specimen-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+  }
+
+  .is-featured .specimen-title {
+    font-size: var(--text-xl);
+  }
+
+  .specimen-resumo {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: var(--leading-snug);
+    text-wrap: pretty;
+  }
+
+  .specimen-date {
+    margin-top: 0.15em;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+
+  /* Entrada escalonada — o espécime é fixado no mural um a um, não aparece
+     tudo junto. Visível por padrão (`backwards`, nunca `both`): sem a
+     animação, o card fica exatamente onde deveria, só sem o gesto de chegada. */
+  @media (prefers-reduced-motion: no-preference) {
+    .specimen {
+      animation: pin-in var(--duration-slow) var(--ease-out-quint) backwards;
+      animation-delay: calc(var(--i, 0) * 40ms);
+    }
+  }
+
+  @keyframes pin-in {
+    from {
+      opacity: 0;
+      transform: rotate(var(--tilt)) translateY(10px) scale(0.96);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .specimen {
+      transition: none;
+    }
+    .specimen:hover,
+    .specimen:focus-visible {
+      transform: none;
+    }
+  }
+</style>

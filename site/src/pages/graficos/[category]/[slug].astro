@@ -1,0 +1,602 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Code } from 'astro:components';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import Base from '../../../layouts/Base.astro';
+import Viz from '../../../components/Viz.astro';
+import { formatDate } from '../../../lib/format';
+import { corDaCategoria } from '../../../lib/categoria';
+
+export async function getStaticPaths() {
+  // graficos/ vive fora de site/, entao o script.R de cada grafico e lido do
+  // disco em tempo de build (nao importado pelo Vite) -- assim a pagina sempre
+  // mostra o codigo real que gerou o grafico, sem duplica-lo no README.
+  // Precisa ficar DENTRO de getStaticPaths: o frontmatter do componente vira
+  // corpo de funcao no build, e getStaticPaths (hoisted) nao enxerga de la.
+  // process.cwd() e a raiz de site/ (npm roda os scripts de la); import.meta.url
+  // NAO serve aqui -- no build ele aponta pro chunk empacotado, nao pro fonte.
+  const graficosDir = join(process.cwd(), '..', 'graficos');
+  const entries = await getCollection('graficos');
+
+  // Número de entrada do caderno — ordem cronológica real de quando cada
+  // gráfico foi adicionado ao acervo, tipo o registro sequencial de um
+  // caderno de laboratório (não a ordem alfabética nem a de exibição na home,
+  // que é mais-recente-primeiro).
+  const cronologica = [...entries].sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+  const numeroDaEntrada = new Map(cronologica.map((e, i) => [e.id, i + 1]));
+
+  return entries.map((entry) => {
+    const [category, slug] = entry.id.split('/');
+    const scriptPath = join(graficosDir, category, slug, 'script.R');
+    let code: string | null = null;
+    try {
+      code = readFileSync(scriptPath, 'utf-8').trimEnd();
+    } catch {
+      console.warn(`[grafico] script.R nao encontrado em ${scriptPath} — secao de codigo omitida`);
+    }
+    // Um grafico e "viz" quando existe um modulo D3 pra ele em lib/viz/charts:
+    // nesse caso o grafico e desenhado no proprio fluxo da pagina, herdando as
+    // fontes e a paleta do site. Sem modulo, cai no widget.html em iframe (os
+    // graficos gerados por pacote R) ou na imagem estatica.
+    const vizPath = join(process.cwd(), 'src', 'lib', 'viz', 'charts', category, `${slug}.ts`);
+    const temViz = existsSync(vizPath);
+    return {
+      params: { category, slug },
+      props: { entry, code, temViz, numero: numeroDaEntrada.get(entry.id) ?? 0 },
+    };
+  });
+}
+
+const { entry, code, temViz, numero } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+const assetBase = `${base}/graficos/${entry.id}/`;
+const numeroFormatado = `Nº ${String(numero).padStart(3, '0')}`;
+---
+
+<Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title} surface="paper">
+  <div class="page" style={corDaCategoria(entry.data.category)}>
+    <a class="back" href={`${base}/`}>« voltar ao caderno</a>
+
+    <header class="head">
+      <div class="entry-stamp">
+        <span class="entry-number">{numeroFormatado}</span>
+        <span class="entry-date">{formatDate(entry.data.date)}</span>
+      </div>
+      <span class="category">{entry.data.category}</span>
+      <h1>{entry.data.title}</h1>
+      <p class="resumo">{entry.data.resumo}</p>
+    </header>
+
+    {temViz ? (
+      <div class="visual">
+        <span class="tape tape-a" aria-hidden="true"></span>
+        <span class="tape tape-b" aria-hidden="true"></span>
+        <div class="visual-mount">
+          <Viz
+            id={entry.id}
+            dataUrl={`${assetBase}data.json`}
+            fallbackSrc={`${assetBase}output.png`}
+            title={entry.data.title}
+          />
+        </div>
+      </div>
+    ) : (
+      <figure class="visual">
+        <span class="tape tape-a" aria-hidden="true"></span>
+        <span class="tape tape-b" aria-hidden="true"></span>
+        {entry.data.interactive ? (
+          <div class="visual-mount widget-frame">
+            <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
+          </div>
+        ) : (
+          <>
+            <button type="button" class="visual-mount zoom-trigger" data-zoom-src={`${assetBase}output.png`}>
+              <img src={`${assetBase}output.png`} alt={entry.data.title} loading="eager" decoding="async" />
+            </button>
+            <figcaption>Clique no espécime pra ver em tamanho real</figcaption>
+          </>
+        )}
+      </figure>
+    )}
+
+    <dl class="ficha">
+      <p class="ficha-title">Ficha do espécime</p>
+      <div class="ficha-row">
+        <dt>Pacotes</dt>
+        <dd class="chips">
+          {entry.data.pacotes.map((p) => <code class="chip">{p}</code>)}
+        </dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Dados</dt>
+        <dd>{entry.data.dados}</dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Nível</dt>
+        <dd>{entry.data.nivel}</dd>
+      </div>
+      <div class="ficha-row">
+        <dt>Tags</dt>
+        <dd class="chips">
+          {entry.data.tags.map((t) => <span class="chip chip-tag">{t}</span>)}
+        </dd>
+      </div>
+    </dl>
+
+    <section class="notes">
+      <Content />
+    </section>
+
+    {code && (
+      <section class="codigo">
+        <div class="codigo-head">
+          <h2>O protocolo</h2>
+          <button type="button" class="copy-btn" data-copy-label="Copiar código">Copiar código</button>
+        </div>
+        <p class="codigo-hint">
+          Script completo que gera este gráfico — roda do zero, sem depender de arquivo externo.
+        </p>
+        <Code code={code} lang="r" theme="github-light" />
+      </section>
+    )}
+  </div>
+
+  <dialog id="lightbox">
+    <button type="button" class="lightbox-close" aria-label="Fechar">✕</button>
+    {/* A imagem e criada no clique, ja com o endereco definido: deixada no
+        markup sem endereco, o navegador a trataria como imagem quebrada. */}
+    <div id="lightbox-slot"></div>
+  </dialog>
+</Base>
+
+<style>
+  .page {
+    max-width: 52rem;
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-md) var(--space-3xl);
+  }
+
+  .back {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    margin-bottom: var(--space-lg);
+  }
+
+  .back:hover {
+    color: var(--color-primary);
+  }
+
+  .head {
+    position: relative;
+    margin-bottom: var(--space-xl);
+    padding-top: var(--space-sm);
+  }
+
+  .entry-stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.3em 0.7em;
+    border: 1.5px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    transform: rotate(-1.5deg);
+    margin-bottom: var(--space-sm);
+  }
+
+  .entry-stamp span + span {
+    padding-left: 0.6em;
+    border-left: 1px solid color-mix(in oklch, var(--color-primary) 45%, transparent);
+  }
+
+  .category {
+    display: inline-block;
+    margin-bottom: var(--space-sm);
+    margin-left: var(--space-sm);
+    padding: 0.15em 0.6em;
+    background: var(--cat-wash);
+    color: var(--cat-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-tight);
+  }
+
+  .resumo {
+    margin-top: var(--space-xs);
+    max-width: var(--measure);
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+
+  /* O espécime — colado na página, não emoldurado como um card de produto. */
+  .visual {
+    position: relative;
+    margin: 0 0 var(--space-xl);
+    padding: var(--space-sm);
+    background: var(--paper-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .visual-mount {
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .tape {
+    position: absolute;
+    width: 5rem;
+    height: 1.7rem;
+    background: linear-gradient(
+      100deg,
+      color-mix(in oklch, var(--cat) 76%, transparent) 0%,
+      color-mix(in oklch, var(--cat) 58%, transparent) 100%
+    );
+    clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%);
+    box-shadow: 0 2px 5px oklch(0.2 0.02 255 / 0.2);
+    z-index: 1;
+  }
+
+  .tape-a {
+    top: -0.75rem;
+    left: -1rem;
+    transform: rotate(-32deg);
+  }
+
+  .tape-b {
+    bottom: -0.75rem;
+    right: -1rem;
+    transform: rotate(-32deg);
+  }
+
+  .zoom-trigger {
+    display: block;
+    width: 100%;
+    padding: 0;
+  }
+
+  .zoom-trigger img {
+    width: 100%;
+    transition: transform var(--duration-base) var(--ease-out-expo);
+  }
+
+  .zoom-trigger:hover img {
+    transform: scale(1.012);
+  }
+
+  figcaption {
+    margin-top: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+
+  .widget-frame iframe {
+    width: 100%;
+    /* altura inicial/fallback — o script ajusta pra altura real do widget
+       quando ele for mais alto que isso, pra nao sobrar barra de rolagem */
+    height: 32rem;
+    border: none;
+    display: block;
+  }
+
+  /* Ficha técnica — etiqueta de espécime, cartolina kraft. Nunca leva texto
+     de --cat-ink em cima (mede 3.8:1 no matiz mais fraco, abaixo de 4.5:1) —
+     só --color-ink/--color-ink-muted, que passam com folga (13.4:1 / 5.7:1). */
+  .ficha {
+    margin: 0 0 var(--space-xl);
+    padding: var(--space-md);
+    background: var(--tag-stock);
+    border: 1px solid color-mix(in oklch, var(--tag-stock) 60%, black 12%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .ficha-title {
+    font-family: var(--font-hand);
+    font-size: 1.4rem;
+    color: var(--color-ink);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .ficha-row {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: var(--space-sm);
+    align-items: baseline;
+  }
+
+  .ficha dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  .ficha dd {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs) var(--space-2xs);
+  }
+
+  .chip {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: 0.15em 0.5em;
+    background: var(--paper);
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  .chip-tag {
+    color: var(--cat-ink);
+    border-color: transparent;
+    background: var(--cat-wash);
+  }
+
+  @media (max-width: 32rem) {
+    .ficha-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-3xs);
+    }
+  }
+
+  .notes {
+    max-width: var(--measure);
+    color: var(--color-ink);
+  }
+
+  .notes :global(h2) {
+    font-size: var(--text-lg);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-xs);
+  }
+
+  .notes :global(ul) {
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .notes :global(li) {
+    line-height: var(--leading-body);
+  }
+
+  .notes :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--paper-surface);
+    padding: 0.1em 0.35em;
+  }
+
+  .notes :global(a) {
+    color: var(--color-primary);
+  }
+
+  .notes :global(strong) {
+    font-weight: 600;
+  }
+
+  .notes :global(p) {
+    margin-top: var(--space-xs);
+  }
+
+  /* Bloco de código — o protocolo datilografado, lido do script.R em tempo de
+     build. */
+  .codigo {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px dashed var(--color-border-strong);
+  }
+
+  .codigo-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .codigo h2 {
+    font-size: var(--text-lg);
+  }
+
+  .copy-btn {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: 0.4em 0.8em;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .copy-btn:hover {
+    background: var(--paper-surface-hover);
+    color: var(--color-ink);
+  }
+
+  .copy-btn[data-copied] {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .codigo-hint {
+    margin-top: var(--space-3xs);
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .codigo :global(.astro-code) {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+    overflow-x: auto;
+    /* Shiki injeta o fundo do tema inline; o do caderno é o surface */
+    background: var(--paper-surface) !important;
+  }
+
+  dialog {
+    padding: 0;
+    border: none;
+    background: transparent;
+    max-width: min(90vw, 60rem);
+    z-index: var(--z-modal);
+  }
+
+  dialog::backdrop {
+    background: oklch(0.16 0.03 55 / 0.85);
+  }
+
+  dialog img {
+    width: 100%;
+    display: block;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    color: oklch(1 0 0);
+    font-size: var(--text-lg);
+  }
+
+  @media (max-width: 40rem) {
+    .tape {
+      width: 3.5rem;
+      height: 1.3rem;
+    }
+  }
+</style>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
+  const slot = document.getElementById('lightbox-slot');
+
+  document.querySelectorAll<HTMLButtonElement>('.zoom-trigger').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      if (!dialog || !slot) return;
+      const src = trigger.dataset.zoomSrc;
+      if (!src) return;
+      // Recriada a cada abertura: o elemento nunca existe sem endereco, e a
+      // troca de grafico nao deixa a imagem anterior piscando antes da nova.
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = trigger.querySelector('img')?.alt ?? '';
+      slot.replaceChildren(img);
+      dialog.showModal();
+    });
+  });
+
+  dialog?.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  document.querySelector('.lightbox-close')?.addEventListener('click', () => dialog?.close());
+
+  // Widgets sao servidos do mesmo dominio (public/graficos/...), entao dá pra
+  // medir a altura real do conteudo e crescer o iframe ate ela -- evita a
+  // barra de rolagem interna quando o widget e mais alto que o valor
+  // padrao (32rem), sem encolher os que já cabem.
+  //
+  // So UMA medicao, no evento 'load' -- nao usar ResizeObserver continuo
+  // aqui. Alguns htmlwidgets (ex: networkD3::simpleNetwork/forceNetwork)
+  // usam sizingPolicy "browser.fill" quando abertos standalone: o widget se
+  // redimensiona pra preencher o proprio iframe. Se ficarmos observando o
+  // body e crescendo o iframe a cada mudanca, o widget enche o novo espaco
+  // maior, o observer dispara de novo, e o iframe cresce sem parar (loop of
+  // resize -> fill -> resize). MAX_ALTURA_PX e um teto de seguranca extra.
+  const MAX_ALTURA_PX = 2000;
+  document.querySelectorAll<HTMLIFrameElement>('.widget-frame iframe').forEach((frame) => {
+    frame.addEventListener('load', () => {
+      try {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+
+        // Varios pacotes de htmlwidget baseados em SVG (ggiraph/girafe,
+        // streamgraph, e provavelmente outros que vierem depois) nascem com
+        // o sizingPolicy do htmlwidgets marcado como "browser.fill":false --
+        // o htmlwidgets.js entao nunca reescala o widget pro tamanho do
+        // container, ele fica travado no width/height fixo em px passado na
+        // geracao e estoura a largura do iframe (corta o grafico e sobra
+        // scrollbar horizontal). Forcando width:100%/height:auto no wrapper
+        // e no <svg>, o navegador reescala mantendo a proporcao -- desde que
+        // o <svg> tenha um viewBox; se so tiver width/height (SVG "antigo",
+        // sem viewBox, ex: streamgraph), sintetizamos um viewBox a partir
+        // deles antes. Lista de seletores fica curta e explicita de
+        // proposito (em vez de pegar todo .html-widget): assim nao
+        // encosta em leaflet/plotly/dygraphs/networkD3, que ja se
+        // redimensionam sozinhos -- so acrescente a classe do wrapper aqui
+        // quando um gráfico novo de outro pacote SVG cair no mesmo problema.
+        doc.querySelectorAll<HTMLElement>('.girafe, .streamgraph, .collapsibleTree').forEach((el) => {
+          el.style.width = '100%';
+          el.style.height = 'auto';
+          const svg = el.querySelector('svg');
+          if (svg) {
+            if (!svg.getAttribute('viewBox')) {
+              const w = svg.getAttribute('width');
+              const h = svg.getAttribute('height');
+              if (w && h) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            }
+            svg.style.width = '100%';
+            svg.style.height = 'auto';
+            svg.style.display = 'block';
+          }
+        });
+
+        const contentHeight = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
+        if (contentHeight > frame.clientHeight) {
+          frame.style.height = `${Math.min(contentHeight + 4, MAX_ALTURA_PX)}px`;
+        }
+      } catch {
+        // widget em outra origem (nao deveria acontecer aqui) -- mantem a altura padrao
+      }
+    });
+  });
+
+  const copyBtn = document.querySelector<HTMLButtonElement>('.copy-btn');
+  const codeEl = document.querySelector<HTMLElement>('.codigo .astro-code');
+
+  copyBtn?.addEventListener('click', async () => {
+    if (!codeEl) return;
+    try {
+      await navigator.clipboard.writeText(codeEl.textContent ?? '');
+      copyBtn.textContent = 'Copiado!';
+      copyBtn.dataset.copied = 'true';
+    } catch {
+      copyBtn.textContent = 'Não deu — copie manualmente';
+    }
+    setTimeout(() => {
+      copyBtn.textContent = copyBtn.dataset.copyLabel ?? 'Copiar código';
+      delete copyBtn.dataset.copied;
+    }, 2000);
+  });
+</script>

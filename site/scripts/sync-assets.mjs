@@ -1,0 +1,49 @@
+// Copia output.png / widget.html de ../graficos/<categoria>/<slug>/ para
+// public/graficos/<categoria>/<slug>/ antes de dev/build. graficos/ continua
+// sendo a unica fonte de verdade dos arquivos; public/graficos e derivado
+// (ver .gitignore) e pode ser regenerado a qualquer momento rodando este script.
+import { existsSync, mkdirSync, copyFileSync, cpSync, readdirSync, rmSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const siteRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const graficosDir = join(siteRoot, '..', 'graficos');
+const publicDir = join(siteRoot, 'public', 'graficos');
+
+// data.json e a fonte de dados dos graficos desenhados em D3 no proprio site
+// (src/lib/viz/) -- gerado pelo script.R junto com o output.png, pra que as
+// duas versoes do mesmo grafico nunca partam de numeros diferentes.
+const ASSET_FILES = ['output.png', 'widget.html', 'data.json'];
+// pasta de dependencias de um widget.html nao-selfcontained (htmlwidgets::saveWidget
+// com selfcontained=FALSE) -- precisa ir junto ou o iframe do widget quebra
+const ASSET_DIRS = ['widget_files'];
+
+rmSync(publicDir, { recursive: true, force: true });
+
+let count = 0;
+for (const category of readdirSync(graficosDir, { withFileTypes: true })) {
+  if (!category.isDirectory()) continue;
+  const categoryPath = join(graficosDir, category.name);
+  for (const slug of readdirSync(categoryPath, { withFileTypes: true })) {
+    if (!slug.isDirectory()) continue;
+    const slugPath = join(categoryPath, slug.name);
+    const destDir = join(publicDir, category.name, slug.name);
+    for (const file of ASSET_FILES) {
+      const src = join(slugPath, file);
+      if (existsSync(src)) {
+        mkdirSync(destDir, { recursive: true });
+        copyFileSync(src, join(destDir, file));
+        count++;
+      }
+    }
+    for (const dir of ASSET_DIRS) {
+      const src = join(slugPath, dir);
+      if (existsSync(src)) {
+        cpSync(src, join(destDir, dir), { recursive: true });
+        count++;
+      }
+    }
+  }
+}
+
+console.log(`sync-assets: ${count} arquivo(s) copiado(s) para public/graficos/`);

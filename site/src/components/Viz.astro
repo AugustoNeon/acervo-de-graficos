@@ -1,0 +1,234 @@
+---
+/**
+ * Monta um grafico interativo direto no fluxo da pagina (sem iframe).
+ *
+ * Progressive enhancement: o que vai no HTML e o `output.png`. Se o JS falhar,
+ * nao carregar ou estiver desligado, a pagina continua mostrando o grafico --
+ * so que estatico. O runtime (lib/viz/mount.ts) troca a imagem pelo SVG
+ * interativo depois que o modulo e o data.json chegam.
+ */
+interface Props {
+  /** "<categoria>/<slug>" — resolve tanto o modulo quanto o data.json */
+  id: string;
+  dataUrl: string;
+  fallbackSrc: string;
+  title: string;
+  /** Proporcao largura/altura, pra reservar o espaco e evitar salto de layout */
+  aspectRatio?: number;
+}
+
+const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
+---
+
+<figure
+  class="viz"
+  data-viz={id}
+  data-viz-data={dataUrl}
+  style={`--viz-aspect: ${aspectRatio};`}
+>
+  <img data-viz-fallback src={fallbackSrc} alt={title} loading="eager" decoding="async" />
+</figure>
+
+<style>
+  .viz {
+    margin: 0;
+    position: relative;
+  }
+
+  /* Reserva a altura antes do desenho, senao o conteudo abaixo pula quando o
+     SVG entra no lugar da imagem. Some assim que o grafico monta: a partir dai
+     a altura tem que caber SVG + legenda, e uma proporcao fixa (que so descreve
+     o SVG) cortaria a legenda fora. */
+  .viz:not([data-viz-state='ready']) {
+    aspect-ratio: var(--viz-aspect);
+  }
+
+  .viz > :global(img[data-viz-fallback]) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .viz > :global(.viz-canvas) {
+    width: 100%;
+  }
+
+  .viz :global(svg) {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Alvos de ponteiro nos graficos — o cursor precisa dizer que da pra
+     interagir antes do usuario tentar. */
+  .viz :global([data-interactive]) {
+    cursor: pointer;
+  }
+
+  /* Legenda: montada em HTML pelo modulo do grafico, nunca dentro do <svg>
+     (texto num viewBox que cresce com o dado encolhe junto e fica ilegivel).
+     Tambem e o caminho de teclado pra filtrar o grafico. */
+  .viz :global(.viz-legenda) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2xs) var(--space-sm);
+    margin-top: var(--space-xs);
+  }
+
+  .viz :global(.viz-legenda button) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.3em 0.6em;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-legenda button:hover),
+  .viz :global(.viz-legenda button:focus-visible) {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  /* Paineis lado a lado (mesmo grafo, codificacoes ou layouts diferentes).
+     `auto-fit` em vez de um numero fixo de colunas: no celular eles empilham
+     sozinhos, e um painel de rede espremido a um terco da largura de 375px
+     seria ilegivel. */
+  .viz :global(.viz-paineis) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: var(--space-sm);
+    align-items: start;
+  }
+
+  .viz :global(.viz-painel-titulo) {
+    margin: 0 0 var(--space-3xs);
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  /* Controles do grafico (alternar layout, etc). Mesma familia visual dos
+     filtros da galeria — a cor ativa e a da categoria da pagina. */
+  .viz :global(.viz-controles) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2xs);
+    margin-top: var(--space-xs);
+  }
+
+  .viz :global(.viz-controles button) {
+    padding: 0.4em 0.9em;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-controles button:hover) {
+    border-color: var(--cat);
+    color: var(--color-ink);
+  }
+
+  .viz :global(.viz-controles button[aria-pressed='true']) {
+    background: var(--cat-wash);
+    border-color: var(--cat);
+    color: var(--cat-ink);
+  }
+
+  /* Controle deslizante (ex: janela de média móvel). Mesma família visual dos
+     outros controles — a cor ativa é a da categoria da página. */
+  .viz :global(.viz-slider) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2xs);
+    margin-top: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .viz :global(.viz-slider-rotulo) {
+    white-space: nowrap;
+  }
+
+  .viz :global(.viz-slider output) {
+    min-width: 4.5em;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  .viz :global(.viz-slider input[type='range']) {
+    width: min(14rem, 40vw);
+    accent-color: var(--cat);
+    cursor: pointer;
+  }
+
+  /* Botão de play/pause — mesma família visual dos outros controles. */
+  .viz :global(.viz-slider-play) {
+    padding: 0.35em 0.8em;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+    transition: background var(--duration-fast) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .viz :global(.viz-slider-play:hover) {
+    border-color: var(--cat);
+    color: var(--color-ink);
+  }
+
+  .viz :global(.viz-slider-play[aria-pressed='true']) {
+    background: var(--cat-wash);
+    border-color: var(--cat);
+    color: var(--cat-ink);
+  }
+
+  .viz :global(.viz-nota) {
+    margin-top: var(--space-xs);
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
+  /* Global de proposito: o mesmo quadradinho de cor aparece na legenda (dentro
+     de .viz) e no tooltip, que vive no <body> pra escapar de qualquer
+     `overflow: hidden` — fora do alcance de um seletor ancorado em .viz. */
+  :global(.viz-swatch) {
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 2px;
+    flex: none;
+    margin-right: 0.1em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viz :global(.viz-legenda button) {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { mountAllViz } from '../lib/viz/mount';
+  mountAllViz();
+</script>
