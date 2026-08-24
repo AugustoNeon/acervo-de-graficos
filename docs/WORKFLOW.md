@@ -50,6 +50,10 @@ Antes de aceitar a versão estática como final: veja se existe um pacote R que 
 
 Se existir e for razoável de aplicar, salve o widget como `widget.html` na mesma pasta do gráfico (além do `output.png`, que continua sendo o preview/thumbnail). Se não houver equivalente razoável pro tipo de gráfico, siga só com o `output.png` — não é obrigatório em todos.
 
+**Checklist antes de aceitar a versão interativa como pronta** (já causou retrabalho mais de uma vez — ver AGENTS.md "Lições aprendidas", 2026-07-29):
+- [ ] A paleta de cores é a **mesma** no `output.png` e na versão interativa — defina a paleta **uma vez só** (uma variável no R) e alimente as duas com ela; nunca escolha a cor de cada versão separadamente, mesmo quando são bibliotecas/motores diferentes.
+- [ ] Renderize a interativa de verdade (Chromium/Playwright, não só ler o código) e compare lado a lado com o `output.png` — divergência de cor ou de layout lê como bug pro usuário, mesmo com as duas versões "corretas" isoladamente.
+
 ## 6. Preencher o README do gráfico (padrão obrigatório)
 
 O `README.md` da pasta **é a página do gráfico no site** — não é anotação interna. Ele segue um padrão fechado, igual pra todos os gráficos; copie de [`_template/README.md`](../_template/README.md) e preencha **todas** as seções, não só as que parecerem relevantes.
