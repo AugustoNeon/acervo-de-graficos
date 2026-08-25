@@ -106,14 +106,28 @@ Se o site (`site/`) já estiver montado, rode `npm run dev` dentro de `site/` e 
 
 ## 9. Commitar
 
-**Importante**: a IA pode rodar `git add`/`git commit`/`git merge` neste projeto; só o `git push` é sempre do usuário (ver `AGENTS.md`). No fim da sessão, a IA commita o que mudou e entrega o comando de push pronto pra copiar, algo como:
+**Importante**: a IA pode rodar `git add`/`git commit`/`git merge`/`git push` direto na `main` neste projeto, sem abrir Pull Request (ver "Git e commits" em [`AGENTS.md`](../AGENTS.md) — inclui a condição inegociável de autoria e o cuidado com branch/git config de sessões remotas).
+
+**Quebre em commits pequenos e separados por tipo de mudança, não um commit só pra tudo.** Prática já estabelecida no histórico do projeto (2026-08-25: confirmado com o usuário que não estava escrito em lugar nenhum, apesar de já ser o padrão seguido). Pra um gráfico novo, a sequência típica é:
+
 ```powershell
-git add graficos/<categoria>/<slug> docs/PROGRESS.md
-git commit -m "add: <nome do gráfico> (<categoria>)"
-```
-```powershell
+git add graficos/<categoria>/<slug>/script.R graficos/<categoria>/<slug>/output.png graficos/<categoria>/<slug>/data.json
+git commit -m "add: <nome do gráfico> - script.R (<categoria>)"
+
+git add site/src/lib/viz/charts/<categoria>/<slug>.ts site/package.json site/package-lock.json
+git commit -m "add: <nome do gráfico> - versao D3 interativa (<pacote/tecnica>)"
+# (pule este commit se o gráfico não tiver versão interativa)
+
+git add graficos/<categoria>/<slug>/README.md
+git commit -m "docs: README d[o/a] <nome do gráfico> (<categoria>)"
+
+git add docs/PROGRESS.md
+git commit -m "docs: registra entrada d[o/a] <nome do gráfico> no PROGRESS.md"
+
 git push
 ```
+
+Se a categoria for nova no acervo (precisou de tokens em `tokens.css`/`categoria.ts`), inclua esses dois arquivos no commit da versão D3 — é o que torna a categoria visível/colorida no site. Ajuste a ordem/quebra quando fizer sentido (ex: um achado de R que valha a pena registrar no AGENTS.md "Lições aprendidas" pode virar seu próprio commit `docs:`), mas não junte tudo — cada commit deve dar pra entender e reverter isolado dos outros.
 
 ## Convenções gerais
 
