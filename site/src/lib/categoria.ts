@@ -13,6 +13,7 @@
 
 /** Categorias que já têm matiz próprio em tokens.css. */
 const COM_COR = new Set([
+  'comparison',
   'correlation',
   'distribution',
   'evolution',
