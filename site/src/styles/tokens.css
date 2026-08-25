@@ -51,6 +51,7 @@
   --cat-comparison: oklch(0.62 0.108 99);
   --cat-map: oklch(0.62 0.108 128);
   --cat-evolution: oklch(0.62 0.108 158);
+  --cat-general: oklch(0.62 0.108 187);
   --cat-flow: oklch(0.62 0.108 215);
   --cat-correlation: oklch(0.62 0.108 262);
   --cat-distribution: oklch(0.62 0.108 305);
@@ -61,6 +62,7 @@
   --cat-comparison-ink: oklch(0.525 0.092 99);
   --cat-map-ink: oklch(0.525 0.092 128);
   --cat-evolution-ink: oklch(0.525 0.092 158);
+  --cat-general-ink: oklch(0.525 0.092 187);
   --cat-flow-ink: oklch(0.525 0.092 215);
   --cat-correlation-ink: oklch(0.525 0.092 262);
   --cat-distribution-ink: oklch(0.525 0.092 305);
@@ -71,6 +73,7 @@
   --cat-comparison-wash: oklch(0.955 0.038 99);
   --cat-map-wash: oklch(0.955 0.038 128);
   --cat-evolution-wash: oklch(0.955 0.038 158);
+  --cat-general-wash: oklch(0.955 0.038 187);
   --cat-flow-wash: oklch(0.955 0.038 215);
   --cat-correlation-wash: oklch(0.955 0.038 262);
   --cat-distribution-wash: oklch(0.955 0.038 305);

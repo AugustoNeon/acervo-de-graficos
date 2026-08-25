@@ -40,6 +40,16 @@ Registro do que já foi instalado/configurado nesta máquina, para não reinstal
   visto de outras sessões), e o campo `source` do frontmatter fica sem
   conferência contra a URL real. Avise no README/PROGRESS.md quando isso
   acontecer, pra o usuário saber que aquele link específico não foi validado.
+- **`cloud.r-project.org` (CRAN) também pode estar bloqueado** — confirmado
+  em 2026-08-25 (`curl` retornou `CONNECT tunnel failed, response 403`;
+  `install.packages()` falhou do mesmo jeito). Antes de depender de um
+  pacote pra interatividade, confira primeiro se ele está empacotado como
+  `r-cran-<nome>` via `apt-cache search "^r-cran-"` (funciona normalmente,
+  é o repositório Ubuntu, não o CRAN) — só tente `install.packages()` depois,
+  e não assuma que vai funcionar só porque funcionou em uma sessão anterior
+  (o bloqueio pode variar por ambiente/sessão). Sem o pacote e sem CRAN, a
+  saída é montar a interatividade em D3 puro a partir do `data.json`
+  exportado pelo R, em vez do widget do pacote que faltou.
 - **Sem Chrome/Edge instalado**, mas o **Chromium do Playwright já vem
   pronto** em `/opt/pw-browsers/chromium` (ver `CLAUDE.md` da raiz). Serve
   tanto pro papel do `webshot2`/`CHROMOTE_CHROME` (thumbnail de widget sem
