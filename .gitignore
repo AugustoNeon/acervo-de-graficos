@@ -6,6 +6,10 @@ Rplots.pdf
 
 # Node (site/ tem seu próprio .gitignore mais específico; isto é rede de segurança)
 node_modules/
+# idem: .astro/ é gerado pelo Astro (types/log de dev) -- só aparece na raiz se
+# "astro dev"/"astro build" rodar por engano fora de site/, mas o .gitignore
+# de lá não cobre a raiz.
+.astro/
 
 # OS
 .DS_Store
