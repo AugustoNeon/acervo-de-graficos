@@ -17,6 +17,7 @@ const COM_COR = new Set([
   'correlation',
   'distribution',
   'evolution',
+  'general',
   'flow',
   'map',
   'network',
