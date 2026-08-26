@@ -68,6 +68,8 @@ cor.
   <div><span class="swatch" style="background:#DCD8D2"></span> Diagonal cinza — não é dado (tag com ela mesma)</div>
 </div>
 
+<div class="pull-quote pull-quote-direita clearfix">a matriz não tem uma ordem natural</div>
+
 A cor sozinha diz a força de um par — mas o achado da matriz está no **padrão**
 que os pares formam juntos:
 
@@ -77,7 +79,6 @@ que os pares formam juntos:
   diferentes. Costumam ser o achado mais interessante do gráfico.
 - **Simetria em torno da diagonal**: confirma que a rede é não direcionada.
 
-A coisa mais importante de entender: **a matriz não tem uma ordem natural**.
 Trocar a ordem das linhas e colunas não muda nenhum número, mas muda
 completamente o que se enxerga — agrupadas por afinidade, as comunidades
 saltam como blocos; em ordem alfabética, os mesmos valores viram um chuvisco
@@ -159,6 +160,8 @@ matriz, tornando visível a redundância da simetria.
 </div>
 
 ## Notas do coletor
+
+<div class="pull-quote">a cor nasce uma vez, no R, e viaja como dado</div>
 
 A primeira versão calculava a cor duas vezes: uma em R (`colorRampPalette()`),
 outra em D3, cada uma com seu próprio interpolador. As duas liam a mesma
