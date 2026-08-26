@@ -5,6 +5,8 @@ date: 2026-08-18
 source: "https://r-graph-gallery.com/barplot.html"
 interactive: true
 resumo: "As mesmas seis barras se reorganizando entre básico, ordenado, horizontal, largura variável e barra de erro."
+veredito_uso: "poucas dezenas de categorias, e a comparação por comprimento (a leitura mais precisa que o olho humano tem) é o que importa."
+veredito_evita: "dezenas de categorias (fica ilegível), ou o que importa é a composição de um total — aí um gráfico de partes responde melhor."
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica, com duas métricas extras opcionais"
 nivel: básico
@@ -28,6 +30,8 @@ primeiro, sem mudar o dado.
 **Use quando** você tem poucas dezenas de categorias, no máximo, e quer que a
 diferença de magnitude entre elas seja lida por comprimento — a forma mais
 precisa que o olho humano tem de comparar valores.
+
+<div class="pull-quote pull-quote-direita clearfix">a forma mais precisa que o olho humano tem de comparar valores</div>
 
 **Evite quando** houver dezenas de categorias (vira ilegível; considere
 agrupar ou usar só as N maiores) ou quando o que importa é a **composição**
@@ -117,3 +121,43 @@ que exploram a mesma família a partir de outros ângulos.
   do valor exato importa mais que a comparação visual.
 - Trocar a barra de erro por um intervalo de confiança assimétrico, quando a
   incerteza não for simétrica em torno do valor central.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../lollipop-streaming" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Lollipop de horas assistidas por plataforma</span>
+    <span class="parecido-razao">Mesmos dados, mesma família de gráfico — troca a barra sólida por uma linha fina com ponto na ponta, menos tinta pro mesmo comprimento.</span>
+  </a>
+  <a class="parecido-item" href="../../part-of-whole/barplot-agrupado-empilhado" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Barplot agrupado e empilhado</span>
+    <span class="parecido-razao">O oposto direto quando a composição importa: cada barra decomposta em subgrupos, em vez de uma única categoria por barra.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A variação "com barra de erro" não é um sexto painel independente — é uma
+camada extra desenhada por cima do estado "ordenado", escondida por padrão
+e revelada com um fade quando esse estado é selecionado. A decisão de
+reaproveitar a posição do "ordenado" em vez de desenhar a barra de erro
+como seu próprio estado, com layout calculado do zero, evita um problema
+sutil: se a barra de erro fosse um sexto conjunto de retângulos com chave
+própria, ela teria que entrar e sair da tela junto com a transição de
+estado, e qualquer diferença mínima de posição entre "ordenado" e "com
+barra de erro" (arredondamento de ponto flutuante, por exemplo) faria as
+barras "tremerem" um pixel na troca — imperceptível isolado, mas visível
+bem no momento em que o traço da barra de erro precisa se alinhar
+perfeitamente ao topo da barra que ela descreve.
+
+Reaproveitar a mesma posição x/y do estado "ordenado" para desenhar a
+camada de erro elimina essa possibilidade por construção: a barra de erro
+nunca precisa concordar com a posição da barra principal calculando as
+duas de forma independente, porque as duas são, literalmente, a mesma
+posição — só uma delas ganha um traço extra por cima. A técnica generaliza
+para qualquer anotação que precisa estar "grudada" numa forma que já
+existe: em vez de recalcular a posição da anotação a partir dos mesmos
+dados brutos, ler a posição já resolvida do elemento principal garante que
+as duas nunca divirjam.
