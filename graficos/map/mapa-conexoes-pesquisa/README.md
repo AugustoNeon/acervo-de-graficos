@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/how-to-draw-connecting-routes-on-map-with-r-and-great-circles.html"
 interactive: true
 resumo: "Mapa-múndi mostrando rotas de intercâmbio entre 10 centros de pesquisa, com o traçado real de cada rota calculado como caminho mais curto sobre a esfera."
+veredito_uso: "os dados são pares origem-destino com coordenadas reais, e a geografia da ligação em si é parte da informação."
+veredito_evita: "há mais de algumas dezenas de conexões, ou a posição exata não importa — um Sankey/cordas sem mapa é mais direto."
 pacotes: ["ggplot2", "sf", "geosphere"]
 dados: "cidades com coordenadas (lon/lat) + pares origem-destino com um valor numérico por par"
 nivel: avançado
@@ -48,10 +50,12 @@ de calcular a geometria de cada rota — não uma tabela só.
   daquele centro (o quanto ele funciona como polo da rede)
 - **Traçado da linha**: o caminho mais curto entre as duas cidades sobre a
   esfera (não uma reta na tela) — por isso as rotas de longa distância
-  aparecem curvadas, arqueando em direção aos polos
+  aparecem curvadas, arqueando em direção aos polos.
 - **Espessura e opacidade da linha**: quantidade de pesquisadores naquela
   rota especificamente
 - **Cor da linha**: região de origem da rota
+
+<div class="pull-quote pull-quote-direita clearfix">voos entre América do Norte e Ásia costumam passar perto do Alasca, embora pareçam desnecessários numa reta</div>
 
 ## Como foi feito
 
@@ -84,19 +88,14 @@ seguir a linha com o olho por cima de todas as outras.
 ## Possíveis problemas pelo caminho
 
 - **Problema**: uma rota aparece como uma linha reta absurda cruzando o mapa
-  inteiro de ponta a ponta. **Por quê**: a rota cruza o antimeridiano e o
-  cálculo de grande círculo não foi quebrado em dois trechos — o ponto final
-  de um lado do mapa liga direto ao primeiro ponto do outro lado.
-  **Solução**: `gcIntermediate(..., breakAtDateLine = TRUE)` devolve uma
-  lista de trechos em vez de um caminho só quando isso acontece; desenhar
-  cada trecho como uma linha separada resolve.
+  inteiro de ponta a ponta. **Solução**: `gcIntermediate(...,
+  breakAtDateLine = TRUE)` — mas o jeito como isso quebra silenciosamente
+  merece a história completa, em "Notas do coletor".
 - **Problema**: o mapa de fundo aparece como um borrão cobrindo a tela
-  inteira em vez do contorno dos países. **Por quê**: o GeoJSON que o `sf`
-  escreve tem o sentido de rotação (enrolamento) dos anéis inconsistente
-  entre países, e o `d3-geo` é sensível a isso pro recorte esférico.
-  **Solução**: corrigir o enrolamento por polígono no próprio código de
-  desenho (função compartilhada entre os mapas deste acervo), não depender
-  do R/GDAL exportarem sempre no sentido certo.
+  inteira em vez do contorno dos países. **Solução**: corrija o enrolamento
+  dos anéis do GeoJSON no próprio código de desenho — mesmo bug, mesma
+  correção do [dashboard mapa + dispersão + barras](../dashboard-inovacao-ggiraph)
+  deste acervo, que conta a investigação completa.
 
 ## Variações possíveis
 
@@ -106,3 +105,38 @@ seguir a linha com o olho por cima de todas as outras.
   útil quando todas as conexões ficam concentradas numa área
 - Colorir as rotas por volume em vez de por região, quando a pergunta for
   "quais são as rotas mais fortes" em vez de "de onde vêm as conexões"
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../dashboard-inovacao-ggiraph" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Dashboard interativo: mapa + dispersão + barras</span>
+    <span class="parecido-razao">Mesma base técnica (GeoJSON real, projeção e path em D3) e o mesmo bug de enrolamento de anéis — aqui o mapa é só um entre três painéis ligados.</span>
+  </a>
+  <a class="parecido-item" href="../../flow/chord-transferencias-clubes" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Diagrama de cordas: transferências entre clubes</span>
+    <span class="parecido-razao">O oposto direto quando a posição geográfica exata não importa: a mesma pergunta de "quem troca com quem, quanto" sem precisar de um mapa por trás.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+`gcIntermediate()` devolve dois tipos diferentes de resultado dependendo do
+próprio dado, não do código que o chama: uma matriz de pontos quando a rota
+não cruza o antimeridiano, e uma **lista** de matrizes (um trecho pra cada
+lado da linha de ±180°) quando cruza. Código escrito assumindo sempre-matriz
+(`nrow(gc)`, iterar `gc[,1]` direto) funciona perfeitamente pra maioria das
+rotas — e só quebra na primeira rota que cruzar o Pacífico, desenhando uma
+linha reta absurda atravessando o mapa inteiro, sem erro nenhum no console.
+
+É o tipo de bug que passa despercebido se os dados de teste não incluírem
+essa rota específica: nada no código está "errado" pras outras 16 rotas,
+só a 17ª expõe que o tipo de retorno não é fixo. A correção foi normalizar
+sempre pra lista antes de iterar (`segmentos <- if (is.list(gc)) gc else
+list(gc)`), tratando o caso comum (matriz) como uma lista de um elemento
+só, em vez de ramificar o código em dois caminhos. Vale a mesma
+desconfiança em qualquer função R que devolve tipos diferentes conforme o
+dado: testar só com o caso mais comum não prova que os outros casos
+funcionam.
