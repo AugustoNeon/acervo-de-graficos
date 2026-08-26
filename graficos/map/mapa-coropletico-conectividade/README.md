@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/327-chloropleth-map-from-geojson-with-ggplot2.html"
 interactive: true
 resumo: "Percentual fictício de domicílios com internet banda larga fixa em cada estado brasileiro, colorido por intensidade."
+veredito_uso: "a variável é uma taxa/percentual comparável entre regiões, e a distribuição espacial é parte da pergunta."
+veredito_evita: "a variável é contagem bruta (não normalizada), ou as regiões têm tamanhos muito desiguais."
 pacotes: ["ggplot2", "sf", "rnaturalearthdata"]
 dados: "1 variável geográfica (polígono do estado) + 1 numérica (percentual)"
 nivel: básico
@@ -81,20 +83,14 @@ inconsistente entre estados (ver `shared/mapa.ts`).
 
 - **Problema**: uma junção espacial ou outra operação topológica falha com
   "Loop 0 is not valid", mesmo o mapa desenhando normalmente sem erro
-  nenhum antes disso. **Por quê**: o dado Natural Earth 1:50m tem pelo
-  menos um anel com vértice duplicado (autointerseção), que o motor
-  esférico `s2` do pacote `sf` rejeita em teste topológico, embora o
-  desenho simples (sem topologia) não seja afetado. **Solução**: rodar
-  `sf::st_make_valid()` no objeto assim que ele é carregado, antes de
-  qualquer operação que dependa de topologia.
+  antes disso. **Solução**: rode `sf::st_make_valid()` assim que o objeto é
+  carregado — lição já aprendida noutro gráfico geográfico deste acervo,
+  aplicada aqui de forma preventiva (ver "Notas do coletor").
 - **Problema**: no navegador, um estado aparece como "o mapa inteiro
-  preenchido, com um buraco no formato dele" em vez da forma sozinha.
-  **Por quê**: o GeoJSON escrito pelo `sf`/GDAL sai com o sentido de
-  enrolamento dos anéis inconsistente entre features, e o `d3-geo` depende
-  desse sentido pra saber o que é "dentro" e "fora" da forma. **Solução**:
-  corrigir o sentido de cada anel no próprio D3 antes de desenhar (função
-  `corrigirEnrolamento()`, já extraída como utilitário compartilhado deste
-  acervo).
+  preenchido, com um buraco no formato dele". **Solução**: corrija o
+  sentido de cada anel antes de desenhar — mesmo bug, mesma correção do
+  [dashboard mapa + dispersão + barras](../dashboard-inovacao-ggiraph)
+  deste acervo, que conta a investigação completa.
 
 ## Variações possíveis
 
@@ -106,3 +102,37 @@ inconsistente entre estados (ver `shared/mapa.ts`).
   regional sem precisar de tabela nem legenda extra.
 - Trocar o mapa de estados por um de municípios do mesmo estado — mesma
   técnica, granularidade geográfica menor.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../bubble-map-leaflet-brasil" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Bubble map interativo do Brasil (leaflet)</span>
+    <span class="parecido-razao">O oposto direto quando o dado é sobre PONTOS, não áreas: uma bolha por cidade em vez de pintar o polígono inteiro do estado.</span>
+  </a>
+  <a class="parecido-item" href="../mapa-hexbin-avistamentos-aves" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Mapa hexbin: avistamentos de aves</span>
+    <span class="parecido-razao">Mesma ideia de agregação espacial, mas por uma grade artificial de hexágonos em vez das fronteiras políticas reais dos estados.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O `sf::st_make_valid()` neste script não veio de um bug encontrado
+aqui — veio de um já catalogado num gráfico geográfico anterior deste
+acervo, que travou com "Loop 0 is not valid" ao tentar uma junção espacial
+sobre a mesma malha do Natural Earth 1:50m (pelo menos um anel tem um
+vértice duplicado que o motor esférico `s2` rejeita em teste topológico,
+mesmo o desenho simples funcionando sem problema).
+
+Este gráfico nunca chegou a travar: `st_make_valid()` entrou no script
+antes de qualquer operação topológica ser tentada, de propósito, só porque
+o comentário no código do gráfico anterior já avisava. É um tipo de nota
+diferente da maioria das outras deste acervo — não "como um bug foi
+encontrado e corrigido", mas "como um bug documentado numa sessão anterior
+evitou repetir a mesma investigação numa sessão seguinte". O valor de
+registrar uma lição não é só corrigir o gráfico onde ela apareceu — é
+economizar a descoberta inteira da próxima vez que a mesma malha de dados
+aparecer.
