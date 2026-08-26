@@ -49,11 +49,18 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 <Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title} surface="paper">
   <div class="page" style={corDaCategoria(entry.data.category)}>
     <a class="back" href={`${base}/`}>« voltar ao caderno</a>
+    <p class="site-orientacao">Acervo de Gráficos — catálogo pessoal de tipos de gráfico em R, cada um replicado e documentado.</p>
 
     <header class="head">
       <span class="category">{entry.data.category}</span>
       <h1>{entry.data.title}</h1>
       <p class="resumo">{entry.data.resumo}</p>
+      {(entry.data.veredito_uso || entry.data.veredito_evita) && (
+        <ul class="veredito">
+          {entry.data.veredito_uso && <li class="veredito-uso"><span aria-hidden="true">✓</span> {entry.data.veredito_uso}</li>}
+          {entry.data.veredito_evita && <li class="veredito-evita"><span aria-hidden="true">✕</span> {entry.data.veredito_evita}</li>}
+        </ul>
+      )}
     </header>
 
     {temViz ? (
@@ -158,6 +165,30 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   .back:hover {
     color: var(--color-primary);
+  }
+
+  .site-orientacao {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .veredito {
+    margin-top: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    font-size: var(--text-sm);
+  }
+
+  .veredito li {
+    color: var(--color-ink-muted);
+  }
+
+  .veredito li span {
+    font-family: var(--font-mono);
+    color: var(--color-ink);
   }
 
   .head {
@@ -372,6 +403,54 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     margin-top: var(--space-xs);
   }
 
+  /* Zona de bastidor — "Notas do coletor". Identificada em tempo de execução
+     (ver script abaixo) pelo H2 com esse texto exato, sempre a última seção
+     do corpo: reaproveita o carimbo (borda + rotação leve + mono, na cor da
+     categoria) e o kraft da ficha técnica, marcando a virada de tom pra
+     quem está lendo em sequência. */
+  .notes :global(.bastidor) {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px dashed var(--color-border-strong);
+  }
+
+  .notes :global(.bastidor-carimbo) {
+    display: inline-block;
+    margin-bottom: var(--space-sm);
+    padding: 0.2em 0.7em;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cat-ink);
+    border: 1px solid var(--cat);
+    transform: rotate(-1.5deg);
+  }
+
+  .notes :global(.bastidor-card) {
+    padding: var(--space-md);
+    background: var(--tag-stock);
+    border: 1px solid color-mix(in oklch, var(--tag-stock) 60%, black 12%);
+  }
+
+  .notes :global(.bastidor-card > :first-child) {
+    margin-top: 0;
+  }
+
+  /* h2 real de "Notas do coletor" continua no DOM pra leitor de tela — o
+     carimbo ao lado é a versão visual, decorativa (aria-hidden). */
+  .notes :global(.sr-only) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   /* Bloco de código — o protocolo datilografado, lido do script.R em tempo de
      build. */
   .codigo {
@@ -546,6 +625,37 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       }
     });
   });
+
+  // "Notas do coletor" e a zona de bastidor: sempre a ultima secao do README
+  // (ver docs/pendencias-reformulacao-pagina-grafico.md), identificada aqui
+  // pelo texto do H2 em vez de virar campo de frontmatter -- o corpo inteiro
+  // continua sendo um Markdown so, renderizado de uma vez por <Content />, e
+  // isso evita ter que separar/remontar o HTML no build so pra estilizar a
+  // ultima secao diferente das outras.
+  const notes = document.querySelector('.notes');
+  const headings = notes ? Array.from(notes.querySelectorAll('h2')) : [];
+  const bastidorHeading = headings.find((h) => h.textContent?.trim() === 'Notas do coletor');
+  if (bastidorHeading) {
+    const card = document.createElement('div');
+    card.className = 'bastidor-card';
+    let node = bastidorHeading.nextElementSibling;
+    while (node) {
+      const next = node.nextElementSibling;
+      card.appendChild(node);
+      node = next;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bastidor';
+    const carimbo = document.createElement('span');
+    carimbo.className = 'bastidor-carimbo';
+    carimbo.setAttribute('aria-hidden', 'true');
+    carimbo.textContent = 'Notas do coletor';
+    bastidorHeading.classList.add('sr-only');
+
+    bastidorHeading.replaceWith(wrap);
+    wrap.append(carimbo, bastidorHeading, card);
+  }
 
   const copyBtn = document.querySelector<HTMLButtonElement>('.copy-btn');
   const codeEl = document.querySelector<HTMLElement>('.codigo .astro-code');
