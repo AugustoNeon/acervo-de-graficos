@@ -5,6 +5,8 @@ date: 2026-07-27
 source: "https://r-graph-gallery.com/414-map-multiple-charts-in-ggiraph.html"
 interactive: true
 resumo: "Três gráficos diferentes ligados pela mesma chave: passar o mouse em um destaca o mesmo dado nos outros dois."
+veredito_uso: "a mesma entidade tem várias dimensões relevantes, e a pergunta é de comparação cruzada."
+veredito_evita: "dois gráficos já bastam, ou o leitor está numa tela pequena — a ligação depende de ver os três painéis ao mesmo tempo."
 pacotes: ["sf", "spData", "dplyr", "patchwork", "jsonlite", "d3"]
 dados: "geometria por país + 2 variáveis numéricas"
 nivel: avançado
@@ -57,7 +59,9 @@ E vale o alerta usual: em dados fictícios como estes, qualquer correlação apa
 
 O ponto crítico é esse identificador: ele precisa ser **exatamente o mesmo** nos
 três gráficos. Se o mapa usa "Brazil" e o ranking usa "Brasil", a ligação não
-acontece — e falha em silêncio, sem erro nenhum.
+acontece.
+
+<div class="pull-quote">é a causa mais comum de falha silenciosa nesse tipo de gráfico, em qualquer linguagem</div>
 
 ## Como ler o gráfico
 
@@ -131,6 +135,11 @@ geometria dos países é real; os valores, não.
   de um único país. **Solução**: chamar `fitSize()` sempre com a `FeatureCollection`
   completa, mesmo que o desenho seja de um subconjunto dela.
 
+- **Problema**: o mapa inteiro vira um "blob" sólido cobrindo o mundo, com cada
+  país virando um buraco quase invisível nele, em vez de países coloridos.
+  **Solução**: normalize o sentido dos anéis do GeoJSON antes de desenhar — a
+  investigação completa está em "Notas do coletor", no fim da página.
+
 - **Problema**: o hover fica lento com muitos países. **Por quê**: o realce
   reavalia todo o conjunto (mapa + dispersão + barras) a cada `pointerenter`.
   **Solução**: pra um conjunto do tamanho de países do mundo (~175) não chega a
@@ -149,3 +158,49 @@ geometria dos países é real; os valores, não.
 - Aplicar a mesma técnica sem mapa — a ligação funciona entre quaisquer gráficos,
   como em
   [linha interativa com CSS customizado](../../evolution/linha-interativa-ggiraph-css).
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../mapa-conexoes-pesquisa" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Mapa de conexões: intercâmbio de pesquisadores</span>
+    <span class="parecido-razao">Mesma técnica de base (geometria real em GeoJSON, projeção e path calculados em D3), mas o mapa é o protagonista sozinho, não um painel entre três.</span>
+  </a>
+  <a class="parecido-item" href="../../evolution/linha-interativa-ggiraph-css" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Linha interativa com 4 tratamentos de destaque</span>
+    <span class="parecido-razao">A mesma ideia de coordenar destaque entre elementos, num seletor de modos de interação em vez de três painéis ligados por identificador.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O mapa foi publicado e só depois alguém notou o problema: em vez de 175
+países coloridos, a tela mostrava um "blob" sólido cobrindo o mundo
+inteiro, cada país virando um buraco quase invisível nele — como um
+negativo do mapa esperado. Não havia erro no console, e inspecionar
+qualquer `<path>` individual mostrava um atributo `d` perfeitamente válido.
+O bug só apareceu numa captura de tela real, comparada contra a
+expectativa.
+
+A causa exigiu isolar um único país (Uruguai, escolhido por não ter nada
+de especial — nenhum antimeridiano, nenhuma geometria exótica) e inverter
+manualmente a ordem dos pontos do polígono até o blob sumir. O que isso
+revelou: o GeoJSON que `sf::st_write()` escreve tem o **sentido de
+enrolamento dos anéis inconsistente entre países** — uns anti-horário,
+uns horário, sem um padrão simples (não é "todo mundo invertido", nem
+algo geográfico óbvio). Nenhuma opção do driver GDAL testada mudou isso
+pra esse conjunto de dados específico.
+
+O motivo de isso quebrar especificamente no `d3.geoPath()`: ao contrário
+de um gerador de path plano, ele faz **clipping esférico**, e decide
+"dentro vs. fora" do polígono pelo sentido do anel. Com o sentido errado,
+ele desenha "o globo inteiro preenchido, menos um buraco no formato do
+país" — daí o blob cobrindo tudo. A correção não ficou no lado R: ficou
+no próprio módulo D3, com uma função que calcula a área com sinal de cada
+anel (fórmula do cadarço/shoelace) e força o anel externo pro sentido que
+o `d3-geo` espera, cada furo pro sentido oposto — corrigindo por conta
+própria, não importa o que veio de cada país específico. Vale testar de
+novo em qualquer mapa novo: um GeoJSON que abre sem erro não é garantia
+de que o sentido dos anéis está certo pro `d3-geo`.
