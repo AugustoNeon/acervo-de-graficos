@@ -5,6 +5,8 @@ date: 2026-07-27
 source: "https://r-graph-gallery.com/doughnut-plot.html"
 interactive: true
 resumo: "Um anel dividido em fatias proporcionais ao todo, com um vazio no centro no lugar do miolo de uma pizza."
+veredito_uso: "a totalidade é parte da mensagem (a soma é literalmente 100%, ou 24 horas, ou um orçamento inteiro) e há poucas categorias bem distintas em tamanho."
+veredito_evita: "há mais de 6 fatias, ou os valores são próximos entre si — o olho compara mal ângulos e áreas curvas parecidas."
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma fatia por categoria)"
 nivel: básico
@@ -60,6 +62,8 @@ Fatias vizinhas com tamanho parecido são as mais difíceis de comparar só de
 olho — é aí que passar o mouse (na versão interativa) ajuda, mostrando o
 percentual exato.
 
+<div class="pull-quote pull-quote-direita clearfix">o buraco no centro: sem significado — é só espaço negativo</div>
+
 ## Como foi feito
 
 Não existe um `geom_donut()` pronto no `ggplot2`: a técnica clássica é construir
@@ -70,15 +74,12 @@ gráfico só é desenhado a partir do raio 3 (em vez de 0), abrindo o vazio; mud
 esse intervalo controla a espessura do anel.
 
 A versão interativa é desenhada em D3 (`d3.pie()`+`d3.arc()`), com `innerRadius`
-fazendo o mesmo papel do `xlim()` do estático — controla a espessura do anel. O
-problema de conversão que existia antes (`ggplotly()` não lida bem com
-`coord_polar()`, então a rosca interativa tinha que ser construída com a função
-nativa de pizza do `plotly` em vez de reaproveitar o objeto `ggplot`) nem existe
-mais: o D3 desenha a rosca do zero a partir dos mesmos dados, sem depender de
-conversão nenhuma. Por cima disso, a fatia sob o cursor salta um pouco pra fora
-do anel e o tooltip mostra o percentual exato — o rótulo dentro da fatia só
-aparece quando ela é larga o bastante pra não ficar espremido, ver "Possíveis
-problemas" abaixo.
+fazendo o mesmo papel do `xlim()` do estático — controla a espessura do anel.
+Isso evita de vez um problema de conversão que este gráfico já teve — ver
+"Notas do coletor". Por cima disso, a fatia sob o cursor salta um pouco pra
+fora do anel e o tooltip mostra o percentual exato — o rótulo dentro da fatia
+só aparece quando ela é larga o bastante pra não ficar espremido, ver
+"Possíveis problemas" abaixo.
 
 Dados fictícios: 5 categorias de uso do tempo num dia (Trabalho, Sono, Lazer,
 Estudo, Outros), com horas inventadas somando 24.
@@ -111,3 +112,42 @@ Estudo, Outros), com horas inventadas somando 24.
   que a rosca libera e a pizza não tem.
 - Trocar por um gráfico de barras horizontais — mesma informação, leitura mais
   precisa, especialmente com mais de 4-5 categorias.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../pizza-matriz-energetica" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Pizza clássica: matriz de geração elétrica</span>
+    <span class="parecido-razao">A mesma técnica sem o buraco no centro — comparar as duas ajuda a decidir se o vazio no meio vale a pena.</span>
+  </a>
+  <a class="parecido-item" href="../../ranking/lollipop-streaming" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Lollipop de horas assistidas por plataforma</span>
+    <span class="parecido-razao">O substituto de mais precisão quando poucas categorias forem próximas demais em valor pra uma rosca comunicar bem.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A versão interativa deste gráfico nem sempre foi feita em D3 puro. Numa
+implementação anterior, a tentativa natural era reaproveitar o próprio
+objeto `ggplot` e convertê-lo direto pra interativo com `ggplotly()` —
+economizando desenhar tudo de novo numa segunda linguagem. O problema:
+`ggplotly()` não lida bem com `coord_polar()`, o truque que dobra a barra
+empilhada num círculo. A conversão automática simplesmente não sabe
+traduzir esse sistema de coordenadas pro formato que o `plotly` entende, e
+o resultado saía distorcido ou quebrado.
+
+A saída, na época, foi abandonar a conversão automática pra esse gráfico
+específico e construir a rosca com a função nativa de pizza do `plotly`
+(`plot_ly(..., type = "pie", hole = ...)`) em vez de reaproveitar o objeto
+`ggplot` — uma segunda implementação, mas pelo menos dentro do mesmo
+pacote. Esse problema de conversão nem chega a existir mais na versão
+atual: com o D3 desenhando a rosca do zero a partir dos mesmos dados
+(`d3.pie()` + `d3.arc()`), não há nenhum objeto `ggplot` pra tentar
+converter — o R só exporta os números, e o desenho inteiro nasce no
+navegador. A migração pra D3 em todo o acervo não foi só uma escolha de
+estilo visual; em pelo menos este gráfico, ela eliminou uma classe inteira
+de bug de conversão que simplesmente não tem como acontecer quando não
+existe conversão nenhuma.
