@@ -5,6 +5,8 @@ date: 2026-07-22
 source: "https://r-graph-gallery.com/323-sankey-diagram-with-the-networkd3-library.html"
 interactive: true
 resumo: "Fluxos entre estágios desenhados como faixas cuja espessura é proporcional à quantidade que passa por ali."
+veredito_uso: "o fluxo tem poucos estágios bem definidos e o interesse é a proporção entre caminhos."
+veredito_evita: "há dezenas de nós, ou os fluxos formam ciclos — o layout pressupõe direção única."
 pacotes: ["networkD3", "jsonlite", "d3"]
 dados: "lista de nós + lista de ligações (origem, destino, valor)"
 nivel: intermediário
@@ -81,15 +83,10 @@ proposital: é o que mantém o diagrama legível.
   falha é **silenciosa**. **Solução**: definir as cores explicitamente com
   `.range([...])` e valores hex, em vez de depender de um nome de esquema.
 
-- **Problema**: nós com nomes diferentes recebem a mesma cor. **Por quê**: internamente
-  a cor é calculada com `d.group.replace(/ .*/, "")`, ou seja, **só a primeira
-  palavra do nome vira a chave de cor** — tudo depois do primeiro espaço é
-  descartado. `"Fonte A"`, `"Fonte B"` e `"Fonte C"` viram todos `"Fonte"`.
-  **Solução**: usar nomes sem espaço (`"FonteA"`) para colorir nó a nó. Aqui o
-  comportamento foi mantido de propósito: uma cor por estágio ficou mais limpo do
-  que oito tons distintos — e a versão em D3 reproduz o mesmo efeito visual de
-  propósito, mesmo sem ter essa limitação: o `data.json` já exporta a cor de
-  cada nó atribuída por estágio (`Fonte`/`Canal`/`Resultado`), não uma por nó.
+- **Problema**: nós com nomes diferentes recebem a mesma cor. **Solução**: use
+  nomes sem espaço se quiser cor por nó — mas aqui o "problema" virou decisão
+  de design; a história completa está em "Notas do coletor", no fim da
+  página.
 
 - **Problema**: as faixas não aparecem, ou aparecem nos lugares errados. **Por
   quê**: `source`/`target` foram preenchidos com nomes ou com índices começando em
@@ -106,3 +103,44 @@ proposital: é o que mantém o diagrama legível.
   sozinho.
 - Trocar por um diagrama de cordas quando as relações forem mútuas em vez de
   direcionais.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../chord-transferencias-clubes" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Diagrama de cordas: transferências entre clubes</span>
+    <span class="parecido-razao">O oposto direto: quando o fluxo é mútuo (todo mundo pode mandar e receber) em vez de direcional com estágios em colunas.</span>
+  </a>
+  <a class="parecido-item" href="../alluvial-trajetoria-eleitoral" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Diagrama aluvial: trajetória de voto</span>
+    <span class="parecido-razao">Mesma técnica por baixo dos panos — um Sankey em várias colunas — mas com a restrição extra de que todas as colunas representam a MESMA unidade sendo rastreada.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A cor de cada nó, no widget original do `networkD3`, saía errada de um jeito
+específico: nós com nomes diferentes acabavam com exatamente a mesma cor.
+"Fonte A", "Fonte B" e "Fonte C" — pensados pra ter três tons distintos —
+todos saíam idênticos. Ler o código-fonte do binding JS do pacote
+(`sankeyNetwork.js`) explicou o motivo: antes de calcular a cor, o script
+aplica `d.group.replace(/ .*/, "")` no nome do nó — uma expressão regular
+que descarta tudo depois do primeiro espaço. "Fonte A" e "Fonte B" viram
+ambos só "Fonte" antes mesmo de chegar na escala de cor.
+
+Isso poderia ter sido "corrigido" trocando os nomes pra algo sem espaço
+(`"FonteA"`), recuperando uma cor por nó. Mas olhando o resultado visual do
+comportamento "errado" — todos os nós de um mesmo estágio (Fonte/Canal/
+Resultado) com a mesma cor —, ficou mais limpo do que oito tons
+individuais teriam ficado: a cor passou a comunicar **estágio**, não nó
+individual, o que é exatamente a pergunta que "de onde veio, pra onde foi"
+faz mais sentido responder por cor.
+
+A versão em D3 não tem essa limitação técnica — poderia dar uma cor por nó
+sem esforço nenhum — mas reproduz o mesmo efeito visual de propósito: o
+`data.json` já exporta a cor de cada nó atribuída por estágio, não por nó
+individual. Um comportamento que nasceu de uma regex e um espaço no nome
+virou decisão de design mantida deliberadamente do outro lado da
+implementação, mesmo sem a restrição original que o gerou.
