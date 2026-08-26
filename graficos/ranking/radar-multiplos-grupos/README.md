@@ -5,6 +5,8 @@ date: 2026-08-18
 source: "https://r-graph-gallery.com/143-spider-chart-with-saveral-individuals.html"
 interactive: true
 resumo: "Um polígono por personagem, um eixo por atributo — a forma do polígono é o perfil de quem está sendo comparado."
+veredito_uso: "poucos grupos (até 4-5) e poucos eixos (3-8), todos na mesma escala, e o que importa é o formato geral, não um valor isolado."
+veredito_evita: "a decisão depende de comparar valores com precisão, ou há muitos grupos/eixos — os polígonos se sobrepõem e viram emaranhado."
 pacotes: ["fmsb", "RColorBrewer", "d3"]
 dados: "1 variável de identificação (grupo) + várias numéricas na mesma escala (uma por eixo)"
 nivel: básico
@@ -19,6 +21,8 @@ redor de um círculo. Cada grupo comparado vira um polígono, ligando o valor
 que ele tem em cada eixo. **Para que serve**: comparar o *perfil* de poucos
 itens — não um número isolado, mas o padrão de pontos fortes e fracos em
 várias dimensões ao mesmo tempo, como uma ficha de atributos.
+
+<div class="pull-quote pull-quote-direita clearfix">não um número isolado, mas o padrão de pontos fortes e fracos — como uma ficha de atributos</div>
 
 ## Quando usar (e quando evitar)
 
@@ -82,10 +86,9 @@ grupo (no polígono ou na legenda) isola ele, apagando os outros dois.
 - **Problema**: os eixos saem espelhados — a ordem das variáveis ao redor do
   círculo não bate com o `output.png`. **Por quê**: `fmsb::radarchart()`
   desenha os eixos em sentido **anti-horário** a partir do topo, o oposto do
-  sentido horário mais comum em gráfico polar (confirmado comparando a
-  imagem gerada com o cálculo manual dos ângulos). **Solução**: inverter o
-  sinal do incremento angular (usar `-i`, não `+i`) ao recalcular a posição
-  de cada eixo em qualquer lib fora do `fmsb`.
+  sentido horário mais comum em gráfico polar. **Solução**: inverter o sinal
+  do incremento angular (usar `-i`, não `+i`) — como essa direção foi
+  confirmada está em "Notas do coletor".
 - **Problema**: o gráfico sai com escala errada, ou o `radarchart()` nem
   desenha. **Por quê**: a função não recebe domínio como argumento separado —
   ela lê o teto e o piso de cada eixo das duas primeiras linhas do próprio
@@ -108,3 +111,47 @@ grupo (no polígono ou na legenda) isola ele, apagando os outros dois.
   grupos crescer — a sobreposição de muitos polígonos vira ilegível rápido.
 - Animar um eixo de cada vez em vez de todos os grupos ao mesmo tempo, pra
   guiar a leitura pela ordem dos atributos.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../lollipop-streaming" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Lollipop de horas assistidas por plataforma</span>
+    <span class="parecido-razao">Outra geometria pro mesmo problema de comparar "antes e depois": duas pontas numa mesma haste em vez de eixos radiais.</span>
+  </a>
+  <a class="parecido-item" href="../../correlation/heatmap-clustering-heatmaply" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Heatmap com clustering hierárquico</span>
+    <span class="parecido-razao">O substituto de mais precisão quando muitos grupos ou muitos eixos tornam os polígonos ilegíveis — cor numa grade em vez de forma num círculo.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O primeiro sinal de que algo estava invertido não foi um erro — foi uma
+sensação de "essa ordem parece errada" olhando o `output.png` ao lado da
+lista de atributos no código. Os cinco eixos (Força, Inteligência,
+Destreza, Vitalidade, Carisma) apareciam no círculo, mas não na sequência
+em que tinham sido declarados no `data.frame`: pareciam espelhados,
+girando na direção contrária à esperada.
+
+Confirmar isso exigiu sair do território de "parece errado" pra
+"está errado, e é isso exatamente": calcular à mão o ângulo esperado de
+cada eixo (assumindo a convenção mais comum de gráfico polar, sentido
+horário a partir do topo) e comparar essa lista de ângulos, um por um, com
+a posição real de cada rótulo na imagem gerada. A comparação mostrou que
+`fmsb::radarchart()` desenha na direção oposta — anti-horária a partir do
+topo — por escolha própria da implementação, não por nenhum parâmetro
+incorreto no código deste gráfico.
+
+A correção foi simples depois de confirmada a causa: inverter o sinal do
+incremento angular (`-i` em vez de `+i`) ao recalcular a posição de cada
+eixo pra qualquer desenho fora do próprio `fmsb` — a versão em D3 deste
+gráfico já nasceu com esse sinal certo, porque o bug foi encontrado e
+documentado antes da reescrita interativa começar. A lição maior não é
+sobre `fmsb` especificamente: quando duas implementações do mesmo gráfico
+"parecem" divergir mas nenhuma delas erra tecnicamente, vale desconfiar de
+uma convenção não-documentada (sentido de rotação, origem do eixo,
+orientação de um ângulo) antes de desconfiar da lógica de quem escreveu o
+código novo — e confirmar com números, não só com a impressão visual.
