@@ -5,6 +5,8 @@ date: 2026-08-18
 source: "https://r-graph-gallery.com/294-basic-ridgeline-plot.html"
 interactive: true
 resumo: "Distribuição de notas de avaliação em oito bairros fictícios, empilhadas e coloridas em gradiente pela própria nota."
+veredito_uso: "há 5-15 categorias e o que importa é comparar a FORMA da distribuição entre elas."
+veredito_evita: "há poucas categorias (densidade sobreposta comum resolve) ou muitas (a sobreposição vira ilegível)."
 pacotes: ["ggplot2", "ggridges", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica (com várias observações por categoria) + 1 numérica contínua"
 nivel: intermediário
@@ -54,26 +56,22 @@ agregada — a densidade precisa dos valores brutos para ser estimada.
 
 ## Como foi feito
 
-O `output.png` usa `ggridges::geom_density_ridges_gradient()`, que estima a
+**Imagem estática**: `ggridges::geom_density_ridges_gradient()` estima a
 densidade de cada bairro e colore cada ponto da curva pela posição no eixo
 X — o mesmo `nota`, não uma cor fixa por categoria. `scale_fill_distiller()`
 com paleta divergente mapeia nota baixa a vermelho e alta a verde.
 
-A versão interativa não importa a curva calculada pelo R — o `ggridges`
-resolve a densidade internamente e não expõe esse cálculo de um jeito
-reaproveitável. Em vez disso, o `script.R` exporta só as notas brutas de cada
-bairro, e o D3 estima sua própria densidade com um kernel gaussiano (a mesma
-família de método usada por trás de `ggridges`/`stats::density()`), com a
-largura de banda calculada pela regra de Silverman a partir do desvio-padrão
-de cada bairro. O gradiente de cor é um `<linearGradient>` alinhado à mesma
-escala do eixo X, então a cor de um ponto da curva depende só da posição
-horizontal — igual à lógica do `after_stat(x)` do lado R. As faixas são
-desenhadas de trás (maior mediana) pra frente (menor mediana), pra que a
-faixa mais embaixo sempre fique por cima onde os picos se tocam, o efeito
-clássico do ridgeline.
+**Versão interativa**: o `ggridges` resolve a densidade internamente sem
+expor esse cálculo de um jeito reaproveitável, então o D3 recalcula a
+própria — mesma família de kernel gaussiano, largura de banda pela regra de
+Silverman a partir do desvio-padrão de cada bairro. O gradiente de cor é um
+`<linearGradient>` alinhado à mesma escala do eixo X, então a cor de um
+ponto da curva depende só da posição horizontal, igual à lógica do
+`after_stat(x)` do lado R. A ordem de desenho das faixas está em "Notas do
+coletor".
 
-Dados fictícios: notas de 0 a 10 para oito bairros fictícios, cada um com sua
-própria média e desvio-padrão (`set.seed(4127)`) — pensados para produzir
+**Dado fictício**: notas de 0 a 10 para oito bairros fictícios, cada um com
+sua própria média e desvio-padrão (`set.seed(4127)`) — pensados pra produzir
 formas bem diferentes entre si (faixas estreitas e altas vs. largas e
 achatadas), em vez de curvas parecidas.
 
@@ -109,3 +107,35 @@ achatadas), em vez de curvas parecidas.
   multimodalidade real.
 - Facetar por um segundo agrupamento (por exemplo, tipo de restaurante),
   virando um pequeno múltiplo de ridgelines.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../boxplot-classico" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Boxplot clássico: cinco variações</span>
+    <span class="parecido-razao">O oposto direto: a mesma comparação de distribuições entre categorias, resumida a cinco números por caixa em vez da forma completa de cada uma.</span>
+  </a>
+  <a class="parecido-item" href="../densidade-2d-contorno" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Densidade 2D em bandas de contorno</span>
+    <span class="parecido-razao">Mesma família de técnica (estimativa de densidade por kernel), mas para duas variáveis contínuas de uma vez em vez de uma variável por categoria.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+As faixas são desenhadas de trás (maior mediana) pra frente (menor mediana)
+— na ordem errada, o ridgeline perde o efeito que o define. A ideia inteira
+da técnica é deixar cada pico crescer mais alto do que o espaço reservado
+pra sua própria linha, pra que os picos vizinhos se toquem ou se sobreponham
+um pouco — é isso que dá a sensação de "perfil de montanhas" em vez de uma
+pilha de gráficos separados.
+
+Se a faixa de cima fosse desenhada por último, ela cobriria o topo do pico
+da faixa de baixo bem no ponto onde a comparação entre as duas importa mais.
+Desenhando de trás pra frente, cada faixa nova é sobreposta por todas as que
+vêm depois dela no empilhamento — a de baixo sempre "vence" visualmente onde
+os picos se cruzam, que é exatamente o efeito clássico do ridgeline e o
+motivo de existirem tantas versões dele por aí com esse mesmo cuidado de
+z-order, raramente explicado.
