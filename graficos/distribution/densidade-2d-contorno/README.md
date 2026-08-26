@@ -5,6 +5,8 @@ date: 2026-07-23
 source: "https://www.data-to-viz.com/graph/density2d.html"
 interactive: true
 resumo: "Bandas de contorno mostrando onde os pontos se concentram, no lugar de um gráfico de dispersão com sobreposição demais."
+veredito_uso: "há muitos pontos e a sobreposição está escondendo a estrutura — quanto mais dados, melhor funciona."
+veredito_evita: "há poucas dezenas de observações, ou os pontos individuais (atípicos, por exemplo) importam."
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "duas variáveis numéricas (uma linha por observação)"
 nivel: básico
@@ -25,7 +27,9 @@ isso.
 ## Quando usar (e quando evitar)
 
 **Use quando** houver muitos pontos e a sobreposição estiver escondendo a
-estrutura. Quanto mais dados, melhor funciona — é o oposto da maioria das técnicas.
+estrutura.
+
+<div class="pull-quote pull-quote-direita clearfix">quanto mais dados, melhor funciona — é o oposto da maioria das técnicas</div>
 
 **Evite quando** houver poucas observações: com poucas dezenas de pontos a
 estimativa é instável e inventa formas que não existem nos dados. Nesse caso o
@@ -107,12 +111,12 @@ forma de olhar.
   deslizante existe pra deixar explorar; comece de novo com poucos níveis pra
   reancorar a leitura.
 
-- **Problema**: o hover não encontra nenhuma banda mesmo com o cursor visivelmente
-  dentro de uma. **Por quê**: o teste par-ímpar depende de os polígonos estarem
-  fechados e sem auto-interseção — um contorno degenerado (raro, mas possível em
-  bandas muito finas) pode confundir a contagem de cruzamentos. **Solução**:
-  aumentar levemente o `bandwidth()` costuma resolver, suavizando a banda o
-  suficiente pra evitar geometria degenerada.
+- **Problema**: o hover não encontra nenhuma banda mesmo com o cursor
+  visivelmente dentro de uma. **Por quê**: um contorno degenerado (raro, em
+  bandas muito finas) pode confundir o teste par-ímpar — ver "Notas do
+  coletor" pra como esse teste lida com furos. **Solução**: aumentar
+  levemente o `bandwidth()` costuma suavizar o suficiente pra evitar a
+  geometria degenerada.
 
 ## Variações possíveis
 
@@ -127,3 +131,43 @@ forma de olhar.
   algo determinístico visualmente — por exemplo, fixar o domínio da escala de cor
   em vez de recalculá-lo a cada nível, pra que a cor de uma banda específica não
   mude de tom ao mover o controle deslizante.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../superficie-3d-densidade" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Superfície 3D de densidade (plotly + MASS::kde2d)</span>
+    <span class="parecido-razao">Mesmos dados exatos, outro ângulo de propósito: a mesma distribuição, vista como bandas de contorno de cima aqui, e como relevo tridimensional lá.</span>
+  </a>
+  <a class="parecido-item" href="../../correlation/dispersao-marginais-imoveis" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Dispersão com histogramas marginais</span>
+    <span class="parecido-razao">O oposto direto pra poucos dados: quando a amostra é pequena demais pra uma estimativa de densidade confiável, um scatter comum é mais honesto que bandas suavizadas.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O teste de "que banda está sob o cursor" parecia que ia exigir tratar cada
+banda como um caso especial: bandas de contorno de densidade podem ter
+**furos** — uma região mais densa "vazada" dentro de uma menos densa —, e a
+suspeita inicial era que o teste ponto-dentro-de-polígono precisaria saber
+diferenciar o anel externo de cada banda do anel do furo, pra não contar o
+miolo vazado como parte dela.
+
+Não precisou. A regra par-ímpar (a mesma que o `fill-rule` padrão do SVG
+usa) aplicada em **todos os anéis de todas as bandas de uma vez**, sem
+distinguir anel externo de furo, já dá o resultado certo por conta própria:
+um raio partindo de um ponto dentro de um furo cruza um número par de
+anéis — entra na banda pela borda externa, sai de novo na borda do furo —,
+e o teste conclui corretamente que o ponto está fora. A geometria "sabe"
+resolver o furo sozinha, sem nenhum código extra pra reconhecer buracos.
+
+Isso também evitou o problema maior, mencionado em "Como foi feito": exportar
+a geometria de banda já calculada pelo R (`MASS::kde2d()` via `ggplot2`) é
+incômodo justamente por causa desses furos — serializar `Polygon[]` com
+anéis de buraco de forma genérica é mais trabalho do que recalcular a
+estimativa do zero em D3, a partir dos pontos brutos. A paridade visual vem
+de usar a mesma paleta e a mesma família de técnica, não de desenhar a
+mesma geometria calculada duas vezes.
