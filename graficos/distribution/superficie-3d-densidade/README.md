@@ -5,6 +5,8 @@ date: 2026-07-23
 source: "https://www.data-to-viz.com/graph/density2d.html"
 interactive: true
 resumo: "A mesma estimativa de densidade de um plano, mas levantada como relevo tridimensional que dá para girar e ampliar."
+veredito_uso: "a distribuição tem múltiplos picos, comparar a altura entre eles é o ponto, e o leitor pode girar a superfície."
+veredito_evita: "o resultado é consumido como imagem estática — a versão 2D com contornos é superior pra isso."
 pacotes: ["plotly", "MASS", "webshot2"]
 dados: "duas variáveis numéricas (uma linha por observação)"
 nivel: intermediário
@@ -32,8 +34,10 @@ sempre esconde parte da superfície atrás dos picos, e a perspectiva distorce a
 alturas (o que está mais perto parece maior). Para leitura precisa ou impressa, a
 versão 2D com contornos é superior.
 
-Vale a regra geral: 3D em visualização de dados costuma ser decoração. Aqui se
-justifica porque a terceira dimensão carrega informação real e o giro é possível.
+<div class="pull-quote pull-quote-direita clearfix">3D em visualização de dados costuma ser decoração</div>
+
+Aqui se justifica porque a terceira dimensão carrega informação real e o
+giro é possível.
 
 ## Que dados você precisa
 
@@ -105,3 +109,37 @@ versões serem comparáveis lado a lado.
   bruto que gerou o relevo.
 - Fixar a câmera num ângulo escolhido (`layout(scene = list(camera = ...))`) quando
   o gráfico for usado em apresentação com enquadramento definido.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../densidade-2d-contorno" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Densidade 2D em bandas de contorno</span>
+    <span class="parecido-razao">Mesmos dados exatos, de propósito: a mesma distribuição vista de cima em bandas de contorno lá, e como relevo aqui.</span>
+  </a>
+  <a class="parecido-item" href="../../correlation/dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Dispersão 3D de cafés especiais (rgl)</span>
+    <span class="parecido-razao">O mesmo problema de gerar uma miniatura estática a partir de uma cena 3D headless, resolvido por um caminho diferente — webshot2 (navegador automatizado) aqui, snapshot3d nativo lá.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Os outros gráficos 3D deste acervo usam `rgl`, que sabe tirar sua própria
+fotografia da cena sem precisar de navegador nenhum (`snapshot3d()`) — só
+precisa do truque de rodar sem janela gráfica real. O `plotly` não tem
+esse caminho: ele é, por natureza, uma biblioteca JavaScript renderizada no
+navegador, e a única forma de gerar um `output.png` a partir dela é abrir
+essa cena de verdade num navegador automatizado e fotografar a tela —
+exatamente o que `webshot2::webshot()` faz por baixo.
+
+Isso muda a relação entre as duas versões do gráfico. Nos gráficos `rgl`,
+imagem estática e widget nascem do mesmo desenho `rgl`, só exportado de
+duas formas. Aqui a imagem estática É uma captura de tela do próprio
+widget interativo, num ângulo padrão — não uma renderização paralela, uma
+fotografia. Por isso a miniatura deste gráfico especificamente é tratada
+como coadjuvante: qualquer ângulo capturado esconde parte da superfície
+atrás dos picos, e a única forma de ver o relevo inteiro é abrir a versão
+de verdade e girar.
