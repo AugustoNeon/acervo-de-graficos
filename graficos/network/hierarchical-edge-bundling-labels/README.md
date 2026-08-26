@@ -5,6 +5,8 @@ date: 2026-07-21
 source: "https://r-graph-gallery.com/311-add-labels-to-hierarchical-edge-bundling.html"
 interactive: true
 resumo: "Conexões entre os itens de uma hierarquia, desenhadas como feixes curvos que acompanham a árvore em vez de cortar o círculo em linha reta."
+veredito_uso: "seus dados têm uma hierarquia natural, e você quer mostrar relações que cruzam essa hierarquia."
+veredito_evita: "não existe hierarquia de verdade, ou a pergunta é sobre um par específico — as curvas se sobrepõem demais pra rastrear uma isolada."
 pacotes: ["ggraph", "igraph", "tidyverse", "RColorBrewer", "jsonlite", "d3"]
 dados: "uma hierarquia (pai → filho) + uma lista de conexões entre as folhas"
 nivel: avançado
@@ -20,8 +22,9 @@ meio).
 
 O truque que dá nome à técnica é o *bundling*: em vez de ligar dois pontos com uma
 reta, cada conexão é curvada para acompanhar o caminho pela árvore — subindo até o
-ancestral comum dos dois itens e descendo de novo. Conexões que percorrem trajetos
-parecidos acabam se encostando e formando feixes, como cabos amarrados juntos.
+ancestral comum dos dois itens e descendo de novo.
+
+<div class="pull-quote pull-quote-direita clearfix">conexões que percorrem trajetos parecidos se encostam e formam feixes, como cabos amarrados juntos</div>
 
 **Para que serve**: enxergar quais *grupos* conversam entre si numa rede grande,
 não só quais itens individuais. O agrupamento visual das curvas é a resposta.
@@ -96,11 +99,10 @@ conexões sorteadas aleatoriamente entre folhas.
 
 - **Problema**: o gráfico sai como uma linha reta esticada em vez de um círculo,
   com valores absurdos na escala (na ordem de `1e+252`), e nenhum erro ou aviso
-  aparece. **Por quê**: alguma conexão liga uma folha a ela mesma (`from == to`) —
-  fácil de acontecer quando as conexões são sorteadas com `replace = TRUE`. O
-  cálculo interno de spline degenera para um caminho de um ponto só e produz
-  coordenadas impossíveis. **Solução**: filtrar auto-conexões antes de montar os
-  índices: `connect <- connect[connect$from != connect$to, ]`.
+  aparece. **Solução**: filtre auto-conexões antes de montar os índices
+  (`connect <- connect[connect$from != connect$to, ]`) — este foi o primeiro
+  bug de verdade deste acervo inteiro; a história está em "Notas do
+  coletor".
 
 - **Problema**: `aes(colour = ..index..)` dá aviso de sintaxe obsoleta. **Por quê**:
   a notação `..variavel..` foi substituída no ggplot2 moderno. **Solução**: usar
@@ -136,3 +138,47 @@ conexões sorteadas aleatoriamente entre folhas.
   hierarquia e sacrifica a das conexões.
 - Destacar um único grupo de cada vez, deixando os demais em cinza — útil quando
   há muitas conexões e você quer contar uma história por vez.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../matriz-adjacencia-tags" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Matriz de adjacência: tags que aparecem juntas</span>
+    <span class="parecido-razao">O oposto direto quando a pergunta é sobre um par específico: uma grade lê "A se liga a B?" num único cruzamento, sem precisar seguir uma curva no meio de 165 outras.</span>
+  </a>
+  <a class="parecido-item" href="../arc-diagram-d3" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Arc diagram</span>
+    <span class="parecido-razao">Mesma ideia — nós numa ordem com significado, conexões como curvas — mas numa linha aberta em vez de um círculo fechado, e sem agrupar as curvas em feixes.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Este foi o primeiro gráfico deste acervo inteiro, e o primeiro bug real
+apareceu logo nele: em vez do círculo esperado, o resultado era uma linha
+reta esticada, com uma escala tomada por um valor da ordem de `1e+252` —
+um número absurdo o bastante pra sugerir que algo tinha corrompido a
+escala inteira, não só uma célula fora do lugar. Nenhum erro, nenhum
+aviso — o script rodava do início ao fim normalmente.
+
+A causa: as conexões entre folhas eram sorteadas com `sample(...,
+replace = TRUE)`, e isso ocasionalmente sorteava uma folha ligada a ela
+mesma (`from == to`). O cálculo interno de spline do `geom_conn_bundle()`
+(a função `ggraph:::getSplines`, não exportada, só acessível lendo o
+código-fonte do pacote) degenera quando os dois pontos de uma conexão são
+o mesmo ponto — o caminho vira um "segmento" de comprimento zero, e a
+matemática da curva por trás disso produz coordenadas que tecnicamente
+são números, mas sem nenhum significado geométrico. Uma auto-conexão
+sozinha, entre centenas de conexões válidas, bastava pra estourar a escala
+do gráfico inteiro.
+
+A correção foi filtrar auto-conexões antes de montar os índices que o
+`ggraph` consome (`connect <- connect[connect$from != connect$to, ]`) —
+uma linha só, mas que só apareceu como necessária depois de ver o
+resultado quebrado e desconfiar dos dados sorteados, não do código de
+desenho. Ficou como o primeiro item da lista de lições deste projeto:
+gerar conexões aleatórias com reposição sempre tem chance de sortear um
+nó ligado a si mesmo, e vale filtrar isso preventivamente em qualquer
+gráfico de rede novo, antes mesmo do bug aparecer.
