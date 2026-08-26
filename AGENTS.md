@@ -43,7 +43,8 @@ Ao abrir este repositório pela primeira vez numa sessão nova:
 3. Leia [docs/PROGRESS.md](docs/PROGRESS.md) pra saber o que já foi feito e não repetir gráfico.
 4. Se for rodar ou instalar algo em R, leia [docs/SETUP.md](docs/SETUP.md) antes — não assuma caminhos padrão de instalação (ver "Lições aprendidas" abaixo).
 5. Se for adicionar gráfico novo, siga [docs/WORKFLOW.md](docs/WORKFLOW.md) do início ao fim.
-6. Cada informação mora em UM arquivo só — os outros linkam, não duplicam. Se notar algo desatualizado aqui ou em `docs/`, corrija na mesma sessão em que perceber, não deixe pra depois.
+6. Existe uma reformulação de produto/design **em andamento, não implementada** — o que fica abaixo do gráfico em cada página (duas zonas: referência + "Notas do coletor", mais um bloco novo de "gráficos parecidos"). Decisões já tomadas, protótipo publicado e lista detalhada do que falta em [docs/pendencias-reformulacao-pagina-grafico.md](docs/pendencias-reformulacao-pagina-grafico.md) — leia antes de mexer no template de página de gráfico ou no padrão de README, pra não recomeçar a discussão do zero nem contradizer uma decisão já fechada.
+7. Cada informação mora em UM arquivo só — os outros linkam, não duplicam. Se notar algo desatualizado aqui ou em `docs/`, corrija na mesma sessão em que perceber, não deixe pra depois.
 
 ## Convenções
 
