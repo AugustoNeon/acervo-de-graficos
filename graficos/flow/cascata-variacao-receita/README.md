@@ -5,6 +5,8 @@ date: 2026-08-26
 source: "https://r-graph-gallery.com/waterfall-chart.html"
 interactive: true
 resumo: "Como um total sai de um valor e chega a outro, parcela a parcela — cada barra começa onde a anterior parou."
+veredito_uso: "há um ponto de partida, um de chegada, e parcelas que somam exatamente a diferença entre os dois."
+veredito_evita: "as parcelas não fecham a conta, ou o valor de partida é muito maior que as parcelas."
 pacotes: ["ggplot2"]
 dados: "1 variável categórica ordenada + 1 numérica com sinal (a parcela de cada etapa)"
 nivel: básico
@@ -58,8 +60,9 @@ derivado, não fornecido — basta percorrer as parcelas somando.
 
 - **Altura de uma barra do meio**: o tamanho daquela parcela.
 - **Posição vertical da barra**: onde o total estava naquele ponto do caminho.
-  Duas parcelas de mesmo tamanho aparecem em alturas diferentes — a posição
-  conta a história, o tamanho conta a magnitude.
+  Duas parcelas de mesmo tamanho aparecem em alturas diferentes.
+
+<div class="pull-quote pull-quote-direita clearfix">a posição conta a história, o tamanho conta a magnitude</div>
 - **Cor**: o sinal. Verde soma, vinho subtrai, e as duas barras escuras das
   pontas são totais, não variação.
 - **Linha ligando as barras**: o encadeamento. É o único elemento que separa
@@ -99,7 +102,9 @@ que todas partem do zero e podem ser comparadas diretamente — a pergunta muda 
 nesse modo, porque não são contribuição nenhuma e manteriam a escala esmagada.
 Também dá para reordenar as parcelas por impacto: a escala fica fixa de
 propósito, o que deixa ver que a ordem muda o caminho da cascata e nunca o ponto
-onde ela fecha.
+onde ela fecha. A animação de entrada (as barras nascendo da esquerda pra
+direita) precisou de um ajuste que foge do padrão do resto do site — ver
+"Notas do coletor".
 
 ## Possíveis problemas pelo caminho
 
@@ -131,3 +136,43 @@ onde ela fecha.
   caminho) quando as etapas se agruparem em fases.
 - Empilhar cada parcela por uma segunda dimensão (região, produto), quando a
   pergunta "de onde veio esse ganho" tiver mais de um nível.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../ranking/barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico: cinco variações</span>
+    <span class="parecido-razao">O oposto direto quando só a magnitude de cada causa importa, sem o encadeamento: um gráfico de barras ordenado responde "qual foi a maior causa" com menos esforço de leitura.</span>
+  </a>
+  <a class="parecido-item" href="../funil-conversao-ecommerce" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Funil de conversão de uma loja online</span>
+    <span class="parecido-razao">Mesma família (etapas sequenciais que se acumulam), mas monotônica — o funil só encolhe, a cascata pode subir e descer.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O escalonamento padrão do site (`stagger()`, usado por praticamente todo
+gráfico com animação de entrada) tem um teto de 28ms por elemento, pra não
+gastar segundos animando um gráfico com dezenas de barras. Aplicado direto
+na cascata, o resultado ficava sutil demais: com só 8 barras, o
+escalonamento total não passava de ~200ms — rápido o bastante pra parecer
+que todas nasciam praticamente juntas.
+
+Isso seria aceitável na maioria dos gráficos, onde o escalonamento é só
+acabamento — um toque a mais, não a informação em si. Na cascata é o
+oposto: ver as barras nascerem da esquerda pra direita, uma explicando a
+próxima, É o próprio gesto que o gráfico existe pra descrever. Um
+escalonamento imperceptível apaga exatamente a parte que fazia a animação
+valer a pena.
+
+A correção foi não usar o helper padrão aqui: o atraso de cada barra é
+calculado à mão (`i * 85`, bem acima do teto de 28ms), e a rede de
+segurança que garante o estado final correto (`garantirEstadoFinal`) foi
+ajustada pra somar o atraso da última barra antes de disparar — sem isso,
+ela dispararia cedo demais e cortaria o fim da animação das últimas barras,
+achando que a transição já tinha acabado. Vale a mesma pergunta em
+qualquer gráfico novo: o escalonamento aqui é decoração, ou é a
+informação? A resposta muda se vale usar o padrão ou calcular à mão.
