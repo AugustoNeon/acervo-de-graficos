@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/funnel-plot.html"
 interactive: true
 resumo: "Quantos visitantes sobrevivem a cada etapa do checkout, da entrada no site até a compra concluída."
+veredito_uso: "as etapas têm ordem obrigatória e cada uma é subconjunto estrito da anterior."
+veredito_evita: "as categorias não têm relação de contenção, ou há mais de 6-7 etapas."
 pacotes: ["ggplot2", "RColorBrewer"]
 dados: "1 variável categórica ordenada (etapa) + 1 numérica (contagem em cada etapa)"
 nivel: básico
@@ -66,10 +68,10 @@ retas inclinadas, não blocos retos, que dão o formato clássico de funil.
 
 Dados fictícios: um funil de checkout de uma loja online fictícia, começando
 em 12.480 visitantes (`set.seed(7742)`), com uma queda percentual sorteada
-etapa a etapa — deliberadamente maior nas duas primeiras etapas (visitar →
-ver produto → carrinho) e menor nas duas últimas (carrinho → checkout →
-compra), o perfil típico de e-commerce real, onde a maior parte do abandono
-acontece bem no início da jornada, não perto do pagamento.
+etapa a etapa — deliberadamente maior nas duas primeiras etapas e menor nas
+duas últimas, o perfil típico de e-commerce real.
+
+<div class="pull-quote pull-quote-direita clearfix">a maior parte do abandono acontece bem no início da jornada, não perto do pagamento</div>
 
 A versão interativa recalcula a mesma geometria de trapézio em D3, com o
 rótulo de cada etapa aparecendo só quando ela é larga o bastante pra caber o
@@ -82,14 +84,10 @@ estático).
 
 - **Problema**: texto quase-branco sobre um trapézio bem estreito sai com
   pedaços de palavra faltando ("Iniciaram o checkout" virando algo como
-  "ciaram o checko"), sem nenhum erro no console do R. **Por quê**: é um
-  bug de renderização do dispositivo que gera o PNG quando texto muito claro
-  cai sobre uma forma estreita — não falta de espaço de verdade (o mesmo
-  texto, na mesma posição, renderiza inteiro se a cor for um cinza médio ou
-  preto). **Solução**: desenhar o rótulo como uma etiqueta (fundo branco +
-  texto escuro, `geom_label()`) em vez de texto claro direto sobre o
-  preenchimento — resolve por completo e ainda fica legível em cima de
-  qualquer cor de fundo, clara ou escura.
+  "ciaram o checko"), sem nenhum erro no console do R. **Solução**: desenhe
+  o rótulo como etiqueta (fundo branco + texto escuro, `geom_label()`) em
+  vez de texto claro direto sobre o preenchimento — a investigação completa
+  está em "Notas do coletor", no fim da página.
 - **Problema**: o gráfico nasce com uma faixa enorme de espaço em branco
   acima do funil, ou o funil sai comprimido/deformado. **Por quê**: forçar
   `coord_fixed()` com uma proporção calculada na mão distorce o painel de
@@ -110,3 +108,42 @@ estático).
 - Funil duplo/comparativo: dois funis lado a lado (ex: desktop vs. mobile,
   ou este mês vs. mês passado) pra comparar onde cada grupo perde mais
   gente.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../cascata-variacao-receita" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Cascata: o que explica a variação da receita</span>
+    <span class="parecido-razao">Mesma família (etapas sequenciais que se acumulam), mas sem a restrição de só encolher — a cascata pode subir e descer, o funil só afunila.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O texto de um rótulo saía com pedaços faltando — não cortado de forma
+óbvia (tipo "..."), literalmente faltando letras do meio ou do início da
+palavra, e só nas etapas mais estreitas do funil. A primeira suspeita óbvia
+era falta de espaço: o texto não cabia na largura daquele trapézio
+específico.
+
+Eliminação sistemática descartou isso rápido: o mesmo texto, na mesma
+posição e tamanho, cabia inteiro quando a cor mudava pra um cinza médio ou
+preto — só sumia com a cor quase-branca original. Também não era sobre
+`coord_cartesian(clip=)` (alternar entre os dois modos não mudou nada), nem
+sobre o número de grupos do `geom_polygon()`, nem sobre a forma ser
+trapézio em vez de retângulo isoladamente. Só reproduzia com a
+**combinação** exata: texto muito claro **e** forma estreita ao mesmo
+tempo — nenhum dos dois fatores sozinho.
+
+A causa real é um bug de renderização do próprio dispositivo que gera o
+PNG nessa máquina, não um erro de lógica no código — algo na forma como
+texto quase-branco é composto sobre uma forma de largura pequena faz
+glifos sumirem silenciosamente, sem warning. A correção não tentou achar
+"a cor certa" de texto claro longe o bastante do branco — trocou a
+abordagem inteira: rótulo como etiqueta, fundo branco sólido atrás de
+texto escuro (`geom_label()`), que nunca esbarra nesse bug e ainda fica
+legível sobre qualquer cor de fundo. Outros gráficos deste acervo (pizza,
+rosca, treemap) usam texto branco direto sobre preenchimento sem problema —
+eles nunca tiveram uma forma fina o bastante pra disparar o bug, não porque
+fizeram algo diferente.
