@@ -5,6 +5,8 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/package/ggbump.html"
 interactive: true
 resumo: "A posição de 7 jogos no ranking mensal de audiência de uma plataforma de streaming fictícia, mês a mês, ao longo de um ano."
+veredito_uso: "poucas categorias (até 8-10) competindo pelas mesmas posições ao longo de várias medições, e o que interessa é a disputa entre elas."
+veredito_evita: "muitas categorias (as linhas viram um emaranhado), ou o valor absoluto importa mais que a posição relativa."
 pacotes: ["ggplot2", "dplyr", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica (o item) × 1 ordinal/temporal (o momento) × 1 posição de ranking derivada de uma métrica numérica"
 nivel: intermediário
@@ -21,6 +23,8 @@ na frente, quem ultrapassou quem, e quando" — perguntas que um gráfico de
 linha com o valor bruto no eixo Y não responde diretamente, porque a escala
 de valor pode disfarçar uma troca de posição (ou mostrar uma "troca" que na
 verdade é só ruído perto do topo).
+
+<div class="pull-quote pull-quote-direita clearfix">quem estava na frente, quem ultrapassou quem, e quando</div>
 
 ## Quando usar (e quando evitar)
 
@@ -125,3 +129,36 @@ primeira vista.
 - Adicionar uma faixa de "zona de risco" (ex: sombreado nas últimas posições)
   quando o ranking tiver um corte que importa — os últimos colocados que
   saem de uma lista, times rebaixados, etc.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../evolution/serie-temporal-customizada-dygraphs" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Série temporal customizada (dygraphs)</span>
+    <span class="parecido-razao">O oposto direto quando o valor absoluto importa mais que a posição: uma linha por série com a métrica bruta no eixo Y, sem transformar nada em ranking.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A pontuação de popularidade de cada jogo não foi sorteada mês a mês do
+zero — veio de um passeio aleatório com deriva própria por jogo
+(`set.seed(3391)`), e um dos sete jogos ("Vale Sombrio") foge desse
+padrão de propósito: começa em último lugar, é "lançado" no meio do ano e
+dispara pro topo em poucos meses.
+
+A escolha foi deliberada por uma razão específica: um bump chart existe
+pra tornar óbvia a olho nu uma virada de posição, e um passeio aleatório
+puro para os sete jogos, sem nenhum evento com "sentido" por trás,
+produziria cruzamentos de linha o tempo todo, mas nenhum deles contando
+uma história reconhecível — só ruído estatístico bonito de olhar. Sem um
+caso central óbvio (um jogo lançado tarde que dispara), a primeira olhada
+no gráfico não tem onde pousar: qualquer cruzamento parece tão importante
+quanto qualquer outro. Com o caso "Vale Sombrio" desenhado à mão dentro do
+processo aleatório, a leitura ganha um ponto de entrada natural — "por que
+essa linha nasce lá embaixo e sobe tão rápido?" — antes de quem lê passar a
+notar as outras disputas mais sutis entre os jogos que seguiram o passeio
+aleatório comum. A lição para qualquer dado sintético de demonstração:
+ruído puro é tecnicamente correto, mas uma história plantada de propósito
+é o que ensina alguém a ler a técnica pela primeira vez.
