@@ -5,6 +5,8 @@ date: 2026-08-18
 source: "https://r-graph-gallery.com/lollipop-plot.html"
 interactive: true
 resumo: "Ranking de gêneros musicais por horas de audição, com o líder destacado e o detalhamento por plataforma revelado no hover."
+veredito_uso: "o ranking entre poucas dezenas de categorias importa, e um visual mais leve que um barplot cheio é suficiente."
+veredito_evita: "as categorias são muitas (a haste fica curta demais pra segurar um círculo legível), ou a comparação precisa de área, não só de posição."
 pacotes: ["ggplot2", "dplyr", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica agregada, com uma quebra opcional por subgrupo"
 nivel: básico
@@ -18,6 +20,8 @@ categoria vira uma linha fina terminando num círculo — a "haste" e o "doce" q
 dão nome ao gráfico. **Para que serve**: a mesma pergunta do barplot (comparar
 uma métrica entre categorias), com menos tinta na tela e o valor exato lido
 diretamente na ponta do círculo em vez de estimado pela altura de uma barra.
+
+<div class="pull-quote pull-quote-direita clearfix">menos tinta na tela</div>
 
 ## Quando usar (e quando evitar)
 
@@ -99,3 +103,40 @@ gráfico de [barras agrupadas/empilhadas](../../part-of-whole/barplot-agrupado-e
   intensidade da mudança importar tanto quanto a posição final.
 - Adicionar uma segunda métrica ao tamanho do círculo, transformando o
   lollipop num híbrido com gráfico de bolhas.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico: cinco variações</span>
+    <span class="parecido-razao">Mesmos dados, mesma família — a versão com retângulo cheio em vez de haste fina, quando a área também deve carregar a comparação.</span>
+  </a>
+  <a class="parecido-item" href="../radar-multiplos-grupos" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Radar com múltiplos grupos</span>
+    <span class="parecido-razao">Outra geometria pro mesmo problema de comparar "antes e depois": eixos radiais em vez de duas pontas numa mesma haste.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Este gráfico tem duas animações que podem disparar juntas: o hover (que
+destaca um círculo ao passar o cursor) e a troca de ordem (que reorganiza
+todas as linhas, círculos e o halo do item de destaque de uma vez). É
+exatamente a combinação — hover animado e troca de estado animada sobre o
+mesmo elemento — que causou um bug real neste acervo: clicar num botão de
+ordenação e passar o cursor logo em seguida travava um item a meio caminho
+da transição, sem erro nenhum no console, porque o D3 rastreia transições
+por um par `(elemento, nome)` e uma segunda `.transition()` sem nome
+**cancela** a primeira em andamento, mesmo animando atributos diferentes.
+
+O mesmo bug, com a mesma causa, apareceu em três gráficos deste acervo que
+compartilham essa combinação: o [barplot clássico](../barplot-classico), o
+[barplot agrupado/empilhado](../../part-of-whole/barplot-agrupado-empilhado)
+e este lollipop. A correção — nomear a transição de hover
+(`selection.transition('hover')`) separada da transição de estado, sem
+nome — evita que uma cancele a outra. A lição generalizou pro resto do
+acervo: todo gráfico D3 novo com hover e mudança de estado animando o
+mesmo elemento nasce hoje já com nomes de transição distintos, não como
+correção depois de alguém notar o travamento.
