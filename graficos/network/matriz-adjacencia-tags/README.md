@@ -63,11 +63,19 @@ comparável aos demais.
 
 ## Como ler o gráfico
 
-- **Célula**: um par de nós. Quanto mais escura, mais forte a ligação.
+<div class="legenda-swatches">
+  <div><span class="swatch" style="background:#FBF1E2;border:1px solid #ddd"></span> Célula clara — poucas ou nenhuma coocorrência entre as duas tags</div>
+  <div><span class="swatch" style="background:#B4531F"></span> Célula escura — muitas coocorrências</div>
+  <div><span class="swatch" style="background:#DCD8D2"></span> Diagonal cinza — não é dado (tag com ela mesma)</div>
+</div>
+
+A cor sozinha diz a força de um par — mas o achado da matriz está no **padrão**
+que os pares formam juntos:
+
 - **Blocos escuros na diagonal**: grupos de nós que se ligam muito entre si —
   as comunidades da rede.
-- **Manchas escuras fora dos blocos**: pontes, ou seja, ligações fortes entre
-  grupos diferentes. Costumam ser o achado mais interessante do gráfico.
+- **Manchas escuras fora dos blocos**: pontes, ligações fortes entre grupos
+  diferentes. Costumam ser o achado mais interessante do gráfico.
 - **Simetria em torno da diagonal**: confirma que a rede é não direcionada.
 
 A coisa mais importante de entender é que **a matriz não tem uma ordem natural**.
@@ -144,12 +152,18 @@ da simetria.
 
 ## Gráficos parecidos
 
-- **O oposto direto**: [rede densa (hairball)](../rede-densa-hairball) — o
-  mesmo tipo de dado (nós e arestas), mas exatamente o cenário em que a matriz
-  vence e o diagrama de nós perde: muitas arestas, layout ilegível.
-- **Mesma técnica, outro domínio**: [correlograma](../../correlation/correlograma-indicadores) —
-  a mesma grade de células e a mesma leitura por blocos, mas a força na célula
-  vem de correlação estatística, não de coocorrência numa rede.
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../rede-densa-hairball" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede densa (hairball)</span>
+    <span class="parecido-razao">O oposto direto: o mesmo tipo de dado (nós e arestas), mas exatamente o cenário em que a matriz vence e o diagrama de nós perde — muitas arestas, layout ilegível.</span>
+  </a>
+  <a class="parecido-item" href="../../correlation/correlograma-indicadores" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Correlograma: indicadores municipais</span>
+    <span class="parecido-razao">Mesma técnica — a mesma grade de células e leitura por blocos — mas a força na célula vem de correlação estatística, não de coocorrência numa rede.</span>
+  </a>
+</div>
 
 ## Notas do coletor
 
