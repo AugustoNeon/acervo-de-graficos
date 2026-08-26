@@ -94,6 +94,15 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     color: var(--color-ink);
   }
 
+  /* Legenda de um grafico cujo estado atual nao separa as series que ela
+     nomeia: continua legivel como legenda, mas sem prometer um filtro que
+     naquele estado nao teria o que filtrar. */
+  .viz :global(.viz-legenda button[disabled]) {
+    opacity: 0.45;
+    cursor: default;
+    background: none;
+  }
+
   /* Paineis lado a lado (mesmo grafo, codificacoes ou layouts diferentes).
      `auto-fit` em vez de um numero fixo de colunas: no celular eles empilham
      sozinhos, e um painel de rede espremido a um terco da largura de 375px
@@ -143,6 +152,28 @@ const { id, dataUrl, fallbackSrc, title, aspectRatio = 1 } = Astro.props;
     background: var(--cat-wash);
     border-color: var(--cat);
     color: var(--cat-ink);
+  }
+
+  /* Um controle pode nao fazer sentido em todos os estados do grafico (ex:
+     ordenar linhas quando a posicao vertical passou a ser o proprio valor).
+     Desabilitar e mais honesto do que deixar um botao inerte com aparencia de
+     ativo — e mais especifico que o `cursor: pointer` de [data-interactive]. */
+  .viz :global(.viz-controles button[disabled]) {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--color-border);
+    background: none;
+    color: var(--color-ink-muted);
+  }
+
+  /* Rotulo de um grupo de controles, quando o grafico tem mais de um eixo de
+     escolha e "Halteres | Inclinacao" sozinho nao diria do que se trata. */
+  .viz :global(.viz-controles-rotulo) {
+    align-self: center;
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
   }
 
   /* Controle deslizante (ex: janela de média móvel). Mesma família visual dos
