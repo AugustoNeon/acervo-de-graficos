@@ -5,6 +5,8 @@ date: 2026-08-25
 source: "https://r-graph-gallery.com/connected-scatterplot.html"
 interactive: true
 resumo: "Preço médio da assinatura e número de assinantes de um streaming fictício, ano a ano, conectados em ordem cronológica."
+veredito_uso: "a relação entre duas variáveis muda de direção ao longo do tempo — há reversões que valem destacar."
+veredito_evita: "a relação é simples e monotônica — as duas variáveis só crescem juntas, sem reversão."
 pacotes: ["ggplot2", "ggrepel", "dplyr"]
 dados: "1 variável de tempo + 2 numéricas"
 nivel: intermediário
@@ -51,16 +53,16 @@ numéricas já na mesma linha (não é preciso pivotar).
 - **Cor do ponto**: gradiente do início ao fim do período, um reforço visual
   pra direção do tempo (do azul pro laranja), redundante com os rótulos de
   ano.
-- **Pontos onde o caminho muda de direção**: o que vale mais atenção — é
-  onde a relação entre as duas variáveis mudou de regime.
+- **Pontos onde o caminho muda de direção**: o que vale mais atenção.
+
+<div class="pull-quote pull-quote-direita clearfix">é onde a relação entre as duas variáveis mudou de regime</div>
 
 ## Como foi feito
 
-A técnica é simplesmente `geom_path()` (que liga os pontos na ORDEM em que
-aparecem no dado, diferente de `geom_line()`, que reordena pelo eixo X antes
-de desenhar — usar `geom_line()` aqui destruiria a história temporal) por
-cima de um `geom_point()` comum. `ggrepel::geom_text_repel()` posiciona os
-rótulos de ano só nos pontos de virada, sem sobrepor os pontos vizinhos.
+A técnica é `geom_path()` por cima de um `geom_point()` comum —
+`ggrepel::geom_text_repel()` posiciona os rótulos de ano só nos pontos de
+virada, sem sobrepor os pontos vizinhos. A escolha entre `geom_path()` e o
+`geom_line()` mais comum não é estética — ver "Notas do coletor".
 
 Dados fictícios: preço médio e número de assinantes de um serviço de
 streaming fictício, ano a ano entre 2009 e 2024, construídos à mão (não só
@@ -95,3 +97,35 @@ gráfico de linha.
   (`geom_path(..., lineend = "round")` combinado com interpolação), quando o
   objetivo for enfatizar a tendência geral em vez do valor exato de cada
   ano.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../serie-temporal-customizada-dygraphs" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Série temporal interativa customizada</span>
+    <span class="parecido-razao">O oposto direto quando a relação é monotônica: duas séries temporais comuns contam a história com menos esforço de leitura do que uma dispersão conectada.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A escolha entre `geom_path()` e `geom_line()` parece um detalhe de
+nomenclatura, mas é o tipo de troca que quebra o gráfico inteiro em
+silêncio se sair errada. `geom_line()` **reordena os pontos pelo eixo X**
+antes de desenhar a linha — é o comportamento certo pra um gráfico de linha
+comum, onde X é tipicamente o eixo que já está em ordem. `geom_path()` liga
+os pontos exatamente na ordem em que aparecem no dado, sem reordenar nada.
+
+Neste gráfico, a ordem que importa é a cronológica, não a ordem crescente
+de preço (o eixo X). Usar `geom_line()` por engano não geraria erro nenhum
+— o R desenharia uma linha perfeitamente válida, só que conectando os anos
+na ordem errada, por preço crescente em vez de por ano. O gráfico pareceria
+correto pra quem não conhece os dados de cor, e a história de "guerra de
+preços em 2014" que os dados foram desenhados pra contar simplesmente
+desapareceria, substituída por um emaranhado sem sentido cronológico.
+
+A regra prática: sempre que a ordem de desenho for uma variável que NÃO é
+nenhum dos dois eixos (aqui, o tempo), `geom_path()` é a escolha — 
+`geom_line()` só quando a própria ordem do eixo X for a ordem certa de
+ligar os pontos.
