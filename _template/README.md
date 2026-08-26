@@ -52,6 +52,13 @@ O que um padrão visual específico significa na prática (padrões espaciais qu
 a cor sozinha não cobre — blocos, manchas, simetria — continuam em prosa/bullets
 mesmo quando "Como ler" usa a legenda de swatches acima).
 
+<!-- Opcional, no máximo 1 por seção longa — pull-quote com uma frase LITERAL
+     tirada do parágrafo ao lado, nunca inventada. Ver docs/WORKFLOW.md pro
+     formato flutuado (pull-quote-direita clearfix).
+
+<div class="pull-quote">a frase exata copiada do texto ao redor</div>
+-->
+
 ## Como foi feito
 
 Técnica usada e por quê, pacotes principais e o papel de cada um, decisões de

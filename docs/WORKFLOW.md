@@ -95,9 +95,17 @@ A página tem duas zonas, nessa ordem — referência (tom de manual técnico, p
 | `## Gráficos parecidos` | referência | **Opcional, 1 a 3 links escolhidos à mão** pra outros espécimes do acervo — ver o formato de cartão abaixo. Nunca escolha por tag em comum, isso não garante que os gráficos resolvem problemas parecidos. Dois tipos úteis: "o oposto direto" (resolveria o mesmo problema de outro jeito) e "mesma técnica, outro domínio" |
 | `## Notas do coletor` | **bastidor** | **Opcional mas recomendada.** A história real de 1 decisão ou bug por gráfico, contada com intenção — não diário cru. Sempre a última seção do arquivo: é identificada em tempo de execução pelo texto exato do título, então precisa estar sozinha ao final, sem nenhuma seção depois dela. |
 
-### HTML cru dentro do README: legenda de swatches e cartões de "Gráficos parecidos"
+### HTML cru dentro do README: legenda de swatches, pull-quotes e cartões de "Gráficos parecidos"
 
-Markdown aceita HTML embutido, e o site repassa esse HTML sem escapar — duas seções usam isso pra ganhar um visual mais rico do que bullets/links comuns permitem. Copie o formato exato (as classes vêm do CSS de `[slug].astro`, não têm efeito nenhum se o nome não bater):
+Markdown aceita HTML embutido, e o site repassa esse HTML sem escapar — algumas peças usam isso pra ganhar um visual mais rico do que bullets/links comuns permitem. Copie o formato exato (as classes vêm do CSS de `[slug].astro`, não têm efeito nenhum se o nome não bater):
+
+**Pull-quote** — a frase mais forte de uma seção longa, fora do fluxo do parágrafo, na fonte de exibição. Use com moderação: 1 por seção longa, nunca em toda seção — o efeito é justamente quebrar o ritmo em pontos específicos, não virar um padrão repetitivo que o olho aprende a pular.
+
+```html
+<div class="pull-quote">a frase exata, tirada do próprio texto ao redor</div>
+```
+
+Adicione `pull-quote-direita clearfix` (`<div class="pull-quote pull-quote-direita clearfix">`) pra flutuar à direita com o parágrafo seguinte passando ao lado — bom logo no início de uma seção com texto suficiente pra rodear a citação; sem isso, a citação ocupa a própria linha, melhor quando vem entre dois parágrafos curtos ou dentro do cartão de bastidor. A frase sempre é uma **citação literal** de algo que já está escrito ao lado — nunca invente uma frase nova só pra virar pull-quote.
 
 ```html
 ## Como ler o gráfico
