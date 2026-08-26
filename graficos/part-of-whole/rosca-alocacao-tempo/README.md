@@ -8,7 +8,7 @@ resumo: "Um anel dividido em fatias proporcionais ao todo, com um vazio no centr
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma fatia por categoria)"
 nivel: básico
-tags: ["interativo", "parte-do-todo", "proporção"]
+tags: ["parte-do-todo", "proporção"]
 ---
 
 ## O que é

@@ -8,7 +8,7 @@ resumo: "Bandas de contorno mostrando onde os pontos se concentram, no lugar de 
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "duas variáveis numéricas (uma linha por observação)"
 nivel: básico
-tags: ["interativo", "densidade", "distribuição"]
+tags: ["densidade", "distribuição"]
 ---
 
 ## O que é

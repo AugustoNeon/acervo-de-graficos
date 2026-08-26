@@ -8,7 +8,7 @@ resumo: "A mesma estimativa de densidade de um plano, mas levantada como relevo 
 pacotes: ["plotly", "MASS", "webshot2"]
 dados: "duas variáveis numéricas (uma linha por observação)"
 nivel: intermediário
-tags: ["interativo", "3D", "densidade"]
+tags: ["3D", "densidade"]
 ---
 
 ## O que é

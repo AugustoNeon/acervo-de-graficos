@@ -8,7 +8,7 @@ resumo: "50 startups fictícias posicionadas por investimento captado e crescime
 pacotes: ["ggplot2", "ggrepel", "RColorBrewer"]
 dados: "2 variáveis numéricas (eixos) + 1 numérica (tamanho) + 1 categórica (cor)"
 nivel: intermediário
-tags: ["interativo", "correlação", "bolhas"]
+tags: ["correlação", "bolhas"]
 ---
 
 ## O que é

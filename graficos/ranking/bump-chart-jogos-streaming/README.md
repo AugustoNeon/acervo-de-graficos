@@ -8,7 +8,7 @@ resumo: "A posição de 7 jogos no ranking mensal de audiência de uma plataform
 pacotes: ["ggplot2", "dplyr", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica (o item) × 1 ordinal/temporal (o momento) × 1 posição de ranking derivada de uma métrica numérica"
 nivel: intermediário
-tags: ["interativo", "ranking ao longo do tempo", "linha"]
+tags: ["ranking ao longo do tempo", "linha"]
 ---
 
 ## O que é

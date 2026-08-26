@@ -8,7 +8,7 @@ resumo: "Bolhas de tamanhos proporcionais a um valor, compactadas sem sobreposi�
 pacotes: ["packcircles", "ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma bolha por categoria, sem agrupamento)"
 nivel: básico
-tags: ["interativo", "parte-do-todo", "proporção"]
+tags: ["parte-do-todo", "proporção"]
 ---
 
 ## O que é

@@ -8,7 +8,7 @@ resumo: "Ranking de gêneros musicais por horas de audição, com o líder desta
 pacotes: ["ggplot2", "dplyr", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica agregada, com uma quebra opcional por subgrupo"
 nivel: básico
-tags: ["interativo", "comparação", "ranking"]
+tags: ["comparação", "ranking"]
 ---
 
 ## O que é

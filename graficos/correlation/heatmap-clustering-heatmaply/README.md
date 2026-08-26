@@ -8,7 +8,7 @@ resumo: "Matriz de valores em cores, com linhas e colunas reordenadas por simila
 pacotes: ["pheatmap", "viridis", "jsonlite", "d3"]
 dados: "uma matriz numérica (linhas × colunas), com nomes em ambas as dimensões"
 nivel: intermediário
-tags: ["interativo", "matriz", "clustering"]
+tags: ["matriz", "clustering"]
 ---
 
 ## O que é

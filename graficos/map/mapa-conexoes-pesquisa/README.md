@@ -8,7 +8,7 @@ resumo: "Mapa-múndi mostrando rotas de intercâmbio entre 10 centros de pesquis
 pacotes: ["ggplot2", "sf", "geosphere"]
 dados: "cidades com coordenadas (lon/lat) + pares origem-destino com um valor numérico por par"
 nivel: avançado
-tags: ["interativo", "geoespacial", "rede"]
+tags: ["geoespacial", "rede"]
 ---
 
 ## O que é

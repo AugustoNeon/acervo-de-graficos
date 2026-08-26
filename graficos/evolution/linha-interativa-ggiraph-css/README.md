@@ -8,7 +8,7 @@ resumo: "Séries temporais em que quatro modos diferentes de destaque — escolh
 pacotes: ["ggplot2", "tidyverse", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
-tags: ["interativo", "temporal"]
+tags: ["temporal"]
 ---
 
 ## O que é

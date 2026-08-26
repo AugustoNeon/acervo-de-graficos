@@ -8,7 +8,7 @@ resumo: "A fatia de cada fonte de energia na geração elétrica anual de um pa�
 pacotes: ["ggplot2", "RColorBrewer"]
 dados: "1 variável categórica + 1 numérica (proporção de um total)"
 nivel: básico
-tags: ["interativo", "composição", "clássico"]
+tags: ["composição", "clássico"]
 ---
 
 ## O que é

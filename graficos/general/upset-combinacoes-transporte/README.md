@@ -8,7 +8,7 @@ resumo: "Quais meios de transporte as pessoas usam juntos — um gráfico feito 
 pacotes: ["ggplot2", "patchwork"]
 dados: "1 matriz de presença/ausência (uma linha por indivíduo, uma coluna por conjunto)"
 nivel: intermediário
-tags: ["conjuntos", "interseções", "matriz", "interativo"]
+tags: ["conjuntos", "interseções", "matriz"]
 ---
 
 ## O que é

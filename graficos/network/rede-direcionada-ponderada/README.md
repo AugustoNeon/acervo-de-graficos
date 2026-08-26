@@ -8,7 +8,7 @@ resumo: "Rede em que cada conexão tem sentido (setas) e intensidade (espessura 
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de conexões com origem, destino e peso"
 nivel: intermediário
-tags: ["interativo", "rede", "fluxo"]
+tags: ["rede", "fluxo"]
 ---
 
 ## O que é

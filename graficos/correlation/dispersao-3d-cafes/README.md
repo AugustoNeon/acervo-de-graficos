@@ -8,7 +8,7 @@ resumo: "Três variáveis numéricas ao mesmo tempo, posicionadas nos três eixo
 pacotes: ["rgl", "png", "htmltools"]
 dados: "3 variáveis numéricas + 1 variável categórica de grupo"
 nivel: intermediário
-tags: ["interativo", "3D", "correlação"]
+tags: ["3D", "correlação"]
 ---
 
 ## O que é

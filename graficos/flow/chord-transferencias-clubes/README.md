@@ -8,7 +8,7 @@ resumo: "Transferências de jogadores entre clubes desenhadas como fitas ao redo
 pacotes: ["circlize", "RColorBrewer", "jsonlite", "d3"]
 dados: "matriz quadrada (clube de origem × clube de destino), com a quantidade de jogadores em cada célula"
 nivel: avançado
-tags: ["interativo", "fluxo", "circular"]
+tags: ["fluxo", "circular"]
 ---
 
 ## O que é

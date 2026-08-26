@@ -8,7 +8,7 @@ resumo: "O tempo médio de espera de cada especialidade em dois momentos, ligado
 pacotes: ["ggplot2"]
 dados: "1 variável categórica + 2 numéricas (o mesmo indicador em dois momentos)"
 nivel: básico
-tags: ["halteres", "antes e depois", "comparação", "interativo"]
+tags: ["halteres", "antes e depois", "comparação"]
 ---
 
 ## O que é

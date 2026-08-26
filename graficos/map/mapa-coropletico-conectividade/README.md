@@ -8,7 +8,7 @@ resumo: "Percentual fictício de domicílios com internet banda larga fixa em ca
 pacotes: ["ggplot2", "sf", "rnaturalearthdata"]
 dados: "1 variável geográfica (polígono do estado) + 1 numérica (percentual)"
 nivel: básico
-tags: ["interativo", "geoespacial", "coroplético"]
+tags: ["geoespacial", "coroplético"]
 ---
 
 ## O que é

@@ -8,7 +8,7 @@ resumo: "Áreas empilhadas que fluem em torno de um eixo central, mostrando como
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
-tags: ["interativo", "temporal", "composição"]
+tags: ["temporal", "composição"]
 ---
 
 ## O que é

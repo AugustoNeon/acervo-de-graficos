@@ -8,7 +8,7 @@ resumo: "Tempo de resolução de chamados por equipe de suporte, com cinco varia
 pacotes: ["ggplot2", "dplyr", "forcats", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica contínua, várias observações por categoria"
 nivel: intermediário
-tags: ["interativo", "distribuição", "comparação"]
+tags: ["distribuição", "comparação"]
 ---
 
 ## O que é

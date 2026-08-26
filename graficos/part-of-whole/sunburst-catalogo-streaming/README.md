@@ -8,7 +8,7 @@ resumo: "Catálogo de um streaming fictício em três níveis — gênero, subg�
 pacotes: ["ggplot2", "dplyr", "colorspace"]
 dados: "3 variáveis categóricas hierárquicas + 1 numérica"
 nivel: avançado
-tags: ["hierarquia", "interativo", "zoom", "animação"]
+tags: ["hierarquia", "zoom", "animação"]
 ---
 
 ## O que é

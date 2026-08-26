@@ -8,7 +8,7 @@ resumo: "Uma árvore hierárquica que começa fechada e se abre por clique, nív
 pacotes: ["dplyr", "ggplot2", "jsonlite", "d3"]
 dados: "3 ou mais variáveis categóricas aninhadas (cada linha é um caminho raiz→folha)"
 nivel: básico
-tags: ["interativo", "hierarquia", "parte-do-todo"]
+tags: ["hierarquia", "parte-do-todo"]
 ---
 
 ## O que é

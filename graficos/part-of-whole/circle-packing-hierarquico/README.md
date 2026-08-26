@@ -8,7 +8,7 @@ resumo: "Círculos aninhados dentro de círculos maiores, cada camada representa
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "Uma hierarquia de categorias (vários níveis) + 1 variável numérica nas folhas"
 nivel: intermediário
-tags: ["interativo", "parte-do-todo", "hierarquia"]
+tags: ["parte-do-todo", "hierarquia"]
 ---
 
 ## O que é

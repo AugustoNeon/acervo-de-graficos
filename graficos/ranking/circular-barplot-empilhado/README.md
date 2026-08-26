@@ -8,7 +8,7 @@ resumo: "Um barplot empilhado dobrado em círculo, com as barras agrupadas por c
 pacotes: ["ggplot2", "dplyr", "tidyr", "jsonlite", "d3"]
 dados: "1 variável de identificação + 1 categórica (grupo) + várias numéricas empilháveis"
 nivel: intermediário
-tags: ["ranking", "parte-do-todo", "interativo"]
+tags: ["ranking", "parte-do-todo"]
 ---
 
 ## O que é

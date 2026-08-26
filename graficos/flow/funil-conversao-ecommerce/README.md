@@ -8,7 +8,7 @@ resumo: "Quantos visitantes sobrevivem a cada etapa do checkout, da entrada no s
 pacotes: ["ggplot2", "RColorBrewer"]
 dados: "1 variável categórica ordenada (etapa) + 1 numérica (contagem em cada etapa)"
 nivel: básico
-tags: ["interativo", "funil", "conversão"]
+tags: ["funil", "conversão"]
 ---
 
 ## O que é

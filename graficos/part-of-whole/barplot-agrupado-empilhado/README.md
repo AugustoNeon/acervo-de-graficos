@@ -8,7 +8,7 @@ resumo: "As mesmas 24 células gênero × plataforma se reorganizando entre agru
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis categóricas (categoria + subgrupo) + 1 numérica"
 nivel: intermediário
-tags: ["interativo", "composição", "animação"]
+tags: ["composição", "animação"]
 ---
 
 ## O que é

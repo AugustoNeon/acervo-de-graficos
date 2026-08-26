@@ -8,7 +8,7 @@ resumo: "90 vinhos fictícios comparados em 5 variáveis ao mesmo tempo — acid
 pacotes: ["ggplot2", "GGally", "patchwork"]
 dados: "5 variáveis numéricas (um eixo cada) + 1 categórica (cor)"
 nivel: intermediário
-tags: ["interativo", "multivariado", "correlação"]
+tags: ["multivariado", "correlação"]
 ---
 
 ## O que é

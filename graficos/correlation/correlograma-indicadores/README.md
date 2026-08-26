@@ -8,7 +8,7 @@ resumo: "Matriz de correlação entre 8 indicadores municipais, reordenada por s
 pacotes: ["ggcorrplot", "RColorBrewer"]
 dados: "8 variáveis numéricas medidas nas mesmas observações (matriz de correlação par a par)"
 nivel: intermediário
-tags: ["interativo", "estatística", "matriz"]
+tags: ["estatística", "matriz"]
 ---
 
 ## O que é

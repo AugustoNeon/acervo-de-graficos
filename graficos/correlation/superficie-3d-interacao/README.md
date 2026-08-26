@@ -8,7 +8,7 @@ resumo: "Uma superfície contínua ligando duas variáveis a um resultado, com a
 pacotes: ["rgl", "RColorBrewer"]
 dados: "2 variáveis numéricas contínuas (grade) + 1 resultado calculado pra cada combinação"
 nivel: avançado
-tags: ["interativo", "3D", "correlação", "interação"]
+tags: ["3D", "correlação", "interação"]
 ---
 
 ## O que é
