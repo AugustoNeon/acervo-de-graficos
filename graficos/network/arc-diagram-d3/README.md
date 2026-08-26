@@ -5,6 +5,8 @@ date: 2026-07-23
 source: "https://www.data-to-viz.com/graph/arc.html"
 interactive: true
 resumo: "Rede com todos os nós alinhados numa única linha e as conexões desenhadas como arcos acima dela."
+veredito_uso: "existe uma ordem natural pros nós, e ler o nome de cada um importa tanto quanto ver as ligações."
+veredito_evita: "a ordem dos nós é arbitrária — os arcos ficam todos parecidos e o gráfico não comunica nada."
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de nós (com grupo) + lista de conexões entre eles"
 nivel: avançado
@@ -34,8 +36,10 @@ densos, e as pontes entre grupos viram arcos longos que saltam à vista.
 
 **Evite quando** a ordem dos nós for arbitrária — e aqui está a armadilha
 principal da técnica. Com os nós embaralhados, todos os arcos ficam com
-comprimentos parecidos e o gráfico não comunica absolutamente nada, mesmo estando
-tecnicamente correto. A ordenação **é** a análise.
+comprimentos parecidos e o gráfico não comunica absolutamente nada, mesmo
+estando tecnicamente correto.
+
+<div class="pull-quote">a ordenação é a análise</div>
 
 Evite também com muitos nós: a linha fica longa demais e os arcos, altos demais.
 
@@ -89,12 +93,9 @@ agrupada é intencional, justamente para demonstrar o que a técnica pede.
   ordenar por grupo (ou por qualquer critério com significado) antes de desenhar.
   Esse é o erro central da técnica.
 
-- **Problema**: os rótulos ficam ilegíveis quando a rede cresce. **Por quê**: com
-  um `viewBox` largo, qualquer texto **dentro** do SVG encolhe proporcionalmente ao
-  ser ajustado à tela. **Solução**: manter legendas e textos de instrução em HTML
-  comum, fora do SVG, com tamanho de fonte real — a legenda de grupo, que na
-  primeira versão do widget vivia dentro do próprio `<svg>`, passou pra um
-  `<div>` HTML comum ao entrar no runtime do site.
+- **Problema**: os rótulos ficam ilegíveis quando a rede cresce. **Solução**:
+  mantenha legendas e textos de instrução em HTML comum, fora do SVG — a
+  história completa está em "Notas do coletor", no fim da página.
 
 - **Problema**: os arcos saem cortados no topo. **Por quê**: a altura do arco mais
   longo é proporcional à distância entre os nós, e pode ultrapassar a área de
@@ -114,3 +115,40 @@ agrupada é intencional, justamente para demonstrar o que a técnica pede.
 - Ordenar por número de conexões em vez de por grupo, evidenciando os nós centrais.
 - Fechar a linha em círculo e obter um layout circular — mais compacto, ao custo de
   rótulos em ângulo.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../comparacao-layouts" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Comparação de layouts de rede (Fruchterman-Reingold, DrL, Aleatório)</span>
+    <span class="parecido-razao">O oposto direto: nós posicionados por força/otimização, sem ordem imposta — bom pra revelar estrutura quando não existe uma ordem natural pra explorar.</span>
+  </a>
+  <a class="parecido-item" href="../hierarchical-edge-bundling-labels" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Hierarchical Edge Bundling com labels, cores e tamanhos</span>
+    <span class="parecido-razao">Mesma ideia — nós numa ordem com significado, ao longo de uma curva — mas fechada em círculo e com as conexões agrupadas em feixes em vez de arcos individuais.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A legenda de grupo ficou ilegível depois que a rede deste gráfico cresceu
+numa versão de teste, sem nenhum erro — o texto simplesmente encolheu até
+virar um borrão de poucos pixels. O SVG usa `viewBox="0 0 W H"` com
+`width="100%"` pra caber redes de tamanhos diferentes na mesma largura de
+tela, e isso tem uma consequência que não é óbvia de antemão: qualquer
+texto **dentro** do SVG (`<text>`, com `font-size` em unidades do próprio
+viewBox) reescala junto com esse viewBox. Quanto maior `W`/`H` fica em
+relação ao tamanho real exibido na tela, menor o texto aparece na
+prática — o número no `font-size` continua o mesmo no código, só o
+resultado visual muda.
+
+A legenda de grupo, que na primeira versão do widget vivia dentro do
+próprio `<svg>` como um `<text>` comum, passou a viver num `<div>` HTML
+comum ao lado do SVG, com `font-size` de verdade em CSS — que não reescala
+com o viewBox, porque não faz parte dele. A regra geral: qualquer SVG com
+viewBox que cresce junto com a quantidade de dado (o caso de praticamente
+todo gráfico de rede/grafo deste acervo) não deve ter texto de legenda ou
+instrução vivendo dentro dele — só o desenho de dado em si, que É pra
+escalar junto.
