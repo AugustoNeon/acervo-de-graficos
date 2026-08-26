@@ -5,6 +5,8 @@ date: 2026-07-22
 source: "https://r-graph-gallery.com/network-interactive.html"
 interactive: true
 resumo: "Grafo com layout dirigido por forças, em que os nós se organizam sozinhos e podem ser arrastados pelo navegador."
+veredito_uso: "você quer explorar uma rede pequena ou média e ainda não sabe o que procurar."
+veredito_evita: "a rede é densa demais (centenas de ligações), ou você precisa de posições reprodutíveis — o layout muda a cada execução."
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma tabela de ligações com duas colunas: origem e destino"
 nivel: básico
@@ -34,6 +36,8 @@ resultado vira uma bola emaranhada em que nada se distingue. Evite também quand
 precisar de precisão ou reprodutibilidade: **a posição dos nós não significa
 nada** e muda a cada execução, então não meça distâncias nem descreva "o nó que
 está à direita".
+
+<div class="pull-quote pull-quote-direita clearfix">a posição dos nós não significa nada</div>
 
 ## Que dados você precisa
 
@@ -91,12 +95,9 @@ sorteadas usando `set.seed(77)`, filtrando auto-conexões.
 - **Problema**: o grafo mostra um nó a menos do que o esperado — silenciosamente,
   sem erro nenhum. **Por quê**: `simpleNetwork()` cria os nós só a partir do que
   aparece nas colunas de ligação; se algum nome nunca sai sorteado em nenhuma
-  linha, ele simplesmente não existe no grafo. **Solução**: depois de montar as
-  ligações, comparar a lista de nós esperados com os que realmente aparecem
-  (`setdiff()`) e adicionar uma ligação extra para qualquer nó ausente — de
-  preferência para um nó bem conectado (um "hub"), não para outro nó periférico,
-  senão o layout de forças tende a empurrar essa dupla fraca pra fora do
-  enquadramento da imagem estática.
+  linha, ele simplesmente não existe no grafo. **Solução**: a história completa,
+  com o porquê de a correção não ser tão óbvia quanto parece, está em "Notas do
+  coletor".
 
 ## Variações possíveis
 
@@ -108,3 +109,40 @@ sorteadas usando `set.seed(77)`, filtrando auto-conexões.
   que a rolagem importa mais.
 - Se a rede tiver uma ordem natural, um arc diagram pode ser mais legível que um
   layout por forças.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../rede-direcionada-ponderada" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede direcionada e ponderada (fluxo entre cidades)</span>
+    <span class="parecido-razao">O próximo passo natural: a mesma ideia de rede por forças, mas acrescentando sentido e intensidade a cada conexão.</span>
+  </a>
+  <a class="parecido-item" href="../rede-densa-hairball" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede densa (hairball)</span>
+    <span class="parecido-razao">O que acontece quando este mesmo layout por forças é aplicado além do ponto de ruptura — uma rede densa demais em vez de uma pequena e exploratória.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Um nó sumiu do grafo sem nenhum erro ou aviso — só ao contar visualmente
+os círculos do widget contra a lista de 12 nomes esperados
+(`LETTERS[1:12]`) que a ausência apareceu. A causa: `simpleNetwork()` não
+recebe uma lista de nós separada, ela **infere** os nós inteiramente a
+partir do que aparece nas colunas `origem`/`destino` da tabela de
+ligações. Um nome que por azar do sorteio nunca é escolhido nem como
+origem nem como destino simplesmente não existe no grafo — não é removido,
+nunca foi criado.
+
+A correção óbvia — comparar a lista de nós esperados com os que aparecem
+de fato (`setdiff()`) e adicionar uma ligação extra para o nó ausente —
+tinha uma armadilha escondida: a essa ligação extra ainda precisava de um
+destino, e a escolha desse destino importava. Ligar o nó órfão a outro nó
+igualmente periférico criava um par fracamente conectado que o layout por
+forças empurrava pra fora do centro da simulação — na miniatura estática,
+essa dupla frequentemente saía cortada da borda da imagem. A correção que
+funcionou foi ligar o nó ausente a um nó já bem conectado (um hub): a
+força de atração desse hub mantém o par dentro do enquadramento, em vez de
+deixá-lo à deriva na periferia do layout.
