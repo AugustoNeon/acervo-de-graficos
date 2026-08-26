@@ -422,6 +422,40 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     border-top: 1px dashed var(--color-border-strong);
   }
 
+  /* Pull-quote — a frase mais forte de uma seção longa, fora do fluxo do
+     parágrafo, quando o README escreve essa classe (HTML cru dentro do
+     Markdown). `.pull-quote-direita` flutua pra a direita com o texto
+     passando ao lado; sem ela, ocupa a própria linha. */
+  .notes :global(.pull-quote) {
+    margin: var(--space-md) 0;
+    padding: var(--space-sm) 0 var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--cat);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: 1.3;
+    color: var(--color-ink);
+    text-wrap: balance;
+    max-width: 32ch;
+  }
+
+  .notes :global(.pull-quote-direita) {
+    float: right;
+    margin-left: var(--space-lg);
+  }
+
+  .notes :global(.clearfix)::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+
+  @media (max-width: 32rem) {
+    .notes :global(.pull-quote-direita) {
+      float: none;
+      margin-left: 0;
+    }
+  }
+
   /* "Como ler o gráfico" — legenda de swatches, quando o README escreve a
      seção com essas classes (HTML cru dentro do Markdown) em vez de bullets
      comuns. Mesmo vocabulário visual de .viz-legenda/.viz-swatch da versão
