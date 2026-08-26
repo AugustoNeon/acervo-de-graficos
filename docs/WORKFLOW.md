@@ -68,6 +68,8 @@ date: AAAA-MM-DD
 source: "link da página de referência"   # uso interno só — NUNCA renderizado
 interactive: false        # true se você criou um widget.html no passo 5
 resumo: "Uma frase dizendo o que o gráfico mostra."
+veredito_uso: "uma frase: quando esse gráfico é a escolha certa."    # opcional
+veredito_evita: "uma frase: quando evitar."                          # opcional
 pacotes: ["ggplot2", "ggiraph"]          # vira chips na ficha técnica
 dados: "1 variável categórica + 1 numérica"
 nivel: básico             # básico | intermediário | avançado
@@ -75,26 +77,30 @@ tags: ["interativo", "geoespacial"]
 ---
 ```
 
-`resumo`, `pacotes`, `dados`, `nivel` e `tags` alimentam a **ficha técnica** renderizada no topo da página — são obrigatórios, o build do site falha sem eles.
+`resumo`, `pacotes`, `dados`, `nivel` e `tags` alimentam a **ficha técnica** renderizada no topo da página — são obrigatórios, o build do site falha sem eles. `veredito_uso`/`veredito_evita` alimentam o veredito rápido (✓/✕) logo abaixo do resumo — opcionais, mas preencha os dois juntos ou nenhum (não faz sentido só um lado do veredito).
 
 ### Seções do corpo (nesta ordem)
 
-| Seção | O que entra |
-|---|---|
-| `## O que é` | Definição do tipo de gráfico + para que serve (que pergunta responde) |
-| `## Quando usar (e quando evitar)` | Cenários em que é a escolha certa, e em que engana/polui — com a alternativa |
-| `## Que dados você precisa` | Variáveis exigidas e formato esperado (tidy? agregado? matriz?) |
-| `## Como ler o gráfico` | O que cada elemento visual codifica (posição, cor, tamanho) |
-| `## Como foi feito` | Técnica, papel de cada pacote, decisões não óbvias, o que é dado fictício |
-| `## Possíveis problemas pelo caminho` | Armadilhas em formato **Problema / Por quê / Solução** |
-| `## Variações possíveis` | O que dá pra mudar dali (layout, agrupamento, interatividade, facets) |
+A página tem duas zonas, nessa ordem — referência (tom de manual técnico, pra quem só quer a informação) e bastidor (única zona onde processo/decisão real tem permissão de aparecer, ver ressalva em "Regras de escrita" abaixo).
+
+| Seção | Zona | O que entra |
+|---|---|---|
+| `## O que é` | referência | Definição do tipo de gráfico + para que serve (que pergunta responde) |
+| `## Quando usar (e quando evitar)` | referência | Cenários em que é a escolha certa, e em que engana/polui — com a alternativa |
+| `## Que dados você precisa` | referência | **Condicional**: só inclua quando houver nuance real de formato a explicar (matriz vs. lista de arestas, longo vs. largo). Se o campo `dados` da ficha técnica já resolve sozinho, omita a seção inteira. |
+| `## Como ler o gráfico` | referência | O que cada elemento visual codifica (posição, cor, tamanho) |
+| `## Como foi feito` | referência | Técnica, papel de cada pacote, decisões não óbvias, o que é dado fictício — só a técnica reaproveitável, não a história de como você chegou nela (isso é bastidor) |
+| `## Possíveis problemas pelo caminho` | referência | Armadilhas em formato **Problema / Por quê / Solução**, 1 item quando só há 1 de verdade — não force 3 pra preencher. Quando existir uma história mais rica por trás, aponte pra "Notas do coletor" em vez de contar ali. |
+| `## Variações possíveis` | referência | O que dá pra mudar dali (layout, agrupamento, interatividade, facets) — frases curtas, só a variação que precisa de explicação ganha parágrafo |
+| `## Gráficos parecidos` | referência | **Opcional, 1 a 3 links escolhidos à mão** pra outros espécimes do acervo, cada um com uma frase de razão — nunca escolha por tag em comum, isso não garante que os gráficos resolvem problemas parecidos. Dois tipos úteis: "o oposto direto" (resolveria o mesmo problema de outro jeito) e "mesma técnica, outro domínio" |
+| `## Notas do coletor` | **bastidor** | **Opcional mas recomendada.** A história real de 1 decisão ou bug por gráfico, contada com intenção — não diário cru. Sempre a última seção do arquivo: é identificada em tempo de execução pelo texto exato do título, então precisa estar sozinha ao final, sem nenhuma seção depois dela. |
 
 ### Regras de escrita
 
 - **Nunca citar a fonte original** (R Graph Gallery, data-to-viz ou qualquer outra) em texto renderizado — nem nome, nem link, nem "o exemplo original". O site é material autoral; a fonte vive só no `source` do frontmatter. Ver "Decisões fechadas" em [`AGENTS.md`](../AGENTS.md).
-- **Escreva pra quem chega de fora**, não pra nós: nada de "detectei que", "tive dificuldade com", "reaproveitei do gráfico X". A seção de problemas é aviso pra quem vai reproduzir, não diário de bordo.
+- **Escreva pra quem chega de fora**, não pra nós: nada de "detectei que", "tive dificuldade com", "reaproveitei do gráfico X". **Essa regra vale só na zona de referência** — "Notas do coletor" é exatamente onde o processo real (decisão, bug, o porquê) tem permissão de aparecer, contado com intenção, não como diário de bordo cru.
 - **Não cole o código no README.** O site lê `script.R` direto e renderiza com destaque de sintaxe + botão de copiar — código duplicado no README dessincroniza na primeira edição.
-- Comparações entre gráficos do próprio acervo podem ser linkadas normalmente (é conteúdo nosso).
+- Comparações entre gráficos do próprio acervo podem ser linkadas normalmente (é conteúdo nosso). Links relativos funcionam: `../slug-do-vizinho` pra outro gráfico da mesma categoria, `../../outra-categoria/slug` pra categoria diferente.
 
 ## 7. Atualizar o log geral
 
