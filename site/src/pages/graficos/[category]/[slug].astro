@@ -5,7 +5,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Base from '../../../layouts/Base.astro';
 import Viz from '../../../components/Viz.astro';
-import { formatDate } from '../../../lib/format';
 import { corDaCategoria } from '../../../lib/categoria';
 
 export async function getStaticPaths() {
@@ -18,13 +17,6 @@ export async function getStaticPaths() {
   // NAO serve aqui -- no build ele aponta pro chunk empacotado, nao pro fonte.
   const graficosDir = join(process.cwd(), '..', 'graficos');
   const entries = await getCollection('graficos');
-
-  // Número de entrada do caderno — ordem cronológica real de quando cada
-  // gráfico foi adicionado ao acervo, tipo o registro sequencial de um
-  // caderno de laboratório (não a ordem alfabética nem a de exibição na home,
-  // que é mais-recente-primeiro).
-  const cronologica = [...entries].sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
-  const numeroDaEntrada = new Map(cronologica.map((e, i) => [e.id, i + 1]));
 
   return entries.map((entry) => {
     const [category, slug] = entry.id.split('/');
@@ -43,16 +35,15 @@ export async function getStaticPaths() {
     const temViz = existsSync(vizPath);
     return {
       params: { category, slug },
-      props: { entry, code, temViz, numero: numeroDaEntrada.get(entry.id) ?? 0 },
+      props: { entry, code, temViz },
     };
   });
 }
 
-const { entry, code, temViz, numero } = Astro.props;
+const { entry, code, temViz } = Astro.props;
 const { Content } = await render(entry);
 const base = import.meta.env.BASE_URL;
 const assetBase = `${base}/graficos/${entry.id}/`;
-const numeroFormatado = `Nº ${String(numero).padStart(3, '0')}`;
 ---
 
 <Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title} surface="paper">
@@ -60,10 +51,6 @@ const numeroFormatado = `Nº ${String(numero).padStart(3, '0')}`;
     <a class="back" href={`${base}/`}>« voltar ao caderno</a>
 
     <header class="head">
-      <div class="entry-stamp">
-        <span class="entry-number">{numeroFormatado}</span>
-        <span class="entry-date">{formatDate(entry.data.date)}</span>
-      </div>
       <span class="category">{entry.data.category}</span>
       <h1>{entry.data.title}</h1>
       <p class="resumo">{entry.data.resumo}</p>
@@ -176,33 +163,11 @@ const numeroFormatado = `Nº ${String(numero).padStart(3, '0')}`;
   .head {
     position: relative;
     margin-bottom: var(--space-xl);
-    padding-top: var(--space-sm);
-  }
-
-  .entry-stamp {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6em;
-    padding: 0.3em 0.7em;
-    border: 1.5px solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: 0.05em;
-    color: var(--color-primary);
-    transform: rotate(-1.5deg);
-    margin-bottom: var(--space-sm);
-  }
-
-  .entry-stamp span + span {
-    padding-left: 0.6em;
-    border-left: 1px solid color-mix(in oklch, var(--color-primary) 45%, transparent);
   }
 
   .category {
     display: inline-block;
     margin-bottom: var(--space-sm);
-    margin-left: var(--space-sm);
     padding: 0.15em 0.6em;
     background: var(--cat-wash);
     color: var(--cat-ink);
