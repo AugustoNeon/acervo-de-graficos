@@ -5,6 +5,8 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/piechart-ggplot2.html"
 interactive: true
 resumo: "A fatia de cada fonte de energia na geração elétrica anual de um país fictício, em um círculo só."
+veredito_uso: "poucas categorias (até 5-6), uma ou duas fatias dominam claramente, e o público já reconhece o formato de longe."
+veredito_evita: "mais de 6-7 categorias, fatias de tamanho parecido, ou a comparação precisa ser exata — um barplot ordenado erra menos."
 pacotes: ["ggplot2", "RColorBrewer"]
 dados: "1 variável categórica + 1 numérica (proporção de um total)"
 nivel: básico
@@ -19,6 +21,8 @@ serve**: responder "que fração do todo cada categoria representa" quando o
 número de categorias é pequeno — é o gráfico mais reconhecível que existe
 pra essa pergunta, mesmo sendo também um dos mais criticados (ver seção
 seguinte).
+
+<div class="pull-quote pull-quote-direita clearfix">o gráfico mais reconhecível que existe pra essa pergunta, mesmo sendo também um dos mais criticados</div>
 
 ## Quando usar (e quando evitar)
 
@@ -101,3 +105,37 @@ sob o cursor "salta" um pouco pra fora do círculo; clicar fixa esse destaque.
   em vez de uma única pizza — funciona melhor que empilhar todas as
   categorias e anos num só círculo quando o objetivo é comparar a
   composição ao longo do tempo.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../rosca-alocacao-tempo" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Rosca de alocação de tempo</span>
+    <span class="parecido-razao">A mesma técnica com um buraco no centro — compare as duas lado a lado pra decidir se o vazio ajuda ou só tira espaço de desenho.</span>
+  </a>
+  <a class="parecido-item" href="../../ranking/barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico</span>
+    <span class="parecido-razao">O gráfico que a maioria das críticas à pizza aponta como substituto: mesma composição, muito menos erro de leitura quando os valores são parecidos.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Os pesos das 6 fontes de energia deste gráfico não foram sorteados soltos
+— foram desenhados de propósito pra ter uma fatia claramente dominante
+(hidrelétrica, 38%) e uma claramente residual (carvão, 4%), com o resto
+distribuído no meio. É o cenário em que a pizza costuma comunicar bem: o
+olho não precisa comparar ângulos parecidos, só reconhecer "isso aqui é
+quase 40%, isso ali é quase nada".
+
+A escolha foi deliberada porque é fácil demonstrar o **oposto** por
+acidente: gerar 6 valores aleatórios sem nenhum controle tem boa chance de
+produzir fatias todas na faixa de 12-20%, exatamente o caso em que a
+crítica mais comum à pizza se aplica — ângulos parecidos que o olho
+humano compara mal, forçando quem lê a recorrer ao rótulo de percentual em
+vez do próprio desenho. Um gráfico pensado pra ilustrar "quando a pizza
+funciona" ficaria sem sentido se os dados de exemplo caíssem por acaso no
+pior caso da própria técnica — por isso os pesos foram fixados com
+intenção, não deixados ao sabor do `set.seed()`.
