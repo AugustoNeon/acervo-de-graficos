@@ -5,6 +5,8 @@ date: 2026-08-26
 source: "https://r-graph-gallery.com/303-lollipop-plot-with-2-values.html"
 interactive: true
 resumo: "O tempo médio de espera de cada especialidade em dois momentos, ligado por uma haste — a distância entre os pontos é a mudança."
+veredito_uso: "você tem categorias medidas duas vezes e quer ver quem está pior hoje E quem mudou mais, na mesma imagem."
+veredito_evita: "há mais de dois momentos por categoria — vira uma linha do tempo mal desenhada."
 pacotes: ["ggplot2"]
 dados: "1 variável categórica + 2 numéricas (o mesmo indicador em dois momentos)"
 nivel: básico
@@ -65,46 +67,46 @@ A diferença entre as duas colunas não precisa existir no dado de entrada; ela
   espera (melhora) e vermelho para alta.
 - **Ordem vertical**: por padrão, a espera atual — maior no topo.
 
-O detalhe que engana: **a posição de uma haste no eixo não diz nada sobre o
-tamanho dela**. Uma especialidade pode estar entre as piores em valor absoluto
-e ainda assim ter melhorado bastante, e vice-versa. Ler as duas coisas ao mesmo
-tempo é exatamente o que o gráfico oferece, e exatamente onde a leitura
-apressada erra.
+<div class="pull-quote pull-quote-direita clearfix">a posição de uma haste no eixo não diz nada sobre o tamanho dela</div>
+
+Uma especialidade pode estar entre as piores em valor absoluto e ainda assim
+ter melhorado bastante, e vice-versa. Ler as duas coisas ao mesmo tempo é
+exatamente o que o gráfico oferece, e exatamente onde a leitura apressada
+erra.
 
 ## Como foi feito
 
-A imagem estática é um `ggplot2` com três camadas na mesma altura: um
-`geom_segment()` para a haste e dois `geom_point()`, um por momento. O truque
-que faz tudo se alinhar é o eixo Y categórico: como os três `geom_*` usam a
-mesma variável em `y`, os pontos caem automaticamente sobre a haste, sem
-`position_*` nenhum.
+**Camadas**: três na mesma altura — um `geom_segment()` para a haste e dois
+`geom_point()`, um por momento. O truque que faz tudo se alinhar é o eixo Y
+categórico: como os três `geom_*` usam a mesma variável em `y`, os pontos caem
+automaticamente sobre a haste, sem `position_*` nenhum.
 
-Os pontos usam `shape = 21` (círculo com contorno) em vez do círculo cheio
-padrão. Isso permite mapear `fill` — o que faz o `ggplot2` montar a legenda dos
-dois momentos sozinho — e desenhar um contorno branco fino, que separa os dois
-pontos quando eles quase se encostam (uma das especialidades varia apenas um
-dia). O número da variação vem de um `geom_text()` numa posição fixa à direita,
-colorido por `scale_colour_identity()` a partir de uma coluna de cor calculada
-no próprio quadro de dados.
+**Pontos**: `shape = 21` (círculo com contorno) em vez do círculo cheio padrão.
+Isso permite mapear `fill` — o `ggplot2` monta a legenda dos dois momentos
+sozinho — e desenhar um contorno branco fino, que separa os pontos quando
+quase se encostam (uma das especialidades varia só um dia). O número da
+variação vem de um `geom_text()` fixo à direita, colorido por
+`scale_colour_identity()` a partir de uma coluna de cor já calculada no
+quadro de dados.
 
-A ordem das linhas é fixada convertendo a categoria em `factor` com os níveis
-já ordenados. Sem isso o `ggplot2` ordena alfabeticamente, e a leitura "quem
+**Ordem**: fixada convertendo a categoria em `factor` com os níveis já
+ordenados — sem isso o `ggplot2` ordena alfabeticamente, e a leitura "quem
 está pior" se perde.
 
-Dados fictícios: o tempo médio de espera por especialidade numa rede de
-clínicas imaginária, em dois anos, escritos à mão em vez de sorteados. Ruído
-aleatório puro produziria variações em direções arbitrárias; aqui a maioria das
-especialidades melhora e três pioram — o contraste que dá ao gráfico algo para
-mostrar.
+**Dado fictício**: tempo médio de espera por especialidade numa rede de
+clínicas imaginária, em dois anos, escrito à mão em vez de sorteado — ruído
+aleatório puro produziria variações em direções arbitrárias; aqui a maioria
+das especialidades melhora e três pioram, o contraste que dá ao gráfico algo
+para mostrar.
 
-Na versão interativa, o mesmo par de números ganha outras duas codificações
-alternáveis, e a transição entre elas é contínua: nenhum elemento é criado ou
-destruído na troca, os mesmos pontos e hastes se movem para as novas posições.
-No modo **inclinação**, os dois momentos viram duas colunas e cada categoria
-vira uma linha que sobe ou desce. No modo **divergente**, todas as hastes são
-transladadas para começar no zero, e o que sobra é só o saldo — a haste engorda
-e vira barra. Também dá para reordenar as linhas ao vivo (por espera atual, por
-variação ou alfabeticamente) e clicar em qualquer linha para fixar o destaque.
+**Na versão interativa**: o mesmo par de números ganha duas codificações
+alternáveis, com transição contínua — nenhum elemento é criado ou destruído na
+troca, os mesmos pontos e hastes se movem pras novas posições. No modo
+**inclinação**, os dois momentos viram duas colunas e cada categoria vira uma
+linha que sobe ou desce. No modo **divergente**, as hastes são transladadas
+pra começar no zero, e o que sobra é só o saldo — a haste engorda e vira
+barra. Também dá pra reordenar ao vivo e clicar numa linha pra fixar o
+destaque.
 
 ## Possíveis problemas pelo caminho
 
@@ -141,3 +143,37 @@ variação ou alfabeticamente) e clicar em qualquer linha para fixar o destaque.
   não faça parte da haste.
 - Facetar por região ou unidade, repetindo o mesmo conjunto de categorias em
   cada painel, quando houver um agrupamento acima da categoria.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../evolution/serie-temporal-customizada-dygraphs" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Série temporal interativa customizada</span>
+    <span class="parecido-razao">O oposto direto: quando são mais de dois momentos por categoria — a haste vira linha do tempo mal desenhada, e uma série temporal de verdade lê melhor.</span>
+  </a>
+  <a class="parecido-item" href="../../ranking/bump-chart-jogos-streaming" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Bump chart: ranking mensal de audiência</span>
+    <span class="parecido-razao">O modo "inclinação" deste gráfico generalizado: mais de dois momentos, e a posição que muda é o ranking, não o valor absoluto.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O modo divergente da versão interativa (a haste transladada pro zero, virando
+barra) tinha um bug sutil: as menores variações — justamente as que o leitor
+mais precisa julgar direito — saíam visualmente maiores do que deveriam. A
+barra era desenhada como uma linha SVG grossa com `stroke-linecap: round`, e o
+cap arredondado acrescenta meia espessura de comprimento em **cada ponta**.
+Com espessura 20, uma barra de valor 1 e outra de valor 3 saíam quase do mesmo
+tamanho — e uma variação de 0 ainda aparecia como um círculo, em vez de
+desaparecer.
+
+Não havia erro nem aviso: o gráfico "funcionava", só mentia sobre as
+diferenças pequenas. A correção foi trocar `round` por `butt` sempre que o
+comprimento da linha for o próprio dado — `round` continua certo quando o cap
+é só acabamento, como nas pontas da haste no estado de halteres, onde o que
+importa é a distância entre os dois círculos, não o comprimento da linha em
+si. Só foi possível confirmar renderizando e medindo os pixels de verdade, não
+só olhando: no navegador, os dois estados pareciam igualmente corretos.
