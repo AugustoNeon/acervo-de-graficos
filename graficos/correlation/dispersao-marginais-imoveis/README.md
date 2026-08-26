@@ -5,6 +5,8 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/277-marginal-histogram-for-ggplot2.html"
 interactive: true
 resumo: "Preço x área construída de 300 imóveis fictícios, coloridos por bairro, com a distribuição de cada eixo isoladamente nas bordas do gráfico."
+veredito_uso: "a relação entre duas variáveis É a pergunta, e a forma de cada distribuição isolada também importa."
+veredito_evita: "só a relação importa (os histogramas viram ruído), ou uma das variáveis é categórica."
 pacotes: ["ggplot2", "dplyr", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis numéricas (uma em cada eixo) + 1 categórica opcional (cor)"
 nivel: básico
@@ -91,19 +93,11 @@ colorir por categoria revela e um scatter de uma cor só esconderia.
 
 ## Possíveis problemas pelo caminho
 
-- **Problema**: `geom_histogram(bins = 28)` no estático e
-  `hist(breaks = 28)` na exportação pro D3 produziam bins **ligeiramente
-  diferentes** (2 pontos ficavam de fora do histograma marginal, com o aviso
-  `Removed 2 rows containing missing values`). **Por quê**: os dois tratam
-  um número único de forma diferente por baixo dos panos — `geom_histogram`
-  calcula exatamente aquele tanto de bins de largura igual cobrindo o
-  domínio da escala, `hist()` trata o número como SUGESTÃO pro algoritmo de
-  Sturges, que pode arredondar pra uma quantidade de bins ligeiramente
-  diferente com limites que não cobrem 100% dos dados. **Solução**: gerar um
-  vetor de `breaks` explícito uma vez (`seq(limite_min, limite_max,
-  length.out = 29)`) e passar o MESMO vetor pros dois — `geom_histogram(breaks
-  = ...)` e `hist(breaks = ...)` — garante bins idênticos por construção, não
-  por coincidência de parâmetro.
+- **Problema**: `geom_histogram(bins = 28)` no estático e `hist(breaks = 28)`
+  na exportação pro D3 produziam bins **ligeiramente diferentes** (2 pontos
+  ficavam de fora do histograma marginal). **Solução**: gere um vetor de
+  `breaks` explícito uma vez só e passe o MESMO vetor pros dois lados — a
+  história completa está em "Notas do coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -117,3 +111,39 @@ colorir por categoria revela e um scatter de uma cor só esconderia.
   comparar a força da relação área×preço entre grupos.
 - Trocar o par área×preço por qualquer outro par de variáveis numéricas —
   a técnica não muda.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="correlograma-indicadores" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Correlograma: indicadores municipais</span>
+    <span class="parecido-razao">O oposto direto: em vez de examinar UM par de variáveis a fundo, resume a correlação de TODOS os pares numa grade — bom primeiro passo antes de abrir um par específico aqui.</span>
+  </a>
+  <a class="parecido-item" href="../distribution/histograma-largura-de-bin" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Histograma: largura de bin variável</span>
+    <span class="parecido-razao">A técnica de cada histograma marginal, isolada e aprofundada — inclusive a mesma armadilha de bins que não batem entre R e D3.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Dois pontos sumiam do histograma marginal, com o aviso `Removed 2 rows
+containing missing values` — mas só na versão exportada pro D3, nunca na
+imagem estática. Os dois lados usavam o mesmo número de bins (28), o mesmo
+dado, e pareciam fazer a mesma coisa.
+
+O motivo é que `geom_histogram(bins = 28)` e `hist(breaks = 28)` tratam esse
+número de formas diferentes por baixo dos panos. `geom_histogram` calcula
+exatamente 28 bins de largura igual cobrindo o domínio da escala. `hist()`
+trata 28 como **sugestão** pro algoritmo de Sturges, que pode arredondar pra
+uma contagem de bins ligeiramente diferente — com limites que não cobrem
+100% dos dados originais, sobrando pontos de fora.
+
+A correção não foi ajustar o número até os dois "baterem por sorte" — foi
+parar de dar um número pros dois e gerar um vetor de `breaks` explícito uma
+vez só (`seq(limite_min, limite_max, length.out = 29)`), passado idêntico
+pros dois lados. Bins idênticos por construção, não por coincidência de
+parâmetro. Vale o mesmo cuidado em qualquer gráfico novo que precise dos
+mesmos bins nos dois lados.
