@@ -20,6 +20,10 @@ const graficos = defineCollection({
     dados: z.string(),
     nivel: z.enum(['básico', 'intermediário', 'avançado']),
     tags: z.array(z.string()).nonempty(),
+    // veredito rápido — opcionais: só aparecem enquanto nem os 55 READMEs
+    // tiverem sido retrofitados (ver docs/pendencias-reformulacao-pagina-grafico.md)
+    veredito_uso: z.string().optional(),
+    veredito_evita: z.string().optional(),
   }),
 });
 
