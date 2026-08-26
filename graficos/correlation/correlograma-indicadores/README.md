@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/correlogram.html"
 interactive: true
 resumo: "Matriz de correlação entre 8 indicadores municipais, reordenada por semelhança e com significância estatística marcada célula a célula."
+veredito_uso: "você tem muitas variáveis numéricas (4+) e quer uma primeira leitura de quais se relacionam."
+veredito_evita: "a relação entre variáveis não é linear — Pearson não enxerga isso, e a grade esconde o que existe."
 pacotes: ["ggcorrplot", "RColorBrewer"]
 dados: "8 variáveis numéricas medidas nas mesmas observações (matriz de correlação par a par)"
 nivel: intermediário
@@ -43,17 +45,21 @@ teste de significância a partir dela, nenhum pré-processamento é necessário.
 
 ## Como ler o gráfico
 
+<div class="legenda-swatches">
+  <div><span class="swatch" style="background:#f1a340"></span> Laranja — correlação negativa, quanto mais saturado mais forte</div>
+  <div><span class="swatch" style="background:#f7f7f7;border:1px solid #ddd"></span> Quase branco — correlação perto de zero</div>
+  <div><span class="swatch" style="background:#998ec3"></span> Roxo — correlação positiva, quanto mais saturado mais forte</div>
+</div>
+
 - **Posição da célula**: o par de variáveis que ela cruza, sempre o mesmo nas
   duas direções (é uma matriz simétrica — só o triângulo superior é
   desenhado, o inferior seria a mesma informação espelhada)
-- **Cor**: o sinal e a força da correlação — laranja para negativa, roxo para
-  positiva, quanto mais saturado mais forte
 - **Número dentro da célula**: o coeficiente de correlação exato, de -1 a 1
 - **Marca "n.s." (não significativo)**: a correlação observada nessa amostra
   pode ser só ruído — o teste estatístico não descarta a hipótese de que a
   correlação verdadeira seja zero
-- **Ordem das linhas/colunas**: não é alfabética nem a ordem original das
-  colunas — variáveis que se correlacionam de forma parecida com o resto são
+- **Ordem das linhas/colunas**: não é alfabética nem a ordem original —
+  variáveis que se correlacionam de forma parecida com o resto são
   agrupadas lado a lado, o que faz blocos de alta correlação aparecerem como
   quadrados contíguos na grade em vez de espalhados
 
@@ -111,3 +117,39 @@ precisar ler célula por célula.
 - Substituir o número/cor por elipses de excentricidade proporcional à força
   da correlação (`corrplot(method = "ellipse")`), uma codificação visual
   alternativa que alguns leitores acham mais rápida de escanear que números
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="dispersao-marginais-imoveis" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Dispersão com histogramas marginais</span>
+    <span class="parecido-razao">O oposto direto: quando a relação entre DUAS variáveis específicas precisa de exame direto, não do resumo em grade — inclusive pra flagrar a relação não linear que o correlograma esconde.</span>
+  </a>
+  <a class="parecido-item" href="../network/matriz-adjacencia-tags" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Matriz de adjacência: tags que aparecem juntas</span>
+    <span class="parecido-razao">Mesma técnica — a mesma grade de células reordenada por semelhança — mas a força na célula vem de coocorrência numa rede, não de correlação estatística.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A versão interativa saiu com o sinal da correlação invertido na primeira
+tentativa: pares positivamente correlacionados apareciam laranja, os
+negativos apareciam roxo — exatamente o oposto da imagem estática. O código
+parecia certo: `d3.scaleDiverging(d3.interpolatePuOr).domain([-1, 0, 1])`,
+mesma paleta `PuOr` usada no R.
+
+O problema é que os dois interpoladores não concordam sobre qual ponta é
+qual. `interpolatePuOr(0)` do D3 é roxo e `interpolatePuOr(1)` é laranja;
+`RColorBrewer::brewer.pal(3, "PuOr")[1]` é laranja e `[3]` é roxo — direções
+opostas, mesmo nome de paleta. Não há erro nem aviso, porque os dois lados
+estão "certos" dentro da própria convenção — só divergem entre si, e isso só
+aparece comparando lado a lado com a imagem estática.
+
+A correção foi inverter o parâmetro do interpolador (`(t) => interpolatePuOr(1 - t)`),
+não o domínio da escala — inverter o domínio teria trocado também a ordem dos
+valores no eixo/legenda. Virou hábito conferir a direção de qualquer paleta
+divergente nova comparando `interpolate<Nome>(0)` do D3 contra
+`brewer.pal(3, "<Nome>")[1]` do R antes de assumir que os dois concordam.
