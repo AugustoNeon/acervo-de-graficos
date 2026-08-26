@@ -5,6 +5,8 @@ date: 2026-07-24
 source: "https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html"
 interactive: true
 resumo: "Séries temporais em que quatro modos diferentes de destaque — escolhidos por um seletor — mostram formas distintas de isolar uma categoria."
+veredito_uso: "há muitas linhas sobrepostas (gráfico de espaguete) e você quer comparar formas de destacar uma categoria."
+veredito_evita: "o destino final é impressão ou PDF — nesse caso invista no gráfico estático."
 pacotes: ["ggplot2", "tidyverse", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
@@ -47,9 +49,9 @@ deixa investigar um período específico sem perder a visão geral por perto.
 **Use o 1 quando** quiser uma seleção que persista enquanto quem está lendo
 examina os números, sem precisar manter o mouse parado.
 
-**Evite o 3 em uso sério**: sombra e traço tracejado chamam atenção para o
-efeito, não para o dado — está aqui como demonstração do que é possível, não
-como recomendação.
+**Evite o 3 em uso sério**: sombra e traço tracejado chamam atenção para o efeito, não para o dado.
+
+<div class="pull-quote">está aqui como demonstração do que é possível, não como recomendação</div>
 
 **Evite qualquer interatividade quando** o destino final for impressão ou PDF —
 nesse caso invista no gráfico estático.
@@ -152,3 +154,42 @@ meses, gerado como passeio aleatório com `set.seed(3311)`.
   grande demais até para os 4 modos ajudarem.
 - Ligar este gráfico a outro pelo mesmo identificador de categoria, como em
   [dashboard interativo: mapa + dispersão + barras](../../map/dashboard-inovacao-ggiraph).
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../serie-temporal-customizada-dygraphs" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Série temporal interativa customizada</span>
+    <span class="parecido-razao">Mesma técnica de base (linhas temporais em D3) e o mesmo par de pegadinhas de fuso horário — os dois compartilham o helper que evita esse bug.</span>
+  </a>
+  <a class="parecido-item" href="../../map/dashboard-inovacao-ggiraph" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Dashboard interativo: mapa + dispersão + barras</span>
+    <span class="parecido-razao">A mesma ideia de coordenar destaque entre elementos, levada a três painéis ligados por um identificador comum em vez de um seletor de modo.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Um tooltip mostrava "jul." com o valor numérico de agosto — um mês inteiro
+de diferença, sempre na mesma direção. A data vinha certa do `data.json`
+(string `"2024-08-01"`), e o código de formatação também parecia certo:
+`toLocaleDateString('pt-BR', {...})` sobre o `Date` correspondente.
+
+O problema tinha duas causas empilhadas, não uma. Primeiro: uma string de
+data sem fuso horário explícito (`AAAA-MM-DD`) é interpretada como
+**meia-noite UTC** — e formatar esse instante sem passar `timeZone: 'UTC'`
+usa o fuso do navegador (`America/Sao_Paulo`, UTC−3), o que empurra meia-noite
+de 1º de agosto em UTC pra 21h de 31 de julho no horário local — daí o mês
+errado no tooltip. Corrigir só o `toLocaleDateString()` resolveu o tooltip,
+mas o eixo continuou errado: `d3.scaleTime()`, usado pra posicionar e
+formatar os ticks do eixo, tem exatamente o mesmo problema por baixo, e
+corrigir um lado sem o outro só move o sintoma.
+
+A correção completa trocou `d3.scaleTime()` por `d3.scaleUtc()` na escala
+do eixo — não só o `toLocaleDateString()` isolado — e centralizou as duas
+partes (escala + formatação) num helper compartilhado depois que o mesmo
+par de correções teve que ser refeito do zero em mais dois gráficos deste
+acervo. Qualquer eixo de tempo novo em D3 importa desse helper agora, em
+vez de reimplementar as duas metades da correção de novo.
