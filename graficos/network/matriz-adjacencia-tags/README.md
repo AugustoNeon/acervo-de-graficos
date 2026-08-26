@@ -5,6 +5,8 @@ date: 2026-08-26
 source: "https://r-graph-gallery.com/adjacency-matrix.html"
 interactive: true
 resumo: "A mesma rede que um diagrama de nós desenharia, escrita como grade — onde reordenar as linhas faz as comunidades aparecerem."
+veredito_uso: "a rede é densa e a pergunta é sobre grupos, não sobre caminhos."
+veredito_evita: "a pergunta envolve seguir um caminho entre dois nós específicos."
 pacotes: ["ggplot2", "patchwork"]
 dados: "1 matriz quadrada de pesos (ou uma lista de arestas com peso)"
 nivel: intermediário
@@ -121,10 +123,9 @@ da simetria.
 - **Problema**: as células saem retangulares em vez de quadradas.
   **Por quê**: a proporção da figura manda no painel. **Solução**:
   `coord_fixed()`.
-- **Problema**: a versão estática e a interativa divergem de cor. **Por quê**:
-  cada uma calculou a própria rampa, e interpoladores diferentes (RGB e Lab)
-  não produzem os mesmos tons intermediários. **Solução**: calcule a cor uma vez
-  só e exporte-a junto com o dado.
+- **Problema**: a versão estática e a interativa divergem de cor. **Solução**:
+  calcule a cor uma vez só e exporte-a junto com o dado — a história completa
+  está em "Notas do coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -140,3 +141,34 @@ da simetria.
   dois — cada um responde uma metade das perguntas.
 - Substituir a cor por tamanho de círculo dentro da célula, o que costuma ler
   melhor quando os pesos variam por várias ordens de grandeza.
+
+## Gráficos parecidos
+
+- **O oposto direto**: [rede densa (hairball)](../rede-densa-hairball) — o
+  mesmo tipo de dado (nós e arestas), mas exatamente o cenário em que a matriz
+  vence e o diagrama de nós perde: muitas arestas, layout ilegível.
+- **Mesma técnica, outro domínio**: [correlograma](../../correlation/correlograma-indicadores) —
+  a mesma grade de células e a mesma leitura por blocos, mas a força na célula
+  vem de correlação estatística, não de coocorrência numa rede.
+
+## Notas do coletor
+
+A primeira versão deste gráfico calculava a cor duas vezes: uma em R, com
+`colorRampPalette()`, pra imagem estática; outra em D3, com seu próprio
+interpolador, pra versão interativa. As duas liam a mesma matriz de pesos e
+deveriam sair idênticas — e saíam visivelmente diferentes lado a lado, apesar
+de usarem os mesmos dois extremos da rampa.
+
+O motivo é que "interpolar entre duas cores" não é uma operação com resposta
+única: `colorRampPalette()` interpola em RGB, e o interpolador de cor padrão
+do D3 interpola em Lab. Os extremos batem, mas os tons do meio da rampa —
+exatamente onde caem a maioria dos pesos médios da rede — divergem, porque os
+dois espaços de cor não são uma transformação linear um do outro.
+
+A correção não foi escolher "o interpolador certo" (nenhum dos dois é mais
+certo que o outro) — foi parar de ter dois cálculos. A cor de cada célula
+passou a ser calculada uma única vez, em R, e exportada junto com o resto do
+dado no `data.json`; tanto o `ggplot2` quanto o D3 passaram a só pintar o
+valor que receberam, nunca a decidir a cor sozinhos. Isso virou o padrão pra
+qualquer gráfico deste acervo que tenha as duas versões: a cor nasce uma vez,
+no R, e viaja como dado.
