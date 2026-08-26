@@ -5,6 +5,8 @@ date: 2026-07-29
 source: "https://r-graph-gallery.com/315-hide-first-level-in-circle-packing.html"
 interactive: true
 resumo: "Círculos aninhados dentro de círculos maiores, cada camada representando um nível de uma hierarquia, do todo até a menor subcategoria."
+veredito_uso: "os dados têm hierarquia de verdade e a mensagem precisa mostrar estrutura E magnitude ao mesmo tempo."
+veredito_evita: "a hierarquia tem mais de 4 níveis ou muitos itens por grupo — o espaço em branco entre círculos torna a leitura difícil."
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "Uma hierarquia de categorias (vários níveis) + 1 variável numérica nas folhas"
 nivel: intermediário
@@ -20,6 +22,8 @@ categorias principais, que contêm subcategorias, que contêm os itens
 individuais. **Para que serve**: mostrar ao mesmo tempo a estrutura de uma
 hierarquia (quem pertence a quem) e a magnitude relativa de cada item dentro
 dela — como um treemap, mas com círculos em vez de retângulos.
+
+<div class="pull-quote pull-quote-direita clearfix">como um treemap, mas com círculos em vez de retângulos</div>
 
 ## Quando usar (e quando evitar)
 
@@ -138,3 +142,52 @@ original.
   quando a hierarquia for grande demais pra caber legível de uma vez.
 - Trocar por um treemap quando o espaço em branco entre círculos for um
   problema — mesma lógica de hierarquia + magnitude, sem desperdiçar área.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../circle-packing-simples" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing simples</span>
+    <span class="parecido-razao">A versão de um nível só, sem hierarquia — o ponto de partida antes de aninhar círculos dentro de círculos.</span>
+  </a>
+  <a class="parecido-item" href="../treemap-orcamento-municipal" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Treemap: orçamento municipal por categoria</span>
+    <span class="parecido-razao">Mesma lógica de hierarquia + magnitude, mas com retângulos que aproveitam toda a área — sem o espaço em branco que o empacotamento circular desperdiça.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A versão interativa deste gráfico nem sempre foi escrita em D3. A primeira
+tentativa usou `circlepackeR`, um widget R pronto para exatamente essa
+técnica — e esbarrou num limite que não tinha contorno dentro do próprio
+pacote: ele só aceita duas cores (`color_min`/`color_max`) e interpola
+entre elas num domínio de profundidade **fixo em -1..5**, não importa
+quantos níveis a hierarquia real tenha. Como cada nível ocupa 1/6 desse
+domínio fixo, e o algoritmo de interpolação de cor usado por trás
+(`d3.interpolateHcl`, na versão do D3 que o pacote embute) percorre no
+máximo 180° de matiz do início ao fim, dois níveis vizinhos ficavam
+limitados a uns 30° de diferença de matiz — teal para dourado, uma
+diferença de quase 100°, é simplesmente impossível de alcançar nesse
+espaço. Pior: o CSS que o próprio pacote injeta pinta as folhas de branco
+por padrão, sobrescrevendo qualquer gradiente que se conseguisse calcular.
+
+Não havia parâmetro que resolvesse — a saída, na época, foi sobrepor CSS
+próprio (recolorindo raiz e folhas) e um `<script>` que repintava os
+níveis do meio lendo `__data__.depth` de cada círculo já desenhado pelo
+widget, tudo empacotado junto via `htmltools::save_html()` + `tagList()`.
+Funcionava, mas era uma correção por cima de uma ferramenta que não
+expunha o controle necessário — cada ajuste de cor era uma remendada no
+resultado alheio, não uma configuração direta.
+
+A reescrita para D3 puro, mais tarde, eliminou o problema pela raiz: com
+`d3.hierarchy()` + `d3.pack()` calculando o layout do zero, a paleta por
+profundidade é definida uma única vez no `script.R` e exportada pronta no
+`data.json` — sem domínio fixo, sem interpolação HCL de dois pontos, sem
+CSS injetado por cima de um resultado que não dava pra mudar por dentro.
+A lição que ficou: um widget pronto que resolve 90% do problema pode
+custar mais, no fim, do que escrever a versão do zero — principalmente
+quando o "0%" que falta é justamente o controle mais importante pro
+propósito do gráfico (aqui, cor por nível da hierarquia).
