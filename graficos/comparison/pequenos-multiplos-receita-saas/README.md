@@ -5,6 +5,8 @@ date: 2026-08-25
 source: "https://r-graph-gallery.com/web-area-chart-with-small-multiple.html"
 interactive: true
 resumo: "A mesma evolução de receita mensal por categoria, lida painel por painel em vez de empilhada — cada categoria com sua própria escala."
+veredito_uso: "o que importa é a trajetória de cada categoria (sobe, desce, estabiliza), não o total somado."
+veredito_evita: "o total somado das categorias também importa — aí uma área empilhada resolve melhor."
 pacotes: ["ggplot2", "dplyr"]
 dados: "1 variável de tempo + 1 categórica + 1 numérica"
 nivel: básico
@@ -52,10 +54,11 @@ inteira na forma de desenhar, não no dado.
   codifica nenhuma informação adicional, já que cada categoria já tem seu
   próprio painel.
 
-O detalhe que exige atenção: como cada painel tem sua própria escala
-vertical, **não dá pra comparar a altura entre dois painéis** e concluir
-qual categoria vale mais — pra isso é preciso olhar o número no eixo de
-cada um.
+<div class="pull-quote pull-quote-direita clearfix">não dá pra comparar a altura entre dois painéis</div>
+
+Como cada painel tem sua própria escala vertical, isso vale mesmo que os dois
+pareçam do mesmo tamanho — pra saber qual categoria vale mais é preciso olhar
+o número no eixo de cada um, não a altura da curva.
 
 ## Como foi feito
 
@@ -92,3 +95,29 @@ duas em crescimento em ritmos diferentes, uma estável) mais ruído aleatório.
   número de categorias mudar.
 - Combinar com uma linha de referência (média geral, meta) repetida em todos
   os painéis, pra dar um ponto de comparação comum apesar da escala livre.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../evolution/area-receita-saas-ficticio" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Área sobreposta, empilhada e empilhada 100%</span>
+    <span class="parecido-razao">O oposto direto, de propósito: o mesmo dado exato, lido empilhado em vez de painel por painel — aqui o total importa, ali é a trajetória de cada categoria.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Este gráfico usa exatamente o mesmo dado fictício da área empilhada deste
+acervo — mesmos 24 meses, mesmas quatro categorias, mesmos valores. Não foi
+economia de trabalho: foi decisão deliberada, pra que os dois gráficos
+respondessem à mesma pergunta de formas diferentes e desse pra comparar as
+duas leituras lado a lado, com a certeza de que qualquer diferença percebida
+vem da técnica, não do dado.
+
+Isso também expôs o problema que `scale = "free_y"` resolve: com a mesma
+escala pra todos os painéis (o padrão do `facet_wrap`), a categoria
+"Marketplace" — a de menor magnitude — ficava achatada perto do zero,
+esmagada pela escala da categoria maior, mesmo tendo uma trajetória de
+crescimento tão real quanto as outras. A escala livre por painel é o que
+faz "pequenos múltiplos" cumprir a proposta de comparar forma, não valor.
