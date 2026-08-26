@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/320-the-basis-of-bubble-plot.html"
 interactive: true
 resumo: "50 startups fictícias posicionadas por investimento captado e crescimento de receita, com o porte (funcionários) no tamanho da bolha."
+veredito_uso: "a terceira variável numérica tem leitura natural de tamanho, e vale ver as três juntas."
+veredito_evita: "a terceira variável não é claramente 'quanto maior, mais' — ou há dezenas de bolhas do mesmo tamanho."
 pacotes: ["ggplot2", "ggrepel", "RColorBrewer"]
 dados: "2 variáveis numéricas (eixos) + 1 numérica (tamanho) + 1 categórica (cor)"
 nivel: intermediário
@@ -69,16 +71,16 @@ maioria capta pouco), então uma escala linear amontoaria quase todo mundo
 num canto só do gráfico. `ggrepel::geom_text_repel()` rotula só as 4 bolhas
 maiores, evitando sobrepor texto nas outras 46.
 
-Dados fictícios: 50 startups fictícias (`set.seed(2871)`) em 5 setores,
-cada uma com um "porte" latente que gera investimento captado E número de
-funcionários JUNTOS (empresa maior tende a captar mais e empregar mais
-gente ao mesmo tempo — não são sorteados de forma independente), mas o
-crescimento de receita tem sua própria aleatoriedade, quase independente do
-porte — de propósito, pra revelar que "quem captou mais" não é sempre
-"quem cresce mais rápido", a pergunta clássica que esse tipo de gráfico
-ajuda a responder num contexto de investimento. Nomes de empresa gerados
-por combinação (prefixo + sufixo temático por setor) em vez de rótulo
-genérico tipo "Fintech 1".
+<div class="pull-quote pull-quote-direita clearfix">quem captou mais não é sempre quem cresce mais rápido</div>
+
+Dados fictícios: 50 startups fictícias (`set.seed(2871)`) em 5 setores, cada
+uma com um "porte" latente que gera investimento captado E número de
+funcionários JUNTOS (empresa maior tende a captar mais e empregar mais gente
+ao mesmo tempo — não são sorteados de forma independente), mas o crescimento
+de receita tem sua própria aleatoriedade, quase independente do porte — de
+propósito, pra revelar essa pergunta clássica de investimento. Nomes de
+empresa gerados por combinação (prefixo + sufixo temático por setor) em vez
+de rótulo genérico tipo "Fintech 1".
 
 A versão interativa recalcula o raio em D3 com `d3.scaleSqrt()` (a mesma
 regra de área-proporcional do `ggplot2`) e mostra os quatro números de cada
@@ -115,3 +117,37 @@ empresa no tooltip; clicar num setor na legenda isola aquele grupo entre as
   numéricas mais uma categórica".
 - Facetar por categoria (`facet_wrap(~setor)`) quando o número de pontos
   por bolha ficar grande demais pra uma leitura confortável num painel só.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Dispersão 3D de cafés especiais (rgl)</span>
+    <span class="parecido-razao">O oposto direto: a mesma necessidade de codificar uma terceira variável numérica, resolvida com um eixo Z de verdade em vez de tamanho de bolha.</span>
+  </a>
+  <a class="parecido-item" href="../part-of-whole/circle-packing-simples" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing simples</span>
+    <span class="parecido-razao">Mesma técnica — área do círculo como valor — mas sem eixos X/Y: aqui o círculo também organiza hierarquia, não posição.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A primeira versão desenhava as bolhas na ordem em que apareciam no dado, sem
+reordenar nada — e parecia correta até eu notar que duas ou três startups
+pequenas do setor de fintech simplesmente não apareciam na legenda de cor ao
+passar o cursor, mesmo constando na tabela de dados. Não era bug de tooltip:
+elas estavam lá, só que totalmente cobertas por bolhas maiores desenhadas por
+cima, na mesma região do gráfico.
+
+`ggplot2` desenha as camadas na ordem das linhas do `data.frame`, não por
+tamanho — então qualquer bolha grande que viesse depois de uma pequena no
+dado a engolia por inteiro. A correção foi ordenar explicitamente por tamanho
+decrescente antes de plotar (`arrange(desc(funcionarios))`), garantindo que
+as maiores sejam desenhadas primeiro e fiquem por baixo — com transparência
+(`alpha`) ativa, as pequenas por cima continuam visíveis mesmo sobre uma
+bolha grande. Sem as duas coisas juntas (ordem certa + transparência), uma
+das duas sempre desaparece: só ordem esconde a pequena; só transparência sem
+ordem deixa a cor errada por cima.
