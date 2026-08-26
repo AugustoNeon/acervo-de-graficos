@@ -35,11 +35,22 @@ já resolve sozinho.
 
 ## Como ler o gráfico
 
+<!-- Preferencial quando a leitura é principalmente por cor: legenda de
+     swatches (ver formato completo em docs/WORKFLOW.md), com as cores REAIS
+     do script.R, não inventadas.
+
+<div class="legenda-swatches">
+  <div><span class="swatch" style="background:#COR_REAL"></span> O que essa cor significa</div>
+</div>
+-->
+
 - **Eixo/posição**: ...
 - **Cor**: ...
 - **Tamanho**: ...
 
-O que um padrão visual específico significa na prática.
+O que um padrão visual específico significa na prática (padrões espaciais que
+a cor sozinha não cobre — blocos, manchas, simetria — continuam em prosa/bullets
+mesmo quando "Como ler" usa a legenda de swatches acima).
 
 ## Como foi feito
 
@@ -63,10 +74,13 @@ Dados fictícios: descrever o que foi inventado (seed, estrutura, faixas).
 
 ## Gráficos parecidos
 
-- **O oposto direto**: [nome](../slug-do-vizinho) — resolveria o mesmo
-  problema de outro jeito.
-- **Mesma técnica, outro domínio**: [nome](../../outra-categoria/slug) —
-  mesma técnica, dado de outra natureza.
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../slug-do-vizinho" style="--cat-link: var(--cat-CATEGORIA); --cat-link-ink: var(--cat-CATEGORIA-ink);">
+    <span class="parecido-cat">categoria</span>
+    <span class="parecido-titulo">Título exato do gráfico linkado</span>
+    <span class="parecido-razao">Por que é o "oposto direto" ou "mesma técnica, outro domínio".</span>
+  </a>
+</div>
 -->
 
 <!-- Opcional mas recomendada — a história real de 1 decisão ou bug deste
