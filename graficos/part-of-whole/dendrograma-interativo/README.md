@@ -5,6 +5,8 @@ date: 2026-07-30
 source: "https://r-graph-gallery.com/336-interactive-dendrogram-with-collapsibletree.html"
 interactive: true
 resumo: "Uma árvore hierárquica que começa fechada e se abre por clique, nível por nível, até chegar nas folhas."
+veredito_uso: "a hierarquia tem profundidade real (3+ níveis) e você quer que quem explora controle o quanto vê de cada vez."
+veredito_evita: "a hierarquia é rasa (1-2 níveis), ou o gráfico precisa funcionar sem interação (impresso, PDF, apresentação)."
 pacotes: ["dplyr", "ggplot2", "jsonlite", "d3"]
 dados: "3 ou mais variáveis categóricas aninhadas (cada linha é um caminho raiz→folha)"
 nivel: básico
@@ -18,7 +20,11 @@ pode ser clicado pra revelar (ou esconder de novo) os galhos abaixo dele. Em
 vez de mostrar a árvore inteira de uma vez — o que fica ilegível quando a
 hierarquia tem muitos níveis ou muitos itens por nível —, ela começa fechada,
 mostrando só a raiz e o primeiro nível, e cresce sob demanda conforme quem
-está vendo clica no que interessa. **Para que serve**: explorar uma estrutura
+está vendo clica no que interessa.
+
+<div class="pull-quote pull-quote-direita clearfix">cresce sob demanda conforme quem está vendo clica no que interessa</div>
+
+**Para que serve**: explorar uma estrutura
 em árvore (categorias de um catálogo, estrutura de pastas, qualquer dado que
 se desdobra em níveis) sem precisar decidir de antemão até que profundidade
 mostrar.
@@ -89,8 +95,10 @@ vez de recalcular a árvore inteira só pra descartar quase tudo dela.
 - **Problema**: a ordem dos filhos de cada nó muda entre execuções, mesmo com
   os mesmos dados. **Por quê**: `split()` agrupa por ordem alfabética dos
   níveis do fator quando a coluna é convertida sem especificar `levels`
-  explicitamente. **Solução**: fixar `levels = unique(x)` no `factor()` antes
-  de dividir, preservando a ordem de primeira aparição nos dados.
+  explicitamente — não pela ordem em que os dados aparecem. **Solução**:
+  fixar `levels = unique(x)` no `factor()` antes de dividir, preservando a
+  ordem de primeira aparição; a armadilha por trás disso está em "Notas do
+  coletor".
 
 ## Variações possíveis
 
@@ -105,3 +113,42 @@ vez de recalcular a árvore inteira só pra descartar quase tudo dela.
   dado tiver uma métrica além da própria hierarquia.
 - Usar `attribute` com uma função de agregação diferente de soma (`aggFun =
   mean`, por exemplo) quando o número que importa é uma média, não um total.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../circle-packing-hierarquico" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing hierárquico</span>
+    <span class="parecido-razao">O oposto direto quando a hierarquia é pequena o bastante pra mostrar tudo de uma vez: nenhum clique necessário, a estrutura inteira já visível.</span>
+  </a>
+  <a class="parecido-item" href="../treemap-orcamento-municipal" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Treemap: orçamento municipal por categoria</span>
+    <span class="parecido-razao">Outra forma de mostrar hierarquia sem colapsar nada — área proporcional ao valor em vez de um clique revelando cada nível.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A ordem dos filhos de um mesmo nó saía diferente da ordem em que os tipos
+de lã e os níveis de tensão apareciam no dataset original — sem nenhuma
+mudança nos dados entre uma execução e outra, só reabrindo o script já
+bastava pra ver a árvore reorganizada. A causa não estava em nenhuma lógica
+de ordenação escrita explicitamente no código: `split()`, usado pra dividir
+os dados em galhos da árvore, agrupa pela ordem dos **níveis do fator**, e
+quando uma coluna de texto vira fator sem especificar `levels` à mão, o R
+ordena esses níveis alfabeticamente por padrão — não pela ordem em que os
+valores de fato apareceram na tabela.
+
+Pra a maioria dos usos de `factor()`, essa ordenação alfabética silenciosa
+não importa. Aqui importava, porque a ordem dos galhos na árvore é
+informação visual: o dataset tinha uma ordem intencional (a sequência em
+que os experimentos de tecelagem foram registrados), e a ordenação
+alfabética a substituía sem avisar. A correção foi fixar
+`levels = unique(x)` no `factor()` antes de qualquer `split()`, capturando
+a ordem de primeira aparição em vez de deixar o R escolher uma ordem
+"padrão" por conta própria. A lição generaliza: sempre que a ordem de uma
+coluna categórica for parte da mensagem de um gráfico — não só um detalhe
+de agrupamento —, vale fixar `levels` explicitamente, mesmo quando o código
+funciona sem isso.
