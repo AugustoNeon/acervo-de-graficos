@@ -5,6 +5,8 @@ date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
 interactive: true
 resumo: "A mesma rede, com os mesmos dados, desenhada por três algoritmos de posicionamento diferentes — e três leituras diferentes."
+veredito_uso: "você está escolhendo como apresentar uma rede — rodar 2-3 layouts antes de decidir evita conclusões acidentais."
+veredito_evita: "a rede é pequena e óbvia o bastante pra qualquer layout razoável mostrar a mesma coisa."
 pacotes: ["ggraph", "igraph", "patchwork", "jsonlite", "d3"]
 dados: "uma lista de conexões (origem, destino)"
 nivel: intermediário
@@ -22,9 +24,12 @@ nenhum dado alterado — desenhado por três algoritmos de layout distintos:
   comunidades de forma mais agressiva.
 - **Aleatório**: posições sorteadas, sem nenhuma otimização. Serve de controle.
 
-**Para que serve**: demonstrar que **o layout não é detalhe estético — é parte da
-análise**. A mesma rede pode parecer organizada, agrupada ou caótica dependendo
-apenas de onde os pontos foram colocados.
+**Para que serve**: demonstrar que o layout não é detalhe estético.
+
+<div class="pull-quote pull-quote-direita clearfix">é parte da análise</div>
+
+A mesma rede pode parecer organizada, agrupada ou caótica dependendo apenas
+de onde os pontos foram colocados.
 
 ## Quando usar (e quando evitar)
 
@@ -72,11 +77,9 @@ preferencial, que produz redes com poucos nós muito conectados) e desenhado tr�
 vezes com `ggraph`, mudando só o argumento `layout`, que aceita os nomes do
 `igraph` diretamente como texto: `"fr"`, `"drl"` e `"randomly"`.
 
-Os três painéis são combinados num único arquivo com `patchwork`.
-
-Não há versão interativa: o conteúdo é a comparação lado a lado, que é estática por
-natureza — um widget navegável mostraria um layout por vez e destruiria justamente
-o efeito.
+Os três painéis são combinados num único arquivo com `patchwork`. Este é um
+dos poucos gráficos do acervo sem versão interativa — decisão deliberada,
+não uma que faltou tempo de fazer; ver "Notas do coletor".
 
 ## Possíveis problemas pelo caminho
 
@@ -107,3 +110,42 @@ o efeito.
   ao mesmo tempo.
 - Repetir a comparação com uma rede que tenha comunidades reais e verificar quais
   algoritmos as revelam melhor.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../arc-diagram-d3" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Arc diagram</span>
+    <span class="parecido-razao">O oposto direto: nós numa ordem imposta com significado, em vez de posicionados por um algoritmo de força que pode ou não revelar estrutura real.</span>
+  </a>
+  <a class="parecido-item" href="../rede-densa-hairball" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede densa (hairball)</span>
+    <span class="parecido-razao">O que acontece quando NENHUM layout de força resolve — mesmo o melhor algoritmo empacota numa bola de fios quando a rede é densa demais.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Este acervo tem uma regra de projeto quase sem exceção: interatividade é
+prioridade número um em todo gráfico novo, e a versão estática existe
+principalmente como fallback de progressive enhancement. Este gráfico é
+uma das poucas exceções deliberadas — e a razão não é técnica (não faltou
+biblioteca nem tempo), é conceitual.
+
+O ponto inteiro deste gráfico é a comparação simultânea entre três
+layouts do mesmo dado. Um widget interativo — mesmo um bom, com seletor de
+algoritmo — mostraria um layout de cada vez, escondendo os outros dois. Isso
+destruiria exatamente a coisa que o gráfico existe pra provar: que a MESMA
+rede muda de aparência conforme o algoritmo escolhido, um fato que só se
+sustenta vendo os três ao mesmo tempo, lado a lado, comparáveis num único
+olhar. Trocar isso por um seletor não seria uma versão "melhorada e
+interativa" do mesmo gráfico — seria um gráfico diferente, respondendo uma
+pergunta mais pobre ("como fica com o layout X?" em vez de "o layout
+importa?").
+
+A lição generaliza: "interatividade é prioridade" não significa
+interatividade sempre, em qualquer gráfico — significa que a ausência dela
+precisa ser uma decisão consciente sobre o que o gráfico está tentando
+provar, não um padrão aplicado sem pensar, nem uma exceção por preguiça.
