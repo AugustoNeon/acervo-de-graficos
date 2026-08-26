@@ -5,6 +5,8 @@ date: 2026-07-27
 source: "https://r-graph-gallery.com/3d_scatter_plot.html"
 interactive: true
 resumo: "Três variáveis numéricas ao mesmo tempo, posicionadas nos três eixos de um cubo, coloridas por grupo."
+veredito_uso: "há exatamente três variáveis numéricas cuja relação conjunta importa, e dá pra girar o gráfico."
+veredito_evita: "o destino é uma imagem fixa — profundidade 3D é ilusão de perspectiva, e um ângulo ruim esconde o padrão."
 pacotes: ["rgl", "png", "htmltools"]
 dados: "3 variáveis numéricas + 1 variável categórica de grupo"
 nivel: intermediário
@@ -61,41 +63,31 @@ você está procurando — a miniatura estática mostra só um ângulo fixo.
 
 ## Como foi feito
 
-O gráfico vem de `rgl::plot3d()`, que recebe três vetores numéricos e desenha o
-cubo com os pontos posicionados e coloridos por grupo. Cada observação é uma
-esfera de verdade (`type = "s"`, com `radius` controlando o tamanho) em vez de um
+**Cena**: `rgl::plot3d()` recebe três vetores numéricos e desenha o cubo com
+os pontos posicionados e coloridos por grupo. Cada observação é uma esfera de
+verdade (`type = "s"`, com `radius` controlando o tamanho) em vez de um
 marcador achatado — isso dá sombreamento e reflexo de luz reais, que mudam
-conforme o ângulo, reforçando a sensação de profundidade ao girar o gráfico.
+conforme o ângulo, reforçando a sensação de profundidade ao girar.
 
-Uma particularidade deste ambiente: o script roda sem uma janela gráfica real
-(`Rscript` não-interativo), então é preciso `options(rgl.useNULL = TRUE)` antes de
-carregar o pacote — isso troca o dispositivo gráfico por um renderizador nulo que
-ainda produz a cena corretamente, só sem abrir janela na tela.
+**Modo headless**: o script roda sem janela gráfica real (`Rscript`
+não-interativo), então é preciso `options(rgl.useNULL = TRUE)` antes de
+carregar o pacote — troca o dispositivo por um renderizador nulo que ainda
+produz a cena corretamente, só sem abrir janela na tela. A legenda não usa a
+função nativa `legend3d()` por causa desse mesmo modo — a história completa
+está em "Notas do coletor".
 
-A legenda não usa a função nativa `legend3d()`: em modo headless ela não aparece
-no resultado exportado. A solução foi compor a imagem em duas etapas — primeiro
-`snapshot3d()` captura só a cena 3D para um arquivo temporário, depois esse
-arquivo é reaberto como imagem e uma legenda comum (`legend()`, do R base) é
-desenhada por cima, gerando o `output.png` final.
+**Dado fictício**: avaliação sensorial de cafés especiais — acidez, corpo e
+doçura (escala 0–10) — por nível de torra (`set.seed(3005)`), 30 observações
+por grupo, com médias diferentes por torra seguindo uma tendência real do
+mundo do café (torras claras mais ácidas e menos encorpadas, torras escuras o
+oposto), embora os números em si sejam inventados.
 
-Dados fictícios: avaliação sensorial de cafés especiais — acidez, corpo e doçura
-(escala 0–10) — por nível de torra (`set.seed(3005)`), 30 observações por grupo.
-Os valores foram gerados com médias diferentes por torra, seguindo uma tendência
-real do mundo do café (torras claras tendem a ser mais ácidas e menos encorpadas,
-torras escuras o oposto), embora os números em si sejam inventados.
-
-A versão interativa reaproveita a mesma cena: `rgl::rglwidget()` converte o que já
-está desenhado num widget WebGL, sem duplicar dados nem código do gráfico. A
-legenda, de novo, não pode usar `legend3d()` (mesma limitação do modo headless) —
-aqui ela é uma lista HTML simples ao lado do widget, montada com `htmltools`,
-mesma lógica já usada no arc diagram do acervo (legenda fora do elemento gráfico
-em vez de dentro).
-
-Um ajuste extra foi necessário: o canvas WebGL nasce com largura fixa em pixels
-(a mesma do dispositivo `rgl` criado no início do script) e não se adapta ao
-espaço disponível. Uma pequena regra CSS (`max-width: 100%`) resolve isso — e o
-próprio motor de renderização do widget recalcula a resolução interna do canvas
-para a nova largura, então a imagem continua nítida.
+**Na versão interativa**: `rgl::rglwidget()` converte a mesma cena num widget
+WebGL, sem duplicar dado nem código. A legenda, de novo, não pode usar
+`legend3d()` — vira uma lista HTML simples ao lado do widget, montada com
+`htmltools`. O canvas WebGL nasce com largura fixa em pixels e não se adapta
+ao espaço disponível; uma regra CSS (`max-width: 100%`) resolve, e o próprio
+motor de renderização recalcula a resolução interna sozinho.
 
 ## Possíveis problemas pelo caminho
 
@@ -104,31 +96,21 @@ para a nova largura, então a imagem continua nítida.
   definir `options(rgl.useNULL = TRUE)` antes de `library(rgl)` — troca para um
   renderizador que funciona sem tela.
 
-- **Problema**: `legend3d()` não aparece na imagem final. **Por quê**: a função
-  depende de capturar e re-compor a cena internamente, algo que falha no
-  renderizador nulo. **Solução**: compor a legenda manualmente por cima do
-  `snapshot3d()`, com `rasterImage()` + `legend()` do R base.
+- **Problema**: `legend3d()` não aparece nem na imagem final nem no widget.
+  **Solução**: compor a legenda por fora da cena 3D — a história completa
+  está em "Notas do coletor", no fim da página.
 
-- **Problema**: o ângulo da câmera esconde o padrão principal. **Por quê**: a
-  posição inicial de `plot3d()` é arbitrária. **Solução**: ajustar com
-  `view3d(theta, phi)` antes do `snapshot3d()`, ou usar a versão interativa e
-  girar manualmente até o ângulo certo.
+- **Problema**: o ângulo da câmera esconde o padrão principal, ou pontos de
+  grupos diferentes parecem misturados. **Por quê**: a posição inicial de
+  `plot3d()` é arbitrária, e a separação real pode existir escondida naquele
+  ângulo específico. **Solução**: ajuste com `view3d(theta, phi)` antes do
+  `snapshot3d()`, ou gire a versão interativa antes de concluir que os
+  grupos não se separam.
 
-- **Problema**: os pontos de um grupo ficam visualmente misturados com outro.
-  **Por quê**: pode ser que a separação real exista, mas fique escondida naquele
-  ângulo específico. **Solução**: girar o gráfico (na versão interativa) antes de
-  concluir que os grupos não se separam.
-
-- **Problema**: a legenda também não aparece na versão interativa. **Por quê**:
-  `legend3d()` depende do mesmo mecanismo de captura que falha no modo headless,
-  então o problema se repete dentro do widget. **Solução**: desenhar a legenda como
-  HTML comum ao lado do widget, em vez de dentro da cena 3D.
-
-- **Problema**: o widget aparece cortado, com barra de rolagem horizontal. **Por
-  quê**: o canvas WebGL herda um tamanho fixo em pixels do dispositivo `rgl`
-  original, sem se adaptar ao espaço disponível. **Solução**: forçar
-  `max-width: 100%` no canvas via CSS — o mecanismo de renderização do widget
-  recalcula a resolução sozinho.
+- **Problema**: o widget aparece cortado, com barra de rolagem horizontal.
+  **Por quê**: o canvas WebGL herda um tamanho fixo em pixels do dispositivo
+  `rgl` original. **Solução**: force `max-width: 100%` no canvas via CSS — o
+  motor de renderização recalcula a resolução sozinho.
 
 ## Variações possíveis
 
@@ -143,3 +125,37 @@ para a nova largura, então a imagem continua nítida.
 - Adicionar uma quarta dimensão via tamanho do ponto, mapeando uma variável extra.
 - Girar e capturar vários ângulos como pequenos múltiplos, quando uma imagem
   estática for realmente necessária e nenhum ângulo único bastar.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="bolhas-investimento-startups" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Bubble chart: investimento x crescimento x porte</span>
+    <span class="parecido-razao">O oposto direto: a mesma necessidade de mostrar três variáveis numéricas, resolvida com tamanho de bolha num plano 2D em vez de um eixo Z de verdade.</span>
+  </a>
+  <a class="parecido-item" href="superficie-3d-interacao" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Superfície 3D de interação (rgl)</span>
+    <span class="parecido-razao">Mesma técnica (rgl, mesmo modo headless, mesmas armadilhas de legenda) — mas uma superfície contínua no lugar de pontos discretos.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+`legend3d()` simplesmente não aparecia — nem erro, nem aviso, o overlay de
+legenda ficava ausente do `snapshot3d()` final, como se a chamada nunca
+tivesse acontecido. A causa é uma limitação conhecida do mecanismo de
+composição de overlay do `rgl` (`bgplot3d()`): ele depende de capturar e
+recompor a cena internamente, e isso falha silenciosamente no renderizador
+nulo que o modo headless exige.
+
+A correção foi parar de pedir pro `rgl` desenhar a legenda, e desenhá-la por
+fora dele. Pra imagem estática: `snapshot3d()` captura só a cena 3D pra um
+arquivo temporário, esse arquivo é reaberto com `png::readPNG()` +
+`rasterImage()` dentro de um device `png()` normal do R base, e uma legenda
+comum (`legend()`) é desenhada por cima. Pra versão interativa, o mesmo
+princípio vira uma lista HTML simples ao lado do widget WebGL, montada com
+`htmltools`, em vez de dentro da cena. As duas soluções são a mesma ideia —
+a legenda nunca mora dentro do que o `rgl` renderiza — e viraram o padrão
+pra qualquer gráfico deste acervo que precise de legenda em modo headless.
