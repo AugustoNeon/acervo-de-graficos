@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/262-basic-boxplot-with-ggplot2.html"
 interactive: true
 resumo: "Tempo de resolução de chamados por equipe de suporte, com cinco variações alternáveis do boxplot clássico: básico, ordenado, com jitter, entalhado e largura variável."
+veredito_uso: "você precisa comparar espalhamento, assimetria e atípicos entre várias categorias de uma vez."
+veredito_evita: "a amostra de alguma categoria é pequena (menos de ~10 pontos), ou a distribuição é multimodal."
 pacotes: ["ggplot2", "dplyr", "forcats", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica contínua, várias observações por categoria"
 nivel: intermediário
@@ -117,10 +119,8 @@ seus próprios parâmetros de mediana/dispersão.
 
 - **Problema**: passar o cursor sobre um ponto atípico ou de jitter mostra o
   tooltip resumido da caixa inteira, em vez do valor daquele ponto
-  específico. **Por quê**: o evento `pointermove` borbulha do círculo até o
-  `<g>` da equipe, que também tem seu próprio listener — o handler do pai
-  roda depois e sobrescreve o tooltip. **Solução**: `event.stopPropagation()`
-  no listener do ponto.
+  específico. **Solução**: `event.stopPropagation()` no listener do ponto —
+  a história completa está em "Notas do coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -132,3 +132,40 @@ seus próprios parâmetros de mediana/dispersão.
   cor dentro de cada posição.
 - Trocar o cálculo de atípicos pelo desvio-padrão (±2σ) em vez do IQR, quando
   a distribuição for aproximadamente normal.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="ridgeline-avaliacoes-bairros" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Ridgeline plot</span>
+    <span class="parecido-razao">O oposto direto quando a distribuição é multimodal: o boxplot resume tudo numa caixa só, sem avisar que existem dois picos escondidos ali — o ridgeline mostra a forma de verdade.</span>
+  </a>
+  <a class="parecido-item" href="violino-e-boxplot" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Violino + boxplot: três variações</span>
+    <span class="parecido-razao">Mesma técnica, um passo adiante: o boxplot clássico combinado com a densidade do violino no mesmo espaço, em vez de alternável.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O tooltip de um ponto atípico mostrava os quartis da caixa inteira em vez do
+valor daquele ponto específico — mesmo com o cursor claramente em cima do
+círculo certo, não da caixa. O listener do ponto individual estava correto,
+disparando com o dado certo.
+
+O culpado era um segundo listener, no `<g>` que agrupa todos os elementos de
+uma equipe (caixa, whiskers, pontos), pra mostrar o resumo da caixa ao passar
+perto de qualquer parte dela. Eventos de ponteiro **borbulham**: o
+`pointermove` do círculo dispara primeiro no próprio ponto, mas continua
+subindo pela árvore até o `<g>` pai, cujo handler roda logo em seguida e
+sobrescreve o tooltip com o resumo errado — os dois listeners disparavam pro
+mesmo movimento do mouse, e o último a rodar vencia.
+
+A correção foi `event.stopPropagation()` no listener do ponto, impedindo o
+evento de continuar subindo depois de já ter sido tratado ali. Vale
+desconfiar desse padrão sempre que dois elementos visualmente sobrepostos
+(um específico dentro de um mais geral) tiverem listeners próprios pro mesmo
+tipo de evento — sem parar a propagação, o mais geral sempre tem a
+"última palavra".
