@@ -5,6 +5,8 @@ date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
 interactive: true
 resumo: "O que acontece quando uma rede tem conexões demais: uma bola de linhas emaranhadas em que nada se distingue."
+veredito_uso: "você quer ilustrar, de propósito, o que acontece quando uma rede fica densa demais para qualquer layout resolver."
+veredito_evita: "sempre que possível — se este é o resultado real do seu gráfico, o problema é a técnica, não os dados; filtre, agregue ou troque de representação."
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma lista de conexões (origem, destino)"
 nivel: intermediário
@@ -23,6 +25,8 @@ desenho, apesar de tecnicamente correto, não comunica nada.
 **Para que serve**: reconhecer o sintoma. É um dos resultados mais comuns em
 visualização de redes, e é facilmente confundido com "a rede é complexa" quando na
 verdade significa "esta representação não serve para estes dados".
+
+<div class="pull-quote pull-quote-direita clearfix">esta representação não serve para estes dados</div>
 
 ## Quando usar (e quando evitar)
 
@@ -84,12 +88,8 @@ e nós arrastáveis.
   estática colore cada nó pelo grau. **Por quê**: `visNetwork` não tem escalas
   contínuas como o `ggplot2` — não existe um `scale_colour_*` ali; ele espera a
   cor de cada nó já pronta, em hexadecimal, numa coluna do `data.frame`.
-  **Solução**: calcular as cores no R e passar por nó em `color.background`. Para
-  bater exatamente com a versão estática, vale saber que
-  `scale_colour_distiller(palette = "OrRd")` é, por dentro, um gradiente sobre as
-  7 cores do brewer — ou seja,
-  `scales::gradient_n_pal(RColorBrewer::brewer.pal(7, "OrRd"))(scales::rescale(x))`
-  reproduz a mesma rampa.
+  **Solução**: calcular as cores no R e passar por nó em `color.background` —
+  a fórmula exata e como o desvio foi flagrado estão em "Notas do coletor".
 
 - **Problema**: a versão interativa fica lenta ou trava. **Por quê**: a simulação
   de física roda continuamente no navegador e o custo cresce com o número de nós.
@@ -113,3 +113,56 @@ e nós arrastáveis.
 - Comparar com uma rede de mesmo tamanho **com** estrutura de comunidade, para ver
   o mesmo algoritmo produzir um resultado legível — a diferença está nos dados, não
   no desenho.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../matriz-adjacencia-tags" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Matriz de adjacência: tags que aparecem juntas</span>
+    <span class="parecido-razao">O oposto direto: o mesmo tipo de dado (nós e arestas), mas exatamente o cenário em que a matriz vence e o diagrama de nós perde — muitas arestas, layout ilegível.</span>
+  </a>
+  <a class="parecido-item" href="../arc-diagram-d3" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Arc diagram</span>
+    <span class="parecido-razao">Outra saída pra densidade alta: nós alinhados numa ordem com significado em vez de posicionados por força — funciona onde existe uma ordem natural pra impor.</span>
+  </a>
+  <a class="parecido-item" href="../comparacao-layouts" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Comparação de layouts de rede (Fruchterman-Reingold, DrL, Aleatório)</span>
+    <span class="parecido-razao">Mostra o mesmo limite por outro ângulo: nenhum dos três algoritmos de força escapa do emaranhado quando a rede é densa demais — o problema é estrutural, não do algoritmo escolhido.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A cor de cada nó divergia entre a miniatura estática e o widget — e não foi
+a única vez. Este gráfico, junto com outros dois deste acervo (uma rede
+dirigida e ponderada, e um circle packing hierárquico), teve exatamente a
+mesma reclamação simultaneamente numa sessão de revisão: a versão
+interativa mostrava uma cor visivelmente diferente da imagem estática ao
+lado, mesmo os dois desenhando o mesmo dado.
+
+A causa era sempre a mesma: pacotes de widget (`visNetwork`, e os
+equivalentes em D3 usados nos outros dois) não têm o sistema de escalas do
+`ggplot2` embutido — não existe um `scale_colour_distiller()` ali, cor
+tem que chegar pronta, em hexadecimal, por nó. A tentação é reconstruir a
+rampa "de olho", escolhendo uma paleta parecida — e é exatamente aí que a
+cor diverge, porque "parecida" não é "a mesma função".
+
+A solução que generalizou pros três gráficos foi abrir o que
+`scale_colour_distiller(palette = P)` faz por dentro: é um gradiente
+contínuo interpolado sobre as N cores discretas de uma paleta do
+`RColorBrewer`. Ou seja,
+`scales::gradient_n_pal(RColorBrewer::brewer.pal(n, P))(scales::rescale(x))`
+reproduz a mesma rampa, cor a cor, calculável no R e exportável como
+hexadecimal pronto pro widget consumir — sem depender de nenhuma
+aproximação visual.
+
+A lição que ficou não é só a fórmula, é o método de verificação: o desvio
+só apareceu comparando um screenshot real do widget (`webshot2::webshot()`
+sobre o `widget.html` publicado) lado a lado com o `output.png`, pixel
+contra pixel — ler o código do widget ou inspecionar a cor no DOM não
+bastava, porque o bug estava na escolha da paleta, não em nenhum erro de
+execução. Desde então, comparar widget e PNG lado a lado virou parte do
+checklist antes de fechar qualquer gráfico de rede novo.
