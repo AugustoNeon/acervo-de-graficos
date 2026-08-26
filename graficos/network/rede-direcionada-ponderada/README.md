@@ -5,6 +5,8 @@ date: 2026-07-24
 source: "https://www.data-to-viz.com/graph/network.html"
 interactive: true
 resumo: "Rede em que cada conexão tem sentido (setas) e intensidade (espessura da linha) ao mesmo tempo."
+veredito_uso: "a direção da relação muda a interpretação — migração, citações, transferências, dependências."
+veredito_evita: "a relação é genuinamente mútua (amizade, coautoria) — setas viram ruído sem informação nova."
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de conexões com origem, destino e peso"
 nivel: intermediário
@@ -23,6 +25,8 @@ Uma rede que carrega duas informações além da simples existência da conexão
 **Para que serve**: representar fluxos reais — pessoas migrando entre cidades,
 dinheiro circulando entre contas, tráfego entre servidores. Nesses casos "existe
 relação" é uma descrição pobre demais: o que importa é quanto vai, e para que lado.
+
+<div class="pull-quote pull-quote-direita clearfix">"existe relação" é uma descrição pobre demais</div>
 
 ## Quando usar (e quando evitar)
 
@@ -88,9 +92,8 @@ Na interativa, o `visNetwork` recebe `arrows = "to"` para o sentido e a coluna
   enquanto na estática as mais fracas aparecem apagadas. **Por quê**: o peso pode
   ser codificado em duas pistas ao mesmo tempo (espessura *e* opacidade), mas o
   `visNetwork` só aceita **um** valor global de opacidade — não existe escala de
-  opacidade por aresta como o `scale_edge_alpha()`. **Solução**: embutir a
-  transparência na própria cor de cada aresta, passando `rgba(r,g,b,a)` na coluna
-  `color.color` do `data.frame` de arestas, com o `a` calculado a partir do peso.
+  opacidade por aresta como o `scale_edge_alpha()`. **Solução**: o truque do
+  `rgba()` embutido na cor está em "Notas do coletor".
 
 - **Problema**: uma aresta muito grossa domina o desenho. **Por quê**: valor extremo
   nos pesos. **Solução**: limitar o intervalo com `scale_edge_width(range = ...)` ou
@@ -109,3 +112,44 @@ Na interativa, o `visNetwork` recebe `arrows = "to"` para o sentido e a coluna
 - Se os fluxos tiverem estágios sequenciais, migrar para um
   [diagrama de Sankey](../../flow/sankey-networkd3-simplificado), que representa
   volume com muito mais fidelidade.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../rede-interativa-networkd3" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede interativa com networkD3 (simpleNetwork)</span>
+    <span class="parecido-razao">A versão mais simples do mesmo tipo de dado: sem direção nem peso, só existência de conexão — o ponto de partida antes de acrescentar estas duas camadas.</span>
+  </a>
+  <a class="parecido-item" href="../../flow/sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Diagrama de Sankey</span>
+    <span class="parecido-razao">Quando os fluxos têm estágios sequenciais em vez de uma rede solta, o Sankey representa volume com muito mais fidelidade do que espessura de aresta.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O peso de cada aresta precisava aparecer em duas pistas visuais ao mesmo
+tempo — espessura e opacidade — porque é assim que a versão estática
+funciona: uma aresta fraca não é só mais fina, é mais apagada, e as duas
+pistas juntas facilitam separar "fraco" de "quase invisível" num relance.
+O `visNetwork` recebe espessura por aresta sem problema (`value`), mas só
+tem **um** controle global de opacidade — não existe um equivalente a
+`scale_edge_alpha()` por aresta.
+
+A saída foi perceber que opacidade também é só um componente de cor: em
+vez de procurar um parâmetro de opacidade que não existe, a transparência
+de cada aresta foi embutida direto no `a` de um `rgba(r, g, b, a)`, escrito
+na própria coluna `color.color` que o `visNetwork` já lê pra cor. O widget
+nunca soube que estava recebendo "opacidade codificada" — só desenhou a
+cor que recebeu, que por acaso carregava um canal alfa calculado a partir
+do peso.
+
+Essa mesma ideia — resolver uma pista visual que o widget não tem
+controle nativo embutindo o valor direto na cor — voltou a aparecer noutro
+gráfico de rede deste acervo (a paridade de cor entre miniatura e widget em
+"Rede densa (hairball)"): quando o pacote de widget não tem o sistema de
+escalas do `ggplot2`, quase sempre dá pra contornar calculando o resultado
+final no R e exportando já pronto, em vez de procurar um parâmetro
+equivalente que talvez nem exista.
