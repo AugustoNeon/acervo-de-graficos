@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/235-treemap-with-subgroups.html"
 interactive: true
 resumo: "Orçamento anual de uma prefeitura fictícia dividido em secretaria, programa e ação — clique numa secretaria pra ver os programas dela, e num programa pra ver as ações."
+veredito_uso: "hierarquia com dezenas de itens nas folhas, e a comparação de TAMANHO importa mais que a ordem ou a estrutura em árvore."
+veredito_evita: "a hierarquia é rasa (1 nível), ou a estrutura da árvore (quem é filho de quem) importa mais que o tamanho — um dendrograma mostra topologia melhor."
 pacotes: ["ggplot2", "treemapify", "RColorBrewer", "jsonlite", "d3"]
 dados: "hierarquia de 3 níveis (secretaria > programa > ação) + 1 valor numérico nas folhas"
 nivel: intermediário
@@ -20,6 +22,8 @@ treemap preenche 100% do espaço disponível, sem vazios entre os blocos.
 **Para que serve**: comparar o tamanho relativo de muitos itens organizados
 em hierarquia de uma vez só, respondendo "que fatia disso é a maior, e
 dentro dela, o que pesa mais?".
+
+<div class="pull-quote pull-quote-direita clearfix">que fatia disso é a maior, e dentro dela, o que pesa mais?</div>
 
 ## Quando usar (e quando evitar)
 
@@ -71,13 +75,9 @@ rótulo só nas ações (nível mais fundo).
 A versão interativa em D3 calcula o layout do treemap **uma vez só**, pra
 árvore inteira — todos os 3 níveis já nascem com coordenadas, cada filho
 dentro do retângulo do pai. O "zoom" não recalcula layout nenhum a cada
-clique: são só duas escalas lineares (`x`/`y`) cujo domínio muda pro
-retângulo do nó em foco. Como os filhos desse nó já têm coordenadas DENTRO
-dele (por construção do layout original), reescalar o domínio faz esses
-retângulos se espalharem até preencher a tela sozinhos — sem recalcular
-nada e sem precisar de `transform: scale()` num `<g>` (que distorceria a
-espessura de traço e o tamanho da fonte junto com o zoom, o problema
-clássico dessa técnica).
+clique: é só reescalar duas escalas lineares (`x`/`y`) pro retângulo do nó
+em foco, uma alternativa ao `transform: scale()` que evita o problema
+clássico dessa técnica — ver "Notas do coletor".
 
 Os rótulos usam um `<clipPath>` por bloco, do tamanho exato do retângulo —
 texto comprido é cortado na borda do bloco em vez de vazar pro bloco vizinho
@@ -110,3 +110,43 @@ treemap em comparar itens de escalas bem diferentes ao mesmo tempo.
 - Layout "fixed" (grade regular) em vez de squarified, quando a comparação
   de proporção exata importa mais que blocos com boa relação
   largura/altura.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../sunburst-catalogo-streaming" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Sunburst zoomável: catálogo de streaming</span>
+    <span class="parecido-razao">O mesmo zoom por nível de hierarquia, mas radial: anéis concêntricos em fatias de arco em vez de retângulos que preenchem 100% do espaço.</span>
+  </a>
+  <a class="parecido-item" href="../circle-packing-hierarquico" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing hierárquico</span>
+    <span class="parecido-razao">O oposto direto no uso do espaço: círculos aninhados que deixam vazio entre um nível e o próximo, contra os retângulos deste treemap que preenchem tudo.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+O jeito óbvio de animar um zoom em SVG é `transform: scale()` num `<g>`
+que envolve o conteúdo — mas essa técnica tem um problema clássico:
+escalar o grupo inteiro escala **tudo** dentro dele, inclusive a
+espessura dos traços e o tamanho das fontes. Um bloco ampliado 3x fica com
+bordas 3x mais grossas e texto 3x maior do que o resto da interface — nem
+sempre visível de cara em capturas de tela estáticas, mas óbvio assim que
+o zoom entra em movimento.
+
+A alternativa usada aqui evita o problema pela raiz, não corrigindo depois:
+o layout do treemap é calculado **uma única vez**, pra árvore inteira —
+todos os retângulos, em todos os 3 níveis, já nascem com coordenadas
+absolutas dentro do espaço total, cada filho posicionado dentro do
+retângulo do próprio pai por construção do algoritmo. O "zoom" não mexe em
+nenhum desses retângulos: são duas escalas lineares (`x`/`y`) cujo domínio
+muda pro intervalo do nó em foco. Como os filhos desse nó já têm
+coordenadas dentro dele, reescalar o domínio das escalas faz esses
+retângulos se espalharem sozinhos até preencher a tela — sem tocar em
+nenhum atributo de traço ou fonte, porque nada foi escalado como grupo,
+só reprojetado. A lição generaliza: quando um "zoom" é na verdade uma
+mudança de enquadramento sobre dados que já têm posição fixa (não uma
+ampliação genérica de conteúdo arbitrário), trocar `transform: scale()`
+por escalas D3 reprojetadas evita a distorção sem esforço extra.
