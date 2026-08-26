@@ -5,6 +5,8 @@ date: 2026-08-18
 source: "https://r-graph-gallery.com/barplot.html"
 interactive: true
 resumo: "As mesmas 24 células gênero × plataforma se reorganizando entre agrupado, empilhado e empilhado 100%."
+veredito_uso: "cada categoria é soma de subgrupos, e você quer alternar entre comparar totais, subgrupos e proporções sem trocar de gráfico."
+veredito_evita: "há mais de 5-6 subgrupos por categoria, ou os subgrupos não somam um total que faça sentido."
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis categóricas (categoria + subgrupo) + 1 numérica"
 nivel: intermediário
@@ -63,6 +65,8 @@ matriz.
   passe o cursor sobre um item da legenda pra realçar essa plataforma em
   todas as barras ao mesmo tempo.
 
+<div class="pull-quote pull-quote-direita clearfix">o total desaparece da leitura; sobra só a proporção interna de cada subgrupo</div>
+
 ## Como foi feito
 
 O `output.png` é um pôster de três painéis via `patchwork`, cada um o mesmo
@@ -116,3 +120,48 @@ um detalhe reservado ao hover.
 - Adicionar uma quarta variação com os subgrupos ordenados por valor dentro
   de cada pilha (em vez de sempre na mesma ordem), destacando qual subgrupo é
   dominante em cada categoria.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../ranking/barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico</span>
+    <span class="parecido-razao">O irmão sem decomposição: a mesma pergunta de "qual categoria é maior", sem a segunda camada de subgrupo que este gráfico existe pra mostrar.</span>
+  </a>
+  <a class="parecido-item" href="../treemap-orcamento-municipal" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Treemap: orçamento municipal por categoria</span>
+    <span class="parecido-razao">Outra forma de mostrar composição, mas usando área em vez de altura empilhada — melhor quando o número de subgrupos cresce além do que uma pilha aguenta.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A transição entre os três estados (agrupado, empilhado, empilhado 100%)
+tinha um bug que só aparecia numa sequência bem específica: clicar num
+botão de estado e, logo em seguida, passar o cursor sobre uma barra — o
+resultado era uma barra travada a meio caminho da transição, presa numa
+posição ou tamanho errado, sem nenhum erro no console. Reproduzir exigia
+testar a sequência exata num navegador de verdade; o preview do editor não
+pegava o problema.
+
+A causa: este gráfico tem duas animações concorrentes no mesmo elemento —
+o hover (que destaca uma barra ao passar o cursor) e a troca de estado
+(que reorganiza todas as barras). O D3 rastreia transições por um par
+`(elemento, nome da transição)`, e uma segunda chamada de `.transition()`
+sem nome **cancela silenciosamente** a primeira transição em andamento,
+mesmo que as duas animem atributos diferentes (uma `opacity`, a outra
+`x`/`y`/`width`/`height`). Se o hover disparar no meio da transição de
+estado, uma cancela a outra e o elemento congela onde estava.
+
+A correção foi dar nomes distintos às duas transições
+(`selection.transition('hover')` para uma, a transição de estado sem nome
+para a outra) — assim o D3 as rastreia como independentes e nenhuma
+interrompe a outra. O mesmo bug apareceu, com a mesma causa, em dois
+outros gráficos deste acervo que compartilham a mesma combinação de hover
+animado + troca de estado animada: o [barplot clássico](../../ranking/barplot-classico)
+e o [lollipop](../../ranking/lollipop-streaming). A lição generalizou: todo
+gráfico D3 novo com hover e mudança de estado animando o mesmo elemento
+precisa nascer com nomes de transição distintos, não como correção depois
+de encontrar o bug.
