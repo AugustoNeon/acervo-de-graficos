@@ -5,6 +5,8 @@ date: 2026-08-25
 source: "https://r-graph-gallery.com/101_Manhattan_plot.html"
 interactive: true
 resumo: "Milhares de marcadores genéticos testados contra um desfecho, organizados por cromossomo — dois agrupamentos cruzam a linha de significância."
+veredito_uso: "você testa a mesma hipótese milhares de vezes ao longo de uma variável posicional/ordenada."
+veredito_evita: "há poucos testes (dezenas) — um forest plot com intervalo de confiança comunica mais por ponto."
 pacotes: ["ggplot2", "dplyr"]
 dados: "1 variável categórica (cromossomo) + 1 posicional + 1 numérica (p-valor)"
 nivel: intermediário
@@ -20,9 +22,11 @@ contra um desfecho, posicionado no eixo X pela sua localização no genoma
 evidência estatística — geralmente `-log10(p-valor)`, de forma que
 associações mais fortes aparecem mais **altas**. **Para que serve**: separar
 visualmente um punhado de sinais estatisticamente fortes em meio a dezenas
-de milhares de testes simultâneos, o que dá ao gráfico seu nome (os
-agrupamentos que ultrapassam a linha de significância lembram os arranha-céus
-do horizonte de Manhattan).
+de milhares de testes simultâneos.
+
+<div class="pull-quote pull-quote-direita clearfix">os agrupamentos que ultrapassam a linha de significância lembram os arranha-céus do horizonte de Manhattan</div>
+
+É daí que vem o nome.
 
 ## Quando usar (e quando evitar)
 
@@ -82,11 +86,9 @@ próximos de uma associação real aparecerem elevados juntos, em vez de um
 ## Possíveis problemas pelo caminho
 
 - **Problema**: a soma cumulativa das posições de cromossomo "estoura" e
-  vira `NA` silenciosamente, sem erro. **Por quê**: gerar posições com
-  `sample.int()` devolve um vetor inteiro (32 bits); somar o comprimento de
-  vários cromossomos grandes ultrapassa o limite de ~2,1 bilhões desse tipo.
-  **Solução**: converter a posição pra numérica (`as.numeric()`) antes de
-  qualquer soma cumulativa.
+  vira `NA` silenciosamente, sem erro. **Solução**: converta a posição pra
+  numérica (`as.numeric()`) antes de qualquer soma cumulativa — a história
+  completa está em "Notas do coletor", no fim da página.
 - **Problema**: o eixo Y fica dominado por um único ponto extremo, achatando
   todo o resto perto de zero. **Por quê**: `-log10(p)` cresce rápido pra
   p-valores muito pequenos. **Solução**: aqui não foi necessário (o pico
@@ -103,3 +105,35 @@ próximos de uma associação real aparecerem elevados juntos, em vez de um
 - Trocar a variável posicional por outra completamente diferente (ex: hora
   do dia, id de sensor) sempre que o problema for "muitos testes repetidos,
   organizados por uma variável ordenada".
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../correlation/correlograma-indicadores" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Correlograma: indicadores municipais</span>
+    <span class="parecido-razao">O oposto direto pra muitos testes: em vez de espalhar cada teste como um ponto numa varredura, resume todos os pares numa grade compacta.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A soma cumulativa das posições dos cromossomos virava `NA` no meio do
+gráfico, sem nenhum erro — alguns pontos simplesmente desapareciam da
+metade pra frente do eixo X, como se o dado tivesse acabado antes da hora.
+O dado de entrada estava correto; o problema nasceu no cálculo.
+
+`sample.int()`, usado pra gerar as posições fictícias dentro de cada
+cromossomo, devolve um vetor de inteiros de 32 bits — um tipo com limite de
+cerca de 2,1 bilhões. Somar o comprimento de vários cromossomos grandes,
+um atrás do outro, pra formar a posição cumulativa no eixo X, ultrapassa
+esse limite bem antes do que pareceria intuitivo com só 22 cromossomos
+fictícios. Quando um inteiro de 32 bits estoura em R, o resultado vira
+`NA` — sem aviso, sem erro, silenciosamente.
+
+A correção foi converter a posição pra numérica (`as.numeric()`) antes de
+qualquer soma cumulativa — o tipo `double` do R não tem esse teto baixo. A
+lição generaliza: qualquer soma cumulativa sobre um vetor gerado por
+funções que devolvem inteiro (`sample.int()`, `seq_len()`, `1:n`) merece
+desconfiança quando os valores somados podem crescer bastante — o estouro
+não avisa, só apaga dado.
