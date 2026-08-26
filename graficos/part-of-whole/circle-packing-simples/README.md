@@ -5,6 +5,8 @@ date: 2026-07-29
 source: "https://r-graph-gallery.com/307-add-space-in-circle-packing.html"
 interactive: true
 resumo: "Bolhas de tamanhos proporcionais a um valor, compactadas sem sobreposição num único nível, sem hierarquia entre elas."
+veredito_uso: "há dezenas de categorias sem hierarquia entre si e o objetivo é um layout compacto e orgânico, não precisão de leitura."
+veredito_evita: "a comparação exige precisão — o olho julga área pior que comprimento, e um barplot ordenado comunica os mesmos números com mais fidelidade."
 pacotes: ["packcircles", "ggplot2", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 variável numérica (uma bolha por categoria, sem agrupamento)"
 nivel: básico
@@ -52,6 +54,8 @@ circle packing deste acervo, com várias camadas de agrupamento.
   ficar o mais perto possível do centro de massa das que já foram
   posicionadas), não por nenhuma variável — não leia posição como informação.
 
+<div class="pull-quote pull-quote-direita clearfix">compare áreas, não o diâmetro — um círculo com o dobro do diâmetro tem quatro vezes a área</div>
+
 ## Como foi feito
 
 A camada de layout vem do pacote `packcircles`: `circleProgressiveLayout()`
@@ -92,12 +96,9 @@ inventados, no lugar dos rótulos genéricos do exemplo original.
   `packing$radius` por um fator menor que 1 (ex: 0,95) antes de gerar os
   vértices.
 - **Problema**: a cor de uma bolha no `data.json` não bate com a mesma bolha
-  no `output.png`. **Por quê**: a cor de cada uma vem de reler o `fill`
-  resolvido pelo `ggplot_build()` (a rampa `Spectral` contínua não tem fórmula
-  fechada simples de reproduzir do zero), indexado pela coluna `group` — que
-  só coincide com o `id` de `dados` porque `id` é sequencial sem lacunas
-  (`1:24`). **Solução**: gerar `id` como `seq_len(nrow(dados))` logo antes de
-  montar o `data.json`, nunca a partir de um valor que possa ter buracos.
+  no `output.png`. **Por quê**: a indexação de cor depende de um pressuposto
+  frágil sobre a coluna `group` do `ggplot_build()`. **Solução**: a história
+  completa está em "Notas do coletor".
 
 ## Variações possíveis
 
@@ -109,3 +110,40 @@ inventados, no lugar dos rótulos genéricos do exemplo original.
   círculos grandes (custa mais pontos por polígono).
 - Esconder o rótulo de texto das bolhas menores e depender só do tooltip
   (versão interativa) para os detalhes de cada uma.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../circle-packing-hierarquico" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing hierárquico</span>
+    <span class="parecido-razao">O próximo passo natural: as mesmas bolhas por área, mas aninhadas dentro de grupos pai quando a categoria também tem hierarquia.</span>
+  </a>
+  <a class="parecido-item" href="../../ranking/barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico</span>
+    <span class="parecido-razao">O oposto direto quando a precisão da comparação importa: comprimento é mais fácil de julgar a olho do que área.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A cor de uma bolha divergia entre a miniatura estática e o widget, e a
+causa não estava em nenhuma fórmula de cor — estava numa suposição sobre
+IDs que parecia inofensiva. A cor de cada bolha vem de reler o `fill` já
+resolvido pelo `ggplot_build()` (a rampa `Spectral` contínua não tem uma
+fórmula fechada simples de reproduzir do zero em JavaScript), indexado
+pela coluna `group` que o `ggplot2` gera internamente. Esse índice só
+coincidia com o `id` da tabela de dados porque, por acaso, `id` também era
+sequencial sem lacunas (`1:24`) — o código nunca verificava essa
+coincidência, só contava com ela.
+
+O problema fica invisível enquanto os dados não mudam de formato. Mas
+qualquer filtro, reordenação ou remoção de linha antes de montar o
+`data.json` quebraria essa coincidência silenciosamente: o `group` do
+`ggplot2` reflete a ordem interna dele, não necessariamente a ordem ou os
+valores da coluna `id` depois de qualquer manipulação. A correção foi
+parar de depender da coincidência e gerar `id` explicitamente como
+`seq_len(nrow(dados))` logo antes de montar o `data.json` — garantindo por
+construção, não por acaso, que o índice usado para casar cor com bolha
+sempre bate com a ordem que o `ggplot_build()` está de fato usando.
