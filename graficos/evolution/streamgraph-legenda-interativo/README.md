@@ -5,6 +5,8 @@ date: 2026-07-22
 source: "https://r-graph-gallery.com/156-interactive-streamgraph-with-legend.html"
 interactive: true
 resumo: "Áreas empilhadas que fluem em torno de um eixo central, mostrando como a composição de um total mudou ao longo do tempo."
+veredito_uso: "há muitas categorias e muitos pontos no tempo, e o interesse é o padrão geral — quem domina, quem surge, quem some."
+veredito_evita: "o leitor precisa ler valores exatos, a soma importa, ou há só duas ou três categorias."
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "3 colunas — tempo, categoria e valor (uma linha por combinação)"
 nivel: intermediário
@@ -29,11 +31,14 @@ o padrão geral — quais faixas dominam, quais surgem do nada, quais desaparece
 linha de base flutuante reduz as distorções de forma que atrapalham as áreas
 empilhadas comuns.
 
-**Evite quando** o leitor precisar ler valores exatos: sem uma linha de base fixa,
-comparar espessuras de faixas em alturas diferentes é pouco confiável — o olho
-compara mal áreas que não compartilham a mesma origem. Também evite se as
-categorias forem poucas (duas ou três): um gráfico de linhas comunica melhor. E
-como o total não fica visível como um número, não use quando a soma importar.
+**Evite quando** o leitor precisar ler valores exatos: sem uma linha de base
+fixa, comparar espessuras de faixas em alturas diferentes é pouco confiável.
+
+<div class="pull-quote pull-quote-direita clearfix">o olho compara mal áreas que não compartilham a mesma origem</div>
+
+Também evite se as categorias forem poucas (duas ou três): um gráfico de
+linhas comunica melhor. E como o total não fica visível como um número, não
+use quando a soma importar.
 
 Essa fragilidade de leitura é justamente o motivo de a versão interativa valer a
 pena: o hover devolve o valor exato que a forma sozinha não entrega.
@@ -83,11 +88,9 @@ uniformes.
   `streamgraph` nunca foi publicado no CRAN. **Solução**: instalar do GitHub com
   `remotes::install_github("hrbrmstr/streamgraph")`.
 
-- **Problema**: salvar o widget falha reclamando de `pandoc`. **Por quê**: a opção
-  `selfcontained = TRUE` do `saveWidget()` depende do `pandoc` para embutir tudo
-  num arquivo só. **Solução**: usar `selfcontained = FALSE`. Isso cria uma pasta
-  `widget_files/` ao lado do HTML com as dependências (jquery, d3); as duas
-  precisam andar juntas ou o gráfico abre em branco.
+- **Problema**: salvar o widget falha reclamando de `pandoc`. **Solução**:
+  `selfcontained = FALSE` — mas isso tem uma consequência que passou batida
+  na primeira tentativa; a história completa está em "Notas do coletor".
 
 - **Problema**: dois avisos aparecem ao rodar o script
   (`streamgraph_html returned an object of class 'list'` e `bindFillRole() only
@@ -109,3 +112,41 @@ uniformes.
   bem mais legível.
 - Ordenar as faixas por momento de pico em vez de alfabeticamente, o que costuma
   revelar a narrativa temporal com mais clareza.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../area-receita-saas-ficticio" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Área sobreposta, empilhada e empilhada 100%</span>
+    <span class="parecido-razao">Mesma técnica (área empilhada), outra base: aqui a pilha centraliza pra ganhar fluidez, lá ela parte de zero pra manter o total legível.</span>
+  </a>
+  <a class="parecido-item" href="../../flow/alluvial-trajetoria-eleitoral" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Diagrama aluvial: trajetória de voto</span>
+    <span class="parecido-razao">A mesma pergunta — como a composição de um total muda — respondida entre categorias discretas (de/para) em vez de continuamente ao longo do tempo.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+`selfcontained = FALSE` resolveu o erro de `pandoc` na hora de salvar o
+widget, mas criou um problema que só apareceu depois, no site publicado:
+o gráfico abria em branco, sem erro nenhum no console além de alguns 404
+silenciosos na aba de rede. Faltavam os arquivos de `widget_files/` — a
+pasta que `saveWidget()` gera ao lado do `widget.html` com as dependências
+JS/CSS (d3, jquery) que o modo não-autocontido exige.
+
+A causa não estava neste gráfico — estava no script que publica os
+arquivos gerados no site (`sync-assets.mjs`), que só sabia copiar
+`output.png` e `widget.html`, os dois arquivos que todo gráfico anterior
+tinha. Nenhum gráfico até aqui tinha precisado de uma pasta de
+dependências extra, então ninguém tinha notado a lacuna. Este foi o
+primeiro gráfico do acervo a usar `selfcontained = FALSE` de verdade, e
+por isso o primeiro a expor o problema.
+
+A correção não ficou local a este gráfico: o script de sincronização
+ganhou uma lista de diretórios de asset (`ASSET_DIRS`) copiados
+recursivamente, não só os dois arquivos fixos — resolvendo não só este
+caso, mas qualquer gráfico futuro que também viesse a precisar de uma
+pasta de dependências ao lado do widget.
