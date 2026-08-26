@@ -26,40 +26,39 @@ blocos escuros ao longo da diagonal quando a ordem das linhas é adequada.
 
 ## Quando usar (e quando evitar)
 
-**Use quando** a rede for densa. É exatamente onde o diagrama de nós fracassa:
-a partir de algumas centenas de arestas ele vira uma bola de fios em que nada é
-distinguível — o problema que a [rede densa (hairball)](../rede-densa-hairball)
-deste acervo mostra de propósito. Uma matriz não tem esse limite: com muitas ou
-poucas arestas, cada célula continua ocupando o mesmo espaço e sendo legível.
+**Use quando** a rede for densa — é onde o [diagrama de nós](../rede-densa-hairball)
+deste acervo fracassa de propósito: centenas de arestas viram uma bola de fios
+ilegível. A matriz não tem esse limite — cada célula ocupa sempre o mesmo
+espaço, com muitas ou poucas arestas.
 
-**Evite quando** a pergunta for sobre **caminhos**. "Como chego de A até C?",
-"esse nó é uma ponte entre dois grupos?", "existe um circuito aqui?" — tudo isso
-é imediato num diagrama de nós e praticamente impossível numa matriz, onde
-seguir um caminho exige pular de linha em coluna repetidamente.
+**Evite quando** a pergunta for sobre **caminhos**: "como chego de A até C?",
+"esse nó é uma ponte entre dois grupos?". Isso é imediato num diagrama de nós
+e quase impossível numa matriz, que exige pular de linha em coluna
+repetidamente pra seguir um caminho.
 
-A escolha, portanto, não é sobre gosto: **matriz para densidade e blocos,
-diagrama de nós para caminhos e topologia**. Redes pequenas e esparsas quase
-sempre ficam melhores como diagrama.
+Resumindo: **matriz para densidade e blocos, diagrama de nós para caminhos e
+topologia**.
 
-Um limite prático: a matriz cresce ao quadrado. Com 40 nós já são 1.600 células,
-e os rótulos deixam de caber muito antes disso.
+- Redes pequenas e esparsas quase sempre ficam melhores como diagrama.
+- A matriz cresce ao quadrado — com 40 nós já são 1.600 células, e os rótulos
+  param de caber bem antes disso.
 
 ## Que dados você precisa
 
 - **uma matriz quadrada de pesos** — nós nas linhas e nas colunas, e em cada
   célula a força da ligação (zero quando não há ligação)
 
-Se o dado vier como lista de arestas (`origem`, `destino`, `peso`) — que é o
-formato usual — basta preencher uma matriz vazia a partir dela.
+Se o dado vier como lista de arestas (`origem`, `destino`, `peso`) — o formato
+usual — basta preencher uma matriz vazia a partir dela.
 
-Para uma rede **não direcionada**, a matriz é simétrica: o valor de A×B é o
-mesmo de B×A, e metade do desenho é redundante. Numa rede **direcionada** os
-dois triângulos carregam informações diferentes, e a matriz inteira é
-necessária.
+- **Rede não direcionada**: a matriz é simétrica (A×B = B×A) — metade do
+  desenho é redundante.
+- **Rede direcionada**: os dois triângulos carregam informações diferentes —
+  a matriz inteira é necessária.
 
-A diagonal costuma ficar vazia: um nó não se liga a si mesmo, e preencher essa
-célula com o total do nó distorceria a escala de cor, porque esse número não é
-comparável aos demais.
+A diagonal costuma ficar vazia: um nó não se liga a si mesmo, e o total do nó
+não é comparável aos demais valores, então preenchê-la distorceria a escala de
+cor.
 
 ## Como ler o gráfico
 
@@ -78,44 +77,38 @@ que os pares formam juntos:
   diferentes. Costumam ser o achado mais interessante do gráfico.
 - **Simetria em torno da diagonal**: confirma que a rede é não direcionada.
 
-A coisa mais importante de entender é que **a matriz não tem uma ordem natural**.
+A coisa mais importante de entender: **a matriz não tem uma ordem natural**.
 Trocar a ordem das linhas e colunas não muda nenhum número, mas muda
-completamente o que se enxerga: agrupadas por afinidade, as comunidades saltam
-como blocos; em ordem alfabética, os mesmos valores viram um chuvisco sem
-padrão. Escolher a ordem é o equivalente, aqui, a escolher o layout num diagrama
-de nós — e é por isso que a versão interativa desta página deixa trocar entre
-elas.
+completamente o que se enxerga — agrupadas por afinidade, as comunidades
+saltam como blocos; em ordem alfabética, os mesmos valores viram um chuvisco
+sem padrão. Escolher a ordem aqui é o equivalente a escolher o layout num
+diagrama de nós, e é por isso que a versão interativa deixa trocar entre elas.
 
 ## Como foi feito
 
-A matriz é montada com `geom_tile()` sobre um quadro de dados em formato longo
-(uma linha por célula, com `expand.grid()`), e `coord_fixed()` garante células
-quadradas independentemente das proporções da figura.
+**Células**: `geom_tile()` sobre um quadro de dados em formato longo (uma
+linha por célula, via `expand.grid()`), com `coord_fixed()` pra manter as
+células quadradas independentemente da proporção da figura.
 
-As cores são calculadas à mão com `colorRampPalette()` e aplicadas via
-`scale_fill_identity()`, em vez de deixar o `ggplot2` mapear os valores com
-`scale_fill_gradientn()`. O motivo é a paridade com a versão interativa: a cor
-de cada célula é exportada junto com o dado, e as duas versões do gráfico leem
-exatamente o mesmo valor. A contrapartida é que `scale_fill_identity()` não
-gera legenda nenhuma — ela é desenhada como um segundo gráfico, uma faixa de
-tiles da mesma rampa, composta abaixo com `patchwork`.
+**Cor**: calculada à mão com `colorRampPalette()` e aplicada via
+`scale_fill_identity()`, em vez de deixar o `ggplot2` mapear os valores —
+assim a versão interativa recebe a cor pronta, sem calcular a própria (a
+história completa está em "Notas do coletor"). Sem legenda automática,
+então ela é desenhada como um segundo gráfico — uma faixa de tiles da mesma
+rampa, composta abaixo com `patchwork`.
 
-As linhas que separam os grupos são `geom_vline()`/`geom_hline()` posicionadas
-nas fronteiras acumuladas dos grupos. Sem elas o leitor precisa descobrir
-sozinho onde um bloco termina e o outro começa.
+**Divisórias**: `geom_vline()`/`geom_hline()` nas fronteiras acumuladas dos
+grupos, pra ninguém ter que descobrir sozinho onde um bloco termina.
 
-Dados fictícios: coocorrência de 16 tags num fórum de tecnologia, construída a
-partir de quatro grupos de quatro tags, com pesos altos dentro de cada grupo e
-baixos entre grupos, mais algumas pontes postas à mão. São essas pontes que
-impedem a matriz de virar quatro blocos perfeitamente isolados — bonito e
-irreal.
+**Dado fictício**: coocorrência de 16 tags num fórum de tecnologia — quatro
+grupos de quatro tags, pesos altos dentro do grupo e baixos entre grupos, mais
+algumas pontes postas à mão. São essas pontes que impedem a matriz de virar
+quatro blocos perfeitamente isolados — bonito e irreal.
 
-Na versão interativa, além de trocar a ordem das linhas com as células
-deslizando para as novas posições, passar o cursor sobre uma célula acende a
-linha e a coluna dela inteiras, o que resolve o maior incômodo prático de ler
-uma matriz grande: descobrir a que par uma célula no meio da grade corresponde.
-Há também um modo que esconde metade da matriz, tornando visível a redundância
-da simetria.
+**Na versão interativa**: passar o cursor sobre uma célula acende a linha e a
+coluna inteiras — resolve o maior incômodo de ler uma matriz grande, achar a
+que par uma célula no meio da grade corresponde. Um modo esconde metade da
+matriz, tornando visível a redundância da simetria.
 
 ## Possíveis problemas pelo caminho
 
@@ -167,22 +160,18 @@ da simetria.
 
 ## Notas do coletor
 
-A primeira versão deste gráfico calculava a cor duas vezes: uma em R, com
-`colorRampPalette()`, pra imagem estática; outra em D3, com seu próprio
-interpolador, pra versão interativa. As duas liam a mesma matriz de pesos e
-deveriam sair idênticas — e saíam visivelmente diferentes lado a lado, apesar
-de usarem os mesmos dois extremos da rampa.
+A primeira versão calculava a cor duas vezes: uma em R (`colorRampPalette()`),
+outra em D3, cada uma com seu próprio interpolador. As duas liam a mesma
+matriz de pesos e deveriam sair idênticas — saíram visivelmente diferentes
+lado a lado, mesmo usando os mesmos dois extremos da rampa.
 
-O motivo é que "interpolar entre duas cores" não é uma operação com resposta
-única: `colorRampPalette()` interpola em RGB, e o interpolador de cor padrão
-do D3 interpola em Lab. Os extremos batem, mas os tons do meio da rampa —
-exatamente onde caem a maioria dos pesos médios da rede — divergem, porque os
-dois espaços de cor não são uma transformação linear um do outro.
+O motivo: interpolar entre duas cores não tem resposta única.
+`colorRampPalette()` interpola em RGB; o D3 interpola em Lab por padrão. Os
+extremos batem, mas os tons do meio — onde caem a maioria dos pesos da rede —
+divergem, porque os dois espaços de cor não são uma transformação linear um
+do outro.
 
-A correção não foi escolher "o interpolador certo" (nenhum dos dois é mais
-certo que o outro) — foi parar de ter dois cálculos. A cor de cada célula
-passou a ser calculada uma única vez, em R, e exportada junto com o resto do
-dado no `data.json`; tanto o `ggplot2` quanto o D3 passaram a só pintar o
-valor que receberam, nunca a decidir a cor sozinhos. Isso virou o padrão pra
-qualquer gráfico deste acervo que tenha as duas versões: a cor nasce uma vez,
-no R, e viaja como dado.
+A correção não foi escolher "o interpolador certo" — nenhum dos dois é mais
+certo. Foi parar de calcular duas vezes: a cor de cada célula nasce uma única
+vez, em R, e viaja pronta no `data.json`. `ggplot2` e D3 só pintam o valor que
+recebem. Virou o padrão do acervo pra qualquer gráfico com duas versões.
