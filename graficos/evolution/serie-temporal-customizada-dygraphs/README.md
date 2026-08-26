@@ -5,6 +5,8 @@ date: 2026-07-24
 source: "https://r-graph-gallery.com/318-custom-dygraphs-time-series-example.html"
 interactive: true
 resumo: "Série temporal longa com faixa de seleção de intervalo, média móvel ajustável e leitura de valores ponto a ponto."
+veredito_uso: "a série tem centenas/milhares de pontos e o leitor precisa circular entre panorama e detalhe."
+veredito_evita: "a série é curta (dezenas de pontos) — um gráfico de linhas estático já mostra tudo, os controles só atrapalham."
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "uma série temporal — datas e valores correspondentes"
 nivel: intermediário
@@ -40,7 +42,10 @@ linhas estático mostra tudo de uma vez e os controles só atrapalham. Evite
 também quando o destino for impressão, e quando houver muitas séries
 sobrepostas (a técnica é mais forte com uma ou poucas).
 
-**Cuidado com a média móvel**: ela é ferramenta de exploração, não conclusão.
+**Cuidado com a média móvel**:
+
+<div class="pull-quote">ela é ferramenta de exploração, não conclusão</div>
+
 Um período de suavização escolhido de forma conveniente pode fazer qualquer
 tendência parecer existir ou desaparecer.
 
@@ -96,11 +101,11 @@ range visível, mas isso faria a curva mudar de forma a cada arrasto, o que
 divergiria da leitura "mapa fixo, recorte só no tempo" que a faixa inferior
 promete.
 
-**Cuidado de fuso horário**: como o eixo é temporal, o mesmo problema já visto
-em outro gráfico de série deste acervo se repete aqui — `d3.scaleUtc()` no
-lugar de `d3.scaleTime()`, e todo `toLocaleDateString()` (tooltip, eixo)
-com `timeZone: 'UTC'` explícito, porque as datas do `data.json` chegam no
-formato `AAAA-MM-DD`, que o JavaScript interpreta como meia-noite UTC.
+**Cuidado de fuso horário**: `d3.scaleUtc()` no lugar de `d3.scaleTime()`, e
+todo `toLocaleDateString()` com `timeZone: 'UTC'` explícito — o mesmo par de
+correções contado em detalhe nas "Notas do coletor" da [linha interativa com
+4 tratamentos](../linha-interativa-ggiraph-css) deste acervo, que hoje vive
+num helper compartilhado (`shared/cartesiano.ts`) em vez de reescrito aqui.
 
 Dados fictícios: 300 dias de downloads de um aplicativo (`set.seed(1907)`),
 combinando tendência de crescimento, sazonalidade semanal com picos no fim de
@@ -124,10 +129,10 @@ revelar.
   esperado — dê duplo clique no gráfico pra voltar ao intervalo inteiro.
 
 - **Problema**: o eixo de tempo aparece com datas erradas ou deslocadas.
-  **Por quê**: fuso horário — sem `scaleUtc()`/`timeZone: 'UTC'` explícitos, o
-  navegador interpreta a meia-noite UTC da data no fuso local e pode mostrar o
-  dia (ou mês) anterior. **Solução**: usar `d3.scaleUtc()` para a escala e
-  `timeZone: 'UTC'` em todo `toLocaleDateString()`.
+  **Solução**: `d3.scaleUtc()` para a escala e `timeZone: 'UTC'` em todo
+  `toLocaleDateString()` — mesmo padrão hoje centralizado em
+  `shared/cartesiano.ts`, com a história completa nas "Notas do coletor" da
+  [linha interativa com 4 tratamentos](../linha-interativa-ggiraph-css).
 
 - **Problema**: o gráfico fica lento com séries muito longas. **Por quê**:
   cada ponto vira um vértice desenhado no navegador, e o recorte de intervalo
@@ -146,3 +151,42 @@ revelar.
   quando houver intervalo estimado.
 - Abrir o gráfico já com um intervalo inicial diferente do completo, movendo o
   brush programaticamente pra uma seleção pronta assim que o gráfico monta.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../linha-interativa-ggiraph-css" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Linha interativa com 4 tratamentos de destaque</span>
+    <span class="parecido-razao">Mesma técnica de base e o mesmo par de pegadinhas de fuso horário — os dois compartilham o helper que evita esse bug.</span>
+  </a>
+  <a class="parecido-item" href="../dispersao-conectada-streaming" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Dispersão conectada: preço x assinantes</span>
+    <span class="parecido-razao">O oposto direto: quando a pergunta não é sobre uma série ao longo do tempo, mas sobre como a RELAÇÃO entre duas variáveis muda de regime.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Testar o `d3.brushX()` da faixa de seleção sem um navegador de verdade
+parecia impossível de automatizar — arrastar as bordas do brush é uma
+interação contínua de mouse, o tipo de coisa que normalmente exige um
+Chrome real controlado por CDP.
+
+Mas `d3.brushX()` reage a eventos `mousedown`/`mousemove`/`mouseup` de
+verdade, ao contrário do `d3.drag()` usado em outros gráficos deste acervo
+(que escuta especificamente `mousedown.drag` e ignora eventos de ponteiro
+sintéticos). Isso significa que despachar um `MouseEvent` sintético —
+`dispatchEvent(new MouseEvent('mousedown', {clientX, clientY, buttons: 1,
+bubbles: true}))`, seguido de `mousemove` e `mouseup` — aciona o brush e
+atualiza a seleção normalmente, sem precisar de um navegador controlado de
+verdade.
+
+A condição pra isso funcionar: o redesenho disparado pelo evento
+`brush`/`end` precisa ser uma atualização de atributo síncrona, sem
+`.transition()` nem `requestAnimationFrame()` no meio — do contrário cai na
+mesma limitação de composição de frame que afeta verificação de zoom/força
+noutros gráficos. Útil de lembrar: nem toda interação D3 tem o mesmo custo
+de verificação, e vale checar qual mecanismo de evento cada uma usa antes
+de assumir que só dá pra testar com um navegador real.
