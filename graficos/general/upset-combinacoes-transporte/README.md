@@ -5,6 +5,8 @@ date: 2026-08-26
 source: "https://r-graph-gallery.com/upset-plot.html"
 interactive: true
 resumo: "Quais meios de transporte as pessoas usam juntos — um gráfico feito para conjuntos que se sobrepõem, onde um diagrama de Venn já não caberia."
+veredito_uso: "as categorias não são mutuamente exclusivas, e a pergunta é sobre as combinações."
+veredito_evita: "as categorias são exclusivas (cada indivíduo pertence a exatamente uma) — um gráfico de barras comum resolve melhor."
 pacotes: ["ggplot2", "patchwork"]
 dados: "1 matriz de presença/ausência (uma linha por indivíduo, uma coluna por conjunto)"
 nivel: intermediário
@@ -56,8 +58,9 @@ raras.
 ## Como ler o gráfico
 
 - **Barra de cima**: quantos indivíduos formam **aquela combinação exata** — e
-  só ela. A primeira barra deste gráfico é "só carro", não "todos que usam
-  carro".
+  só ela.
+
+<div class="pull-quote">a primeira barra deste gráfico é "só carro", não "todos que usam carro"</div>
 - **Pontos escuros na coluna abaixo da barra**: quais meios aquela combinação
   reúne. Pontos claros são ausência.
 - **Linha ligando os pontos**: junta os pontos de uma mesma combinação, para
@@ -137,3 +140,41 @@ ou agrupadas pelo meio principal, e clicar para fixar o destaque.
 - Com poucos conjuntos (dois ou três) e público não técnico, um diagrama de Venn
   continua sendo mais imediato — vale medir o custo de explicação antes de
   escolher.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../part-of-whole/rosca-alocacao-tempo" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Rosca de alocação de tempo</span>
+    <span class="parecido-razao">O oposto direto: categorias mutuamente exclusivas que somam 100% de um todo — exatamente o tipo de dado que NÃO pode virar UpSet nem o contrário.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Combinações maiores — trajetos que reuniam quatro ou cinco meios de
+transporte — simplesmente não apareciam certas na versão interativa,
+mesmo com a barra de cima mostrando o tamanho certo. O teste
+`membros.includes("Carro")` em D3 se comportava de um jeito estranho:
+funcionava para a maioria das combinações e falhava silenciosamente pras
+menores, as de um meio só.
+
+A causa estava na exportação, não no D3. `jsonlite::write_json(...,
+auto_unbox = TRUE)` — usado em todo `script.R` deste acervo, pra que
+listas de um elemento só saiam como o próprio valor em vez de um array de
+um item — tem um efeito colateral quando o "elemento único" é justamente
+uma lista de membros com um item: uma combinação de transporte só ("Carro"
+sozinho) virava a **string** `"Carro"` no `data.json`, não o **array**
+`["Carro"]`. `membros.includes("C")` nessa string dá `true` só por acaso
+(porque "C" é uma letra dela), `membros.length` devolve o número de
+letras, e qualquer `.map()` percorre caracteres em vez de itens.
+
+A correção foi envolver o vetor em `I()` antes de exportar
+(`membros = I(vetor)`), que marca explicitamente o valor como array e
+vence o comportamento padrão do `auto_unbox`. A lição generaliza pra
+qualquer gráfico deste acervo com listas de tamanho variável no dado: vale
+sempre abrir o `data.json` gerado e conferir especificamente os casos de
+tamanho 1 — são esses que o `auto_unbox` desmonta sem avisar, e o JSON
+continua perfeitamente válido, só com uma estrutura diferente da
+esperada.
