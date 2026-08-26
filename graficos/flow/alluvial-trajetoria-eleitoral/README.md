@@ -5,6 +5,8 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/alluvial-diagram-ggalluvial.html"
 interactive: true
 resumo: "O mesmo grupo de eleitores acompanhado em três eleições seguidas, mostrando quantos ficaram no mesmo bloco e quantos migraram entre eles."
+veredito_uso: "a mesma unidade é medida em mais de um momento, e o trajeto individual entre categorias importa tanto quanto os totais."
+veredito_evita: "as colunas não representam a mesma unidade ao longo do tempo, ou há mais de 5-6 categorias por coluna."
 pacotes: ["ggalluvial", "ggplot2", "dplyr", "jsonlite", "d3", "d3-sankey"]
 dados: "3 variáveis categóricas (o bloco em cada eleição) medidas na mesma unidade + 1 numérica (quantidade de eleitores em cada combinação)"
 nivel: intermediário
@@ -114,12 +116,9 @@ grossos que trajetos de migração rara. Paleta `RColorBrewer::brewer.pal(4,
   mesmo rótulo ou não).
 
 - **Problema**: rótulos com acento (nomes de bloco, "Eleição") saíam
-  corrompidos no `data.json` gerado. **Por quê**: o ambiente rodava o R sob
-  locale `C`/`POSIX`, que não é UTF-8, então caracteres multibyte eram
-  reinterpretados byte a byte na exportação. **Solução**: rodar o `Rscript`
-  com uma variável de ambiente de locale UTF-8 explícita (`LC_ALL=C.UTF-8`) —
-  vale conferir em qualquer gráfico novo com acentuação se o `data.json`
-  sair com texto estranho, mesmo sem nenhum erro no console do R.
+  corrompidos no `data.json` gerado. **Solução**: rode o `Rscript` com locale
+  UTF-8 explícito (`LC_ALL=C.UTF-8`) — a história completa está em "Notas do
+  coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -134,3 +133,42 @@ grossos que trajetos de migração rara. Paleta `RColorBrewer::brewer.pal(4,
 - Trocar o identificador de trajeto fictício (eleições) por qualquer outra
   sequência categórica repetida na mesma unidade — estágios de funil,
   planos de assinatura, categorias de risco de crédito ao longo de meses.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Sankey diagram simplificado</span>
+    <span class="parecido-razao">Mesma técnica por baixo dos panos — um diagrama aluvial de eixos discretos é um Sankey em várias colunas — mas sem a restrição de "mesma unidade repetida", livre pra ligar categorias de naturezas diferentes.</span>
+  </a>
+  <a class="parecido-item" href="../../evolution/streamgraph-legenda-interativo" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Streamgraph interativo com legenda</span>
+    <span class="parecido-razao">A mesma pergunta — como a composição de um total muda — respondida continuamente ao longo do tempo em vez de entre categorias discretas (de/para).</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Os nomes dos blocos ("Esquerda", "Centro", "Direita") e o próprio título
+"Eleição" saíam corrompidos no `data.json` — não um caractere estranho
+isolado, o texto inteiro virava ruído a partir do primeiro acento. Nenhum
+erro, nenhum aviso no console do R. O script rodava, gerava o arquivo, e o
+arquivo simplesmente tinha lixo onde deveria ter "Eleição".
+
+Esta foi a primeira sessão deste projeto rodando num ambiente Linux, em vez
+de uma das máquinas Windows já usadas antes — e o motivo apareceu aí:
+`Rscript` nasce com o locale em `POSIX`/`C` por padrão nesse tipo de
+ambiente, que não é UTF-8. Uma string acentuada, codificada em UTF-8 de
+verdade pelo R internamente, é reinterpretada **byte a byte** como se fosse
+outra coisa na hora de escrever no arquivo — os bytes continuam
+tecnicamente corretos, só a interpretação deles muda no meio do caminho,
+silenciosamente.
+
+A correção foi rodar o script com `LANG=C.UTF-8 LC_ALL=C.UTF-8` explícitos
+— um locale UTF-8 que já vem disponível no sistema, sem precisar instalar
+nada. Virou hábito depois disso: qualquer gráfico novo com acentuação tem o
+`data.json` conferido de propósito (abrir com `json.load` e imprimir um
+campo acentuado), porque esse tipo de corrupção nunca aparece como erro —
+só como texto errado que passaria despercebido numa checagem rápida.
