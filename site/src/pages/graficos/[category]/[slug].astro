@@ -188,7 +188,15 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 
   .veredito li span {
     font-family: var(--font-mono);
-    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  .veredito-uso span {
+    color: color-mix(in oklch, var(--cat-ink) 70%, var(--color-ink));
+  }
+
+  .veredito-evita span {
+    color: var(--paper-margin);
   }
 
   .head {
@@ -414,6 +422,80 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     border-top: 1px dashed var(--color-border-strong);
   }
 
+  /* "Como ler o gráfico" — legenda de swatches, quando o README escreve a
+     seção com essas classes (HTML cru dentro do Markdown) em vez de bullets
+     comuns. Mesmo vocabulário visual de .viz-legenda/.viz-swatch da versão
+     interativa. */
+  .notes :global(.legenda-swatches) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    max-width: var(--measure);
+    margin-top: var(--space-xs);
+  }
+
+  .notes :global(.legenda-swatches > div) {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: var(--text-sm);
+  }
+
+  .notes :global(.legenda-swatches .swatch) {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    border-radius: 2px;
+    flex: none;
+  }
+
+  /* "Gráficos parecidos" — cada link vira um cartão, com a cor do link
+     emprestada da categoria de destino (--cat-link/--cat-link-ink, definidas
+     inline no próprio README por gráfico). */
+  .notes :global(.parecidos-lista) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    max-width: var(--measure);
+    margin-top: var(--space-xs);
+  }
+
+  .notes :global(.parecido-item) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: var(--space-sm) var(--space-sm);
+    background: var(--paper-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--cat-link, var(--color-border-strong));
+    text-decoration: none;
+    transition: background var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .notes :global(.parecido-item:hover) {
+    background: var(--paper);
+  }
+
+  .notes :global(.parecido-cat) {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--cat-link-ink, var(--color-ink-muted));
+  }
+
+  .notes :global(.parecido-titulo) {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-ink);
+    font-size: var(--text-base);
+  }
+
+  .notes :global(.parecido-razao) {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
   .notes :global(.bastidor-carimbo) {
     display: inline-block;
     margin-bottom: var(--space-sm);
@@ -428,9 +510,26 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   }
 
   .notes :global(.bastidor-card) {
+    position: relative;
     padding: var(--space-md);
     background: var(--tag-stock);
     border: 1px solid color-mix(in oklch, var(--tag-stock) 60%, black 12%);
+  }
+
+  .notes :global(.bastidor-card)::before {
+    content: '';
+    position: absolute;
+    top: -0.5rem;
+    right: 1.5rem;
+    width: 2.6rem;
+    height: 1rem;
+    background: linear-gradient(
+      100deg,
+      color-mix(in oklch, var(--cat) 76%, transparent) 0%,
+      color-mix(in oklch, var(--cat) 58%, transparent) 100%
+    );
+    transform: rotate(6deg);
+    box-shadow: 0 2px 5px oklch(0.2 0.02 255 / 0.2);
   }
 
   .notes :global(.bastidor-card > :first-child) {
