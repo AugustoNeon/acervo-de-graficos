@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/wordcloud.html"
 interactive: true
 resumo: "46 termos fictícios extraídos de avaliações de um app bancário, com o tamanho de cada palavra pela frequência de menção."
+veredito_uso: "o objetivo é uma impressão geral rápida e informal de um texto — feedback de usuários, respostas abertas — não precisão de leitura."
+veredito_evita: "a comparação exata entre frequências importa, ou o texto não foi normalizado antes (plural/singular, maiúsculas, palavras de função)."
 pacotes: ["wordcloud"]
 dados: "1 variável textual (palavra) + 1 numérica (frequência)"
 nivel: básico
@@ -19,6 +21,8 @@ ela aparece num texto ou conjunto de textos). **Para que serve**: dar uma
 primeira impressão rápida de quais termos dominam um corpo de texto — é
 essencialmente um ranking (a pergunta é "quais palavras aparecem mais"),
 só que lido pelo tamanho da fonte em vez de pela altura de uma barra.
+
+<div class="pull-quote pull-quote-direita clearfix">essencialmente um ranking, só que lido pelo tamanho da fonte em vez de pela altura de uma barra</div>
 
 ## Quando usar (e quando evitar)
 
@@ -96,12 +100,9 @@ num sentimento na legenda isola aquele grupo.
   cor pra cada palavra, mas a versão interativa colore as mesmas palavras
   de forma diferente — mesmo as duas estando "certas" isoladamente, a
   divergência lê como bug pra quem vê a miniatura antes de clicar.
-  **Por quê**: cada versão calculou sua própria paleta separadamente (uma
-  por frequência, outra por sentimento), sem garantir que as duas
-  concordassem. **Solução**: definir a paleta **uma única vez** (uma
-  variável no R) e alimentar tanto o `output.png` quanto o `data.json`
-  exportado com ela — nunca decidir a cor de cada versão de forma
-  independente, mesmo quando as duas usam bibliotecas diferentes.
+  **Por quê**: cada versão calculou sua própria paleta separadamente.
+  **Solução**: definir a paleta uma única vez — a história completa, e por
+  que esse é um padrão recorrente neste acervo, está em "Notas do coletor".
 - **Problema**: passar um vetor de cores do mesmo tamanho que as palavras
   pro `wordcloud()` não gera o resultado esperado — as cores saem
   embaralhadas ou aplicadas por faixa de frequência, não por palavra.
@@ -140,3 +141,42 @@ num sentimento na legenda isola aquele grupo.
 - Trocar o texto livre por n-gramas (pares ou trios de palavras, tipo "não
   funciona" ou "muito lento") em vez de palavras isoladas — captura frases
   com sentido próprio que uma palavra sozinha perde.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico: cinco variações</span>
+    <span class="parecido-razao">O substituto de mais precisão quando a comparação exata entre frequências importar: comprimento de barra em vez de área de texto.</span>
+  </a>
+  <a class="parecido-item" href="../../network/rede-densa-hairball" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede densa (hairball)</span>
+    <span class="parecido-razao">Outro gráfico deste acervo com o mesmo tipo de bug de paridade de cor entre a miniatura estática e a versão interativa — mesma causa raiz, dado bem diferente.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A cor de uma palavra divergindo entre `output.png` e o widget não foi um
+caso isolado deste gráfico — é um padrão que já apareceu em pelo menos
+três outros gráficos deste acervo, cada um com sua própria versão do
+mesmo erro de raiz: calcular a cor duas vezes, uma vez por implementação,
+em vez de calcular uma vez e reaproveitar. Aqui, especificamente, o
+`output.png` colore por `sentimento` (positivo/negativo/neutro) e a versão
+em D3 recebe seus próprios dados — bastaria um `hexadecimal` diferente
+escrito à mão num dos dois lados pra as cores nunca mais baterem, mesmo
+sem nenhum erro de execução em nenhuma das partes.
+
+A correção que se tornou padrão neste acervo, repetida gráfico após
+gráfico: a paleta nasce **uma única vez**, como uma variável no `script.R`
+— aqui, `cores_sentimento` — e alimenta tanto o `ggsave()` da miniatura
+quanto o `data.json` exportado pro D3. Nenhuma das duas implementações
+"decide" uma cor por conta própria; as duas leem do mesmo lugar. A lição
+generaliza bem além de nuvens de palavra: sempre que um dado é desenhado
+duas vezes, em duas linguagens ou bibliotecas diferentes, qualquer valor
+"derivado" dos dados brutos (cor, mas também poderia ser um layout ou uma
+escala) precisa ser calculado uma vez só e exportado pronto — nunca
+recalculado de forma independente dos dois lados, por mais que a fórmula
+pareça simples o bastante pra repetir sem risco.
