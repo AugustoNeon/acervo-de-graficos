@@ -88,12 +88,41 @@ A página tem duas zonas, nessa ordem — referência (tom de manual técnico, p
 | `## O que é` | referência | Definição do tipo de gráfico + para que serve (que pergunta responde) |
 | `## Quando usar (e quando evitar)` | referência | Cenários em que é a escolha certa, e em que engana/polui — com a alternativa |
 | `## Que dados você precisa` | referência | **Condicional**: só inclua quando houver nuance real de formato a explicar (matriz vs. lista de arestas, longo vs. largo). Se o campo `dados` da ficha técnica já resolve sozinho, omita a seção inteira. |
-| `## Como ler o gráfico` | referência | O que cada elemento visual codifica (posição, cor, tamanho) |
+| `## Como ler o gráfico` | referência | O que cada elemento visual codifica (posição, cor, tamanho). **Preferencialmente uma legenda de swatches** (ver abaixo) quando a leitura for principalmente por cor; bullets comuns quando não for (ex: gráfico sem canal de cor, ou cuja leitura é só de posição/forma). |
 | `## Como foi feito` | referência | Técnica, papel de cada pacote, decisões não óbvias, o que é dado fictício — só a técnica reaproveitável, não a história de como você chegou nela (isso é bastidor) |
 | `## Possíveis problemas pelo caminho` | referência | Armadilhas em formato **Problema / Por quê / Solução**, 1 item quando só há 1 de verdade — não force 3 pra preencher. Quando existir uma história mais rica por trás, aponte pra "Notas do coletor" em vez de contar ali. |
 | `## Variações possíveis` | referência | O que dá pra mudar dali (layout, agrupamento, interatividade, facets) — frases curtas, só a variação que precisa de explicação ganha parágrafo |
-| `## Gráficos parecidos` | referência | **Opcional, 1 a 3 links escolhidos à mão** pra outros espécimes do acervo, cada um com uma frase de razão — nunca escolha por tag em comum, isso não garante que os gráficos resolvem problemas parecidos. Dois tipos úteis: "o oposto direto" (resolveria o mesmo problema de outro jeito) e "mesma técnica, outro domínio" |
+| `## Gráficos parecidos` | referência | **Opcional, 1 a 3 links escolhidos à mão** pra outros espécimes do acervo — ver o formato de cartão abaixo. Nunca escolha por tag em comum, isso não garante que os gráficos resolvem problemas parecidos. Dois tipos úteis: "o oposto direto" (resolveria o mesmo problema de outro jeito) e "mesma técnica, outro domínio" |
 | `## Notas do coletor` | **bastidor** | **Opcional mas recomendada.** A história real de 1 decisão ou bug por gráfico, contada com intenção — não diário cru. Sempre a última seção do arquivo: é identificada em tempo de execução pelo texto exato do título, então precisa estar sozinha ao final, sem nenhuma seção depois dela. |
+
+### HTML cru dentro do README: legenda de swatches e cartões de "Gráficos parecidos"
+
+Markdown aceita HTML embutido, e o site repassa esse HTML sem escapar — duas seções usam isso pra ganhar um visual mais rico do que bullets/links comuns permitem. Copie o formato exato (as classes vêm do CSS de `[slug].astro`, não têm efeito nenhum se o nome não bater):
+
+```html
+## Como ler o gráfico
+
+<div class="legenda-swatches">
+  <div><span class="swatch" style="background:#COR_REAL"></span> Descrição curta do que essa cor significa</div>
+  <div><span class="swatch" style="background:#OUTRA_COR"></span> Outra faixa de valor</div>
+</div>
+```
+
+Use as cores **reais** da paleta do gráfico (as mesmas do `script.R`/`colorRampPalette`), não cores inventadas — 2 a 4 swatches costuma bastar. Pode continuar com prosa/bullets normais depois do bloco pra explicar padrões espaciais que a cor sozinha não cobre (blocos, manchas, simetria etc.).
+
+```html
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../slug-do-vizinho" style="--cat-link: var(--cat-CATEGORIA); --cat-link-ink: var(--cat-CATEGORIA-ink);">
+    <span class="parecido-cat">categoria</span>
+    <span class="parecido-titulo">Título exato do gráfico linkado</span>
+    <span class="parecido-razao">Frase dizendo por que esse é o "oposto direto" ou "mesma técnica, outro domínio".</span>
+  </a>
+</div>
+```
+
+`--cat-CATEGORIA`/`--cat-CATEGORIA-ink` são os tokens já definidos em `tokens.css` (`comparison`, `correlation`, `distribution`, `evolution`, `general`, `flow`, `map`, `network`, `part-of-whole`, `ranking`) — troque pela categoria do gráfico **linkado** (a borda colorida do cartão é a cor de destino, não a da página atual). Link relativo, mesma regra de sempre (`../slug` mesma categoria, `../../categoria/slug` categoria diferente).
 
 ### Regras de escrita
 
