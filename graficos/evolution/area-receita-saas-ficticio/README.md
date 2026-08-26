@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/136-stacked-area-chart.html"
 interactive: true
 resumo: "Como a receita mensal de um SaaS fictício, decomposta em 4 categorias de produto, evolui ao longo de 24 meses — em três leituras diferentes do mesmo dado."
+veredito_uso: "o total importa tanto quanto a composição (empilhada), ou só a proporção interessa (100%)."
+veredito_evita: "as categorias do meio da pilha precisam ser comparadas entre si com precisão — a base irregular distorce a leitura."
 pacotes: ["ggplot2", "dplyr", "patchwork", "RColorBrewer"]
 dados: "1 variável temporal (mês) + 1 categórica (categoria de produto) + 1 numérica (receita)"
 nivel: básico
@@ -27,10 +29,10 @@ neste gráfico com um seletor.
 **Use a versão sobreposta quando** quiser comparar a trajetória de cada
 categoria individualmente, sem se importar com o total. **Use a empilhada
 quando** o total importa tanto quanto a composição — a altura do topo da
-pilha já é a soma. **Use a 100% quando** só a proporção interessa, não o
-volume absoluto — ótima pra revelar uma mudança de mix que o volume total
-esconde (uma categoria pode crescer em volume e ainda assim perder
-participação, se as outras crescerem mais rápido).
+pilha já é a soma. **Use a 100% quando** só a proporção interessa, não o volume absoluto — ótima
+pra revelar uma mudança de mix que o volume total esconde.
+
+<div class="pull-quote pull-quote-direita clearfix">uma categoria pode crescer em volume e ainda assim perder participação</div>
 
 **Evite** a versão empilhada quando as categorias do meio da pilha
 precisam ser comparadas entre si com precisão — só a categoria da base tem
@@ -75,11 +77,8 @@ sobe, mas a fatia de "Consultoria" encolhe visivelmente enquanto a de
 "Marketplace" cresce.
 
 A versão interativa recalcula o mesmo empilhamento em D3 (`d3.stack()`, com
-`stackOffsetExpand` no estado percentual) e anima a transição entre os três
-estados interpolando a posição em **pixel** de cada ponto — não a posição em
-unidade de dado — porque os três estados usam escalas verticais com domínios
-diferentes; interpolar em pixel é o que permite uma área ir suavemente de
-"0 a 130" pra "45% a 100%" sem saltar no meio da transição.
+`stackOffsetExpand` no estado percentual). A transição entre os três estados
+tem um detalhe não óbvio — ver "Notas do coletor".
 
 ## Possíveis problemas pelo caminho
 
@@ -108,3 +107,35 @@ diferentes; interpolar em pixel é o que permite uma área ir suavemente de
   tempo de verdade, só de um eixo com ordem e continuidade.
 - Adicionar uma linha vertical de "hoje"/marco de referência cortando as
   áreas, útil quando parte da série é projeção e parte é realizado.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../comparison/pequenos-multiplos-receita-saas" style="--cat-link: var(--cat-comparison); --cat-link-ink: var(--cat-comparison-ink);">
+    <span class="parecido-cat">comparison</span>
+    <span class="parecido-titulo">Pequenos múltiplos: receita por categoria</span>
+    <span class="parecido-razao">O oposto direto, de propósito: o mesmo dado exato, lido painel por painel em vez de empilhado — ali é a trajetória de cada categoria, aqui é o total.</span>
+  </a>
+  <a class="parecido-item" href="../streamgraph-legenda-interativo" style="--cat-link: var(--cat-evolution); --cat-link-ink: var(--cat-evolution-ink);">
+    <span class="parecido-cat">evolution</span>
+    <span class="parecido-titulo">Streamgraph interativo com legenda</span>
+    <span class="parecido-razao">Mesma técnica (área empilhada), outra base: em vez de partir de zero, o streamgraph centraliza a pilha, trocando "total legível" por "forma mais orgânica".</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Animar a transição entre os três estados (sobreposta, empilhada, empilhada
+100%) diretamente pelos valores do dado não funciona: os três usam escalas
+verticais com domínios diferentes — a sobreposta e a empilhada vão de 0 até
+a soma em reais, a 100% vai sempre de 0 a 1. Interpolar em unidade de dado
+faria uma área "pular" no meio do caminho, porque o significado do número
+130 muda completamente de um estado pro outro.
+
+A correção foi interpolar em **pixel**, não em unidade de dado: cada ponto
+da área anima da sua posição vertical atual na tela até a nova posição na
+tela, já convertida pela escala de destino. A área vai suavemente de
+"ocupando de 0 a 130 pixels" pra "ocupando de 45% a 100% da altura
+disponível" sem nenhum salto, porque pixel é a única grandeza que os três
+estados compartilham de verdade — não importa o que o número representa,
+só onde ele cai na tela.
