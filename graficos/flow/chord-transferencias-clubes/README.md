@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/123-circular-plot-circlize-package-2.html"
 interactive: true
 resumo: "Transferências de jogadores entre clubes desenhadas como fitas ao redor de um círculo, com a espessura proporcional à quantidade e a cor indicando quem mandou o jogador."
+veredito_uso: "as categorias trocam entre si nos dois sentidos, e você quer comparar a intensidade de cada ligação de uma vez."
+veredito_evita: "há mais de 10-12 categorias, ou as relações são de mão única e sequenciais — aí um Sankey conta melhor."
 pacotes: ["circlize", "RColorBrewer", "jsonlite", "d3"]
 dados: "matriz quadrada (clube de origem × clube de destino), com a quantidade de jogadores em cada célula"
 nivel: avançado
@@ -17,8 +19,9 @@ Um diagrama de cordas dispõe um conjunto de categorias em volta de um círculo 
 liga cada par com uma fita cuja espessura é proporcional à quantidade que flui
 entre elas. **Para que serve**: responder "quem troca com quem, e quanto" quando
 as relações são **mútuas** — ao contrário do Sankey, que separa origem e destino
-em colunas diferentes, aqui todo mundo vive no mesmo círculo e pode mandar e
-receber ao mesmo tempo.
+em colunas diferentes.
+
+<div class="pull-quote">todo mundo vive no mesmo círculo e pode mandar e receber ao mesmo tempo</div>
 
 ## Quando usar (e quando evitar)
 
@@ -96,11 +99,9 @@ mundo na mesma janela.
   (interativo) — nunca deixar a direção implícita.
 
 - **Problema**: um clube que só recebe jogadores (nunca envia) fica com um
-  arco de comprimento zero, sumindo do círculo. **Por quê**: `d3.chord()` (a
-  versão não-direcionada) mede o tamanho de cada arco só pelo que **sai**
-  daquele nó. **Solução**: usar `d3.chordDirected()`, que mede o arco pela
-  soma de entrada **e** saída — o motivo desta versão interativa não usar o
-  gerador `chord()` padrão.
+  arco de comprimento zero, sumindo do círculo. **Solução**: use
+  `d3.chordDirected()`, não `d3.chord()` — a história completa está em
+  "Notas do coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -113,3 +114,40 @@ mundo na mesma janela.
   pequenas que atrapalham a leitura quando o número de categorias cresce.
 - Trocar por um Sankey quando o processo tiver estágios com direção única em
   vez de troca mútua entre as mesmas categorias.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+    <span class="parecido-cat">flow</span>
+    <span class="parecido-titulo">Sankey diagram simplificado</span>
+    <span class="parecido-razao">O oposto direto: quando o fluxo tem direção única e estágios em sequência, em vez de troca mútua entre as mesmas categorias.</span>
+  </a>
+  <a class="parecido-item" href="../network/rede-direcionada-ponderada" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+    <span class="parecido-cat">network</span>
+    <span class="parecido-titulo">Rede direcionada e ponderada (fluxo entre cidades)</span>
+    <span class="parecido-razao">Mesmo tipo de dado (fluxo direcionado e ponderado entre nós), lido como grafo de nós e arestas em vez de fitas ao redor de um círculo.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Um clube que só recebia jogadores, nunca enviava nenhum, simplesmente
+sumia do círculo — sem erro, sem aviso, o arco dele tinha comprimento
+zero. Não era um problema do dado: o clube realmente tinha volume de
+transferências, só não tinha nenhuma saindo dele naquela janela.
+
+O gerador padrão do D3 pra diagramas de corda, `d3.chord()`, foi desenhado
+pra matrizes **não-direcionadas** — ele mede o comprimento do arco de cada
+nó pela soma da linha da matriz, que neste dado representa só as
+transferências enviadas. Um clube com uma coluna cheia (muito recebido) e
+uma linha vazia (nada enviado) tem soma de linha zero, e o arco reflete
+isso literalmente: zero de comprimento, o nó desaparece do desenho mesmo
+participando ativamente do mercado.
+
+A correção foi trocar `d3.chord()` por `d3.chordDirected()` — parte do
+mesmo pacote `d3-chord`, mas que mede cada arco pela soma de **entrada e
+saída** juntas, tratando a matriz como o que ela é aqui: direcionada, não
+simétrica. Vale desconfiar sempre que um gerador de layout tiver uma
+variante "direcionada" ao lado da versão simples — a versão simples quase
+sempre assume simetria que o dado real não tem.
