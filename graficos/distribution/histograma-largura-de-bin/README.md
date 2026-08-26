@@ -5,6 +5,8 @@ date: 2026-08-20
 source: "https://r-graph-gallery.com/220-basic-ggplot2-histogram.html"
 interactive: true
 resumo: "Idade dos participantes de uma corrida de bairro fictícia, com um controle deslizante pro número de bins — mostra como poucos bins escondem os dois grupos etários e bins demais viram ruído."
+veredito_uso: "você quer entender a forma de UMA variável numérica antes de qualquer outra análise."
+veredito_evita: "precisa comparar várias categorias ao mesmo tempo — histogramas sobrepostos ficam ilegíveis rápido."
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável numérica contínua, uma observação por participante"
 nivel: básico
@@ -52,11 +54,12 @@ descreve uma distribuição só, não compara grupos.
   muda de forma quando você mexe no controle, só de escala (pra continuar do
   tamanho certo em relação ao eixo Y, que muda com o número de bins).
   Comparar a curva (fixa na forma) com as barras (que mudam) é o ponto do
-  gráfico: a curva mostra que só existe UMA distribuição por baixo, e as
-  barras são só uma forma, entre várias possíveis, de resumi-la.
+  gráfico.
 - **Controle deslizante**: arraste pra mudar o número de bins — poucos bins
   (esquerda) fundem os dois grupos etários numa forma só; muitos bins
   (direita) fragmentam os dados em ruído.
+
+<div class="pull-quote">as barras são só uma forma, entre várias possíveis, de resumir a mesma distribuição</div>
 
 Passe o cursor sobre uma barra pra ver a faixa de idade exata e quantos
 participantes caem nela.
@@ -77,11 +80,9 @@ depende do slider); o que muda a cada arrasto é só o fator que converte
 densidade em "contagem esperada por bin" (`densidade × n × largura do bin
 atual`), pra ela continuar na mesma escala do eixo Y.
 
-Ao contrário dos outros switchers deste acervo, as barras NÃO usam uma
-chave estável entre posições do slider — cada movimento troca completamente
-os limites de cada bin, então não existe "a mesma barra mudando de forma"
-pra preservar. As barras entram e saem pelo enter/exit comum do D3, indexadas
-por posição.
+Ao contrário dos outros switchers deste acervo, as barras não usam chave
+estável entre posições do slider — a história de por que está em "Notas do
+coletor".
 
 Dados fictícios: idade de 300 participantes de uma corrida de bairro
 fictícia (`set.seed(918)`), misturando de propósito uma categoria infantil
@@ -109,3 +110,42 @@ dois grupos só aparecem separados numa faixa intermediária de bins.
   vertical no controle, pra mostrar onde a heurística "recomendada" cairia.
 - Histograma + rug plot (marcas na base pra cada observação individual),
   útil quando a amostra é pequena o bastante pra não poluir.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../boxplot-classico" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Boxplot clássico: cinco variações</span>
+    <span class="parecido-razao">O oposto direto pra comparar grupos: o histograma mostra a forma de UMA distribuição em detalhe, o boxplot resume MUITAS de uma vez, perdendo forma pra ganhar comparabilidade.</span>
+  </a>
+  <a class="parecido-item" href="../ridgeline-avaliacoes-bairros" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+    <span class="parecido-cat">distribution</span>
+    <span class="parecido-titulo">Ridgeline plot</span>
+    <span class="parecido-razao">Mesma curva de densidade (literalmente o mesmo código, `shared/densidade.ts`), mas empilhada pra comparar vários grupos em vez de mostrar os bins de um só.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Todo outro gráfico deste acervo que tem um controle de estado (trocar
+ordem, alternar codificação) segue a mesma regra: cada elemento visual
+ganha uma chave estável, e o D3 anima a MUDANÇA daquele elemento — a mesma
+barra encolhendo, o mesmo ponto deslizando pra nova posição. É o que faz as
+transições parecerem contínuas em vez de a tela inteira piscar.
+
+Neste gráfico, tentar aplicar a mesma regra não fazia sentido. Mover o
+controle de número de bins muda os LIMITES de cada bin — a barra que hoje
+representa "20 aos 25 anos" pode não ter equivalente nenhum na próxima
+posição do slider, porque a faixa "20 aos 25" simplesmente deixa de existir
+quando o número de bins muda. Não existe "a mesma barra mudando de forma"
+pra animar, porque as barras de antes e depois nem descrevem a mesma
+pergunta.
+
+A solução foi aceitar isso: as barras entram e saem pelo enter/exit comum
+do D3, indexadas só por posição, sem chave estável nenhuma. A transição
+fica mais abrupta que nos outros switchers do site, mas de propósito — é
+a diferença real entre "o mesmo dado com uma codificação diferente" (onde
+a barra de antes tem um equivalente exato depois) e "uma reagregação do
+dado bruto" (onde não tem). Forçar continuidade visual aqui seria mentir
+sobre o que realmente mudou.
