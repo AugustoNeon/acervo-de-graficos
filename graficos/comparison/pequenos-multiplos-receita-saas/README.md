@@ -8,7 +8,7 @@ resumo: "A mesma evolução de receita mensal por categoria, lida painel por pai
 pacotes: ["ggplot2", "dplyr"]
 dados: "1 variável de tempo + 1 categórica + 1 numérica"
 nivel: básico
-tags: ["área", "facetas", "small multiples", "interativo"]
+tags: ["área", "facetas", "small multiples"]
 ---
 
 ## O que é

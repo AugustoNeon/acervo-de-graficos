@@ -8,7 +8,7 @@ resumo: "Bolhas posicionadas por coordenadas geográficas, com tamanho e cor pro
 pacotes: ["leaflet", "htmltools", "webshot2"]
 dados: "latitude, longitude e um valor numérico por ponto"
 nivel: básico
-tags: ["interativo", "geoespacial", "mapa"]
+tags: ["geoespacial", "mapa"]
 ---
 
 ## O que é

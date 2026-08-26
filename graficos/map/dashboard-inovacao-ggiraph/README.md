@@ -8,7 +8,7 @@ resumo: "Três gráficos diferentes ligados pela mesma chave: passar o mouse em 
 pacotes: ["sf", "spData", "dplyr", "patchwork", "jsonlite", "d3"]
 dados: "geometria por país + 2 variáveis numéricas"
 nivel: avançado
-tags: ["interativo", "geoespacial", "dashboard"]
+tags: ["geoespacial", "dashboard"]
 ---
 
 ## O que é

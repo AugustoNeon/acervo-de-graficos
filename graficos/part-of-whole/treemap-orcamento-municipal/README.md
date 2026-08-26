@@ -8,7 +8,7 @@ resumo: "Orçamento anual de uma prefeitura fictícia dividido em secretaria, pr
 pacotes: ["ggplot2", "treemapify", "RColorBrewer", "jsonlite", "d3"]
 dados: "hierarquia de 3 níveis (secretaria > programa > ação) + 1 valor numérico nas folhas"
 nivel: intermediário
-tags: ["interativo", "hierarquia", "zoom"]
+tags: ["hierarquia", "zoom"]
 ---
 
 ## O que é

@@ -8,7 +8,7 @@ resumo: "Fluxos entre estágios desenhados como faixas cuja espessura é proporc
 pacotes: ["networkD3", "jsonlite", "d3"]
 dados: "lista de nós + lista de ligações (origem, destino, valor)"
 nivel: intermediário
-tags: ["interativo", "fluxo", "rede"]
+tags: ["fluxo", "rede"]
 ---
 
 ## O que é

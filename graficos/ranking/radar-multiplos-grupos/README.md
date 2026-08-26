@@ -8,7 +8,7 @@ resumo: "Um polígono por personagem, um eixo por atributo — a forma do políg
 pacotes: ["fmsb", "RColorBrewer", "d3"]
 dados: "1 variável de identificação (grupo) + várias numéricas na mesma escala (uma por eixo)"
 nivel: básico
-tags: ["ranking", "comparação", "interativo"]
+tags: ["ranking", "comparação"]
 ---
 
 ## O que é

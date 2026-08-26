@@ -8,7 +8,7 @@ resumo: "O que acontece quando uma rede tem conexões demais: uma bola de linhas
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma lista de conexões (origem, destino)"
 nivel: intermediário
-tags: ["interativo", "rede", "armadilha"]
+tags: ["rede", "armadilha"]
 ---
 
 ## O que é

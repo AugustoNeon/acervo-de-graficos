@@ -8,7 +8,7 @@ resumo: "Grafo com layout dirigido por forças, em que os nós se organizam sozi
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "uma tabela de ligações com duas colunas: origem e destino"
 nivel: básico
-tags: ["interativo", "rede", "força"]
+tags: ["rede", "força"]
 ---
 
 ## O que é

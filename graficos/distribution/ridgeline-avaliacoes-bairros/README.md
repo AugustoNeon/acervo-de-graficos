@@ -8,7 +8,7 @@ resumo: "Distribuição de notas de avaliação em oito bairros fictícios, empi
 pacotes: ["ggplot2", "ggridges", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica (com várias observações por categoria) + 1 numérica contínua"
 nivel: intermediário
-tags: ["interativo", "densidade", "distribuição"]
+tags: ["densidade", "distribuição"]
 ---
 
 ## O que é

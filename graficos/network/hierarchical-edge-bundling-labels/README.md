@@ -8,7 +8,7 @@ resumo: "Conexões entre os itens de uma hierarquia, desenhadas como feixes curv
 pacotes: ["ggraph", "igraph", "tidyverse", "RColorBrewer", "jsonlite", "d3"]
 dados: "uma hierarquia (pai → filho) + uma lista de conexões entre as folhas"
 nivel: avançado
-tags: ["hierarquia", "rede", "circular", "interativo"]
+tags: ["hierarquia", "rede", "circular"]
 ---
 
 ## O que é

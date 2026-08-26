@@ -8,7 +8,7 @@ resumo: "Velocidade de download de cinco provedores de internet fictícios, com 
 pacotes: ["ggplot2", "dplyr", "forcats", "patchwork", "RColorBrewer", "ggdist", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica contínua, várias observações por categoria"
 nivel: intermediário
-tags: ["interativo", "distribuição", "densidade", "comparação"]
+tags: ["distribuição", "densidade", "comparação"]
 ---
 
 ## O que é

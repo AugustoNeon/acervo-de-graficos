@@ -8,7 +8,7 @@ resumo: "Idade dos participantes de uma corrida de bairro fictícia, com um cont
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável numérica contínua, uma observação por participante"
 nivel: básico
-tags: ["interativo", "distribuição"]
+tags: ["distribuição"]
 ---
 
 ## O que é

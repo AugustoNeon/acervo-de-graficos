@@ -8,7 +8,7 @@ resumo: "As mesmas seis barras se reorganizando entre básico, ordenado, horizon
 pacotes: ["ggplot2", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 variável categórica + 1 numérica, com duas métricas extras opcionais"
 nivel: básico
-tags: ["interativo", "comparação", "animação"]
+tags: ["comparação", "animação"]
 ---
 
 ## O que é

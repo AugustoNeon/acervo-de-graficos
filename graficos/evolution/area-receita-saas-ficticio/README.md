@@ -8,7 +8,7 @@ resumo: "Como a receita mensal de um SaaS fictício, decomposta em 4 categorias 
 pacotes: ["ggplot2", "dplyr", "patchwork", "RColorBrewer"]
 dados: "1 variável temporal (mês) + 1 categórica (categoria de produto) + 1 numérica (receita)"
 nivel: básico
-tags: ["interativo", "temporal", "composição"]
+tags: ["temporal", "composição"]
 ---
 
 ## O que é

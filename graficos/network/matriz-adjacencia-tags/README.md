@@ -8,7 +8,7 @@ resumo: "A mesma rede que um diagrama de nós desenharia, escrita como grade —
 pacotes: ["ggplot2", "patchwork"]
 dados: "1 matriz quadrada de pesos (ou uma lista de arestas com peso)"
 nivel: intermediário
-tags: ["rede", "matriz", "comunidades", "interativo"]
+tags: ["rede", "matriz", "comunidades"]
 ---
 
 ## O que é

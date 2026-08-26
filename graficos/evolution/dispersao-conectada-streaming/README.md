@@ -8,7 +8,7 @@ resumo: "Preço médio da assinatura e número de assinantes de um streaming fic
 pacotes: ["ggplot2", "ggrepel", "dplyr"]
 dados: "1 variável de tempo + 2 numéricas"
 nivel: intermediário
-tags: ["dispersão", "série temporal", "interativo"]
+tags: ["dispersão", "série temporal"]
 ---
 
 ## O que é

@@ -8,7 +8,7 @@ resumo: "O mesmo grupo de eleitores acompanhado em três eleições seguidas, mo
 pacotes: ["ggalluvial", "ggplot2", "dplyr", "jsonlite", "d3", "d3-sankey"]
 dados: "3 variáveis categóricas (o bloco em cada eleição) medidas na mesma unidade + 1 numérica (quantidade de eleitores em cada combinação)"
 nivel: intermediário
-tags: ["interativo", "fluxo", "série temporal categórica"]
+tags: ["fluxo", "série temporal categórica"]
 ---
 
 ## O que é

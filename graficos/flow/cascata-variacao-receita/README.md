@@ -8,7 +8,7 @@ resumo: "Como um total sai de um valor e chega a outro, parcela a parcela — ca
 pacotes: ["ggplot2"]
 dados: "1 variável categórica ordenada + 1 numérica com sinal (a parcela de cada etapa)"
 nivel: básico
-tags: ["cascata", "waterfall", "variação", "interativo"]
+tags: ["cascata", "waterfall", "variação"]
 ---
 
 ## O que é

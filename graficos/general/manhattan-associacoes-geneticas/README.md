@@ -8,7 +8,7 @@ resumo: "Milhares de marcadores genéticos testados contra um desfecho, organiza
 pacotes: ["ggplot2", "dplyr"]
 dados: "1 variável categórica (cromossomo) + 1 posicional + 1 numérica (p-valor)"
 nivel: intermediário
-tags: ["dispersão", "genômica", "interativo", "limiar de significância"]
+tags: ["dispersão", "genômica", "limiar de significância"]
 ---
 
 ## O que é

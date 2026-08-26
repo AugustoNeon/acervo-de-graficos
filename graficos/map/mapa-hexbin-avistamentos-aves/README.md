@@ -8,7 +8,7 @@ resumo: "Avistamentos de aves migratórias reportados no Brasil, agregados em c�
 pacotes: ["ggplot2", "maps", "hexbin", "sf", "rnaturalearthdata", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis numéricas de coordenada (longitude, latitude), uma linha por evento/observação"
 nivel: intermediário
-tags: ["interativo", "densidade", "hexbin"]
+tags: ["densidade", "hexbin"]
 ---
 
 ## O que é

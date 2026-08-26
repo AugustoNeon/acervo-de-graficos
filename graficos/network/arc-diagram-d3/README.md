@@ -8,7 +8,7 @@ resumo: "Rede com todos os nós alinhados numa única linha e as conexões desen
 pacotes: ["ggraph", "igraph", "jsonlite", "d3"]
 dados: "lista de nós (com grupo) + lista de conexões entre eles"
 nivel: avançado
-tags: ["interativo", "rede", "linear"]
+tags: ["rede", "linear"]
 ---
 
 ## O que é

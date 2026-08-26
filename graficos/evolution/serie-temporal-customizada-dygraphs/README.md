@@ -8,7 +8,7 @@ resumo: "Série temporal longa com faixa de seleção de intervalo, média móve
 pacotes: ["ggplot2", "jsonlite", "d3"]
 dados: "uma série temporal — datas e valores correspondentes"
 nivel: intermediário
-tags: ["interativo", "temporal", "série longa"]
+tags: ["temporal", "série longa"]
 ---
 
 ## O que é

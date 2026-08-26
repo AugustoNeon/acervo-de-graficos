@@ -8,7 +8,7 @@ resumo: "Preço x área construída de 300 imóveis fictícios, coloridos por ba
 pacotes: ["ggplot2", "dplyr", "patchwork", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis numéricas (uma em cada eixo) + 1 categórica opcional (cor)"
 nivel: básico
-tags: ["interativo", "correlação", "distribuição"]
+tags: ["correlação", "distribuição"]
 ---
 
 ## O que é

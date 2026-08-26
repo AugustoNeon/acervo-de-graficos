@@ -8,7 +8,7 @@ resumo: "46 termos fictícios extraídos de avaliações de um app bancário, co
 pacotes: ["wordcloud"]
 dados: "1 variável textual (palavra) + 1 numérica (frequência)"
 nivel: básico
-tags: ["interativo", "texto", "frequência"]
+tags: ["texto", "frequência"]
 ---
 
 ## O que é

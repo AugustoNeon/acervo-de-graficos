@@ -8,7 +8,7 @@ resumo: "Doze planetas fictícios avançando ano a ano — posição, tamanho e 
 pacotes: ["ggplot2", "RColorBrewer", "jsonlite", "d3"]
 dados: "1 identificador + 1 categórica (grupo) + 3 numéricas (2 de posição + 1 de tamanho), repetidas por período de tempo"
 nivel: avançado
-tags: ["interativo", "animação", "evolução", "bolhas"]
+tags: ["animação", "evolução", "bolhas"]
 ---
 
 ## O que é
