@@ -5,6 +5,8 @@ date: 2026-08-25
 source: "https://r-graph-gallery.com/sunburst.html"
 interactive: true
 resumo: "Catálogo de um streaming fictício em três níveis — gênero, subgênero e título — com zoom e recolorir ao vivo na versão interativa."
+veredito_uso: "a hierarquia tem 2-4 níveis reais e tanto a proporção quanto a estrutura da árvore importam pra quem lê."
+veredito_evita: "a hierarquia é de um nível só (pizza/donut resolve), ou há muitos níveis/fatias finas demais pra clicar — um treemap aproveita melhor o espaço."
 pacotes: ["ggplot2", "dplyr", "colorspace"]
 dados: "3 variáveis categóricas hierárquicas + 1 numérica"
 nivel: avançado
@@ -19,6 +21,8 @@ de cada fatia é proporcional ao valor que ela representa dentro do próprio
 nível pai. **Para que serve**: mostrar proporção E estrutura hierárquica ao
 mesmo tempo — dá pra comparar fatias dentro do mesmo anel (mesmo nível) e
 também enxergar, com um olhar, quantos ramos e folhas cada categoria tem.
+
+<div class="pull-quote pull-quote-direita clearfix">mostrar proporção E estrutura hierárquica ao mesmo tempo</div>
 
 ## Quando usar (e quando evitar)
 
@@ -86,10 +90,9 @@ dominam o catálogo, outros são nicho.
   numa fatia "outros", ou limitar a hierarquia a 3 níveis (como aqui) em vez
   de deixar crescer sem limite.
 - **Problema**: a transição de zoom "pula" em vez de animar suavemente.
-  **Por quê**: interpolar `x0`/`x1`/`y0`/`y1` direto (em vez de um objeto
-  intermediário) faz o D3 trocar os valores no fim da transição, não ao
-  longo dela. **Solução**: guardar o estado atual de cada nó (`current`) e
-  interpolar explicitamente dele até o alvo a cada quadro.
+  **Por quê**: interpolar `x0`/`x1`/`y0`/`y1` direto faz o D3 trocar os
+  valores no fim da transição, não ao longo dela. **Solução**: a técnica de
+  guardar um estado intermediário está em "Notas do coletor".
 
 ## Variações possíveis
 
@@ -99,3 +102,43 @@ dominam o catálogo, outros são nicho.
   caminho completo até o nó em foco, além do rótulo no centro.
 - Limitar a profundidade visível (ex: sempre mostrar só 2 anéis a partir do
   foco atual), útil quando a hierarquia real tiver muito mais que 3 níveis.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../treemap-orcamento-municipal" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Treemap com zoom: orçamento municipal</span>
+    <span class="parecido-razao">O mesmo zoom por nível de hierarquia, mas com retângulos que preenchem 100% do espaço em vez de fatias de arco que ficam finas demais rápido.</span>
+  </a>
+  <a class="parecido-item" href="../circle-packing-hierarquico" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Circle packing hierárquico</span>
+    <span class="parecido-razao">Outra forma radial de mostrar a mesma hierarquia, com círculos aninhados em vez de anéis concêntricos — sem zoom, tudo visível de uma vez.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+A transição de zoom, na primeira tentativa, não animava — ela "pulava"
+direto do estado antigo pro novo, mesmo com uma transição D3 declarada
+explicitamente. A causa não era falta de transição, era o que estava
+sendo interpolado: o código lia `x0`/`x1`/`y0`/`y1` (os limites de ângulo
+e raio de cada nó) diretamente do nó atual e do nó alvo, e o D3 interpola
+esses valores numéricos perfeitamente bem — mas só se ele tiver, quadro a
+quadro, um objeto que carrega o valor "de agora" pra atualizar. Sem esse
+objeto intermediário, a interpolação matemática acontecia corretamente
+nos bastidores, mas nada lia o resultado a meio caminho — só o começo e o
+fim do trajeto eram desenhados, daí o "pulo".
+
+A correção foi guardar, em cada nó, um objeto extra chamado `current` —
+uma cópia dos `x0`/`x1`/`y0`/`y1` que representa "onde esse nó está
+desenhado agora, neste exato quadro". A cada tick da transição, o
+interpolador escreve o valor daquele instante DENTRO de `current`, e é
+`current` — não o nó original — que o `d3.arc()` lê pra desenhar. A
+diferença é sutil mas central: interpolar direto nos dados de origem só
+produz dois estados (antes/depois); interpolar num objeto de estado à
+parte produz um valor novo, lido e redesenhado, a cada quadro da animação.
+É o mesmo princípio por trás de qualquer transição D3 suave sobre uma
+geometria complexa — guardar onde a coisa está agora, não só de onde veio
+e pra onde vai.
