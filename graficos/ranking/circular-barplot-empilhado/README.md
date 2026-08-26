@@ -5,6 +5,8 @@ date: 2026-07-30
 source: "https://r-graph-gallery.com/299-circular-stacked-barplot.html"
 interactive: true
 resumo: "Um barplot empilhado dobrado em círculo, com as barras agrupadas por categoria e um respiro visual entre cada grupo."
+veredito_uso: "muitas barras (20+), um formato mais compacto que um barplot comprido, e os itens já têm noção de agrupamento em torno de um centro."
+veredito_evita: "a comparação de valores precisa ser precisa — em coordenadas polares, a mesma diferença de valor ocupa área visual diferente conforme a distância do centro."
 pacotes: ["ggplot2", "dplyr", "tidyr", "jsonlite", "d3"]
 dados: "1 variável de identificação + 1 categórica (grupo) + várias numéricas empilháveis"
 nivel: intermediário
@@ -33,6 +35,8 @@ polares, barras mais distantes do centro ocupam mais área visual pro mesmo
 incremento de valor, e comparar alturas de barras em ângulos bem diferentes é
 mais difícil do que numa linha reta. Se a decisão depender de comparar dois
 valores de perto, prefira um barplot comum (linha) ou um lollipop chart.
+
+<div class="pull-quote pull-quote-direita clearfix">barras mais distantes do centro ocupam mais área visual pro mesmo incremento de valor</div>
 
 ## Que dados você precisa
 
@@ -97,9 +101,8 @@ filial, e a legenda destaca uma linha de produto em todas as barras de uma vez.
 
 - **Problema**: os rótulos de texto saem de cabeça para baixo na metade
   inferior do círculo. **Por quê**: o ângulo de rotação de um `geom_text()`
-  não inverte sozinho passando de 180°. **Solução**: somar 180° ao ângulo e
-  trocar o `hjust` de 0 para 1 (ou vice-versa) sempre que o ângulo calculado
-  for menor que -90°.
+  não inverte sozinho passando de 180°. **Solução**: a fórmula e o porquê
+  dela estão em "Notas do coletor".
 - **Problema**: o número de barras "vazias" certo depende de quantos grupos e
   quantas categorias empilhadas existem. **Por quê**: o respiro é multiplicado
   por `nlevels(grupo) * nlevels(categoria)` — mudar a quantidade de grupos ou
@@ -121,3 +124,41 @@ filial, e a legenda destaca uma linha de produto em todas as barras de uma vez.
   empilha por categoria e mostra tooltip sozinho, mas exige recriar os
   rótulos girados e o arco por grupo na mão, já que esse layout de anotações
   não é algo que o `barpolar` reproduz automaticamente.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../barplot-classico" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Barplot clássico: cinco variações</span>
+    <span class="parecido-razao">O oposto direto quando a comparação precisa ser precisa: barras numa linha reta, sem a distorção de área que coordenadas polares introduzem.</span>
+  </a>
+  <a class="parecido-item" href="../../part-of-whole/sunburst-catalogo-streaming" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Sunburst zoomável: catálogo de streaming</span>
+    <span class="parecido-razao">Outro gráfico que dobra barras/fatias em círculo, mas organizando por hierarquia de níveis em vez de grupos lado a lado.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Girar o rótulo de cada barra pra acompanhar o ângulo dela no círculo
+parece, à primeira vista, um problema de uma fórmula só: calcular o ângulo
+a partir da posição da barra (`90 - 360 * posição / total`) e aplicar esse
+valor na rotação do `geom_text()`. A fórmula sozinha funciona perfeitamente
+na metade de cima do círculo — e produz texto de cabeça para baixo,
+perfeitamente legível só que invertido, em toda a metade de baixo.
+
+A causa é geométrica, não um bug de cálculo: rotação de texto em CSS/SVG
+não "sabe" que passou de 180° — ela simplesmente continua girando na
+mesma direção, e um texto girado além de 180° fica de cabeça para baixo do
+ponto de vista de quem lê, mesmo que o ângulo em si esteja matematicamente
+correto. A correção teve duas partes, não uma: somar 180° ao ângulo
+sempre que ele cair na metade inferior do círculo (ângulo calculado menor
+que -90°) reorienta o texto pra ficar na posição certa — mas isso sozinho
+move o texto pro lado errado da barra, porque agora ele "nasce" do ponto
+oposto. A segunda parte, trocar o `hjust` de 0 para 1 (ou o inverso) nesse
+mesmo momento, resolve o alinhamento junto com a rotação. As duas
+correções têm que acontecer juntas, na mesma condição — ajustar só uma
+troca "de cabeça para baixo" por "de lado errado", nunca resolve as duas
+ao mesmo tempo.
