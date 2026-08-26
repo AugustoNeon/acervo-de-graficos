@@ -5,6 +5,8 @@ date: 2026-08-21
 source: "https://r-graph-gallery.com/328-hexbin-map-of-the-usa.html"
 interactive: true
 resumo: "Avistamentos de aves migratórias reportados no Brasil, agregados em células hexagonais coloridas pela quantidade — a densidade real por região, em vez de um ponto por avistamento."
+veredito_uso: "você tem muitos pontos geográficos brutos (centenas a milhares) e o interesse é a CONCENTRAÇÃO espacial."
+veredito_evita: "há poucos pontos (dezenas), ou a unidade do dado já é uma região definida (aí um coroplético é mais direto)."
 pacotes: ["ggplot2", "maps", "hexbin", "sf", "rnaturalearthdata", "RColorBrewer", "jsonlite", "d3"]
 dados: "2 variáveis numéricas de coordenada (longitude, latitude), uma linha por evento/observação"
 nivel: intermediário
@@ -53,8 +55,9 @@ antes.
 - **Linha fina entre hexágonos**: fronteira estadual — deixa dá pra situar
   cada aglomerado num estado, sem precisar decorar a geografia do Brasil.
 - **Sigla (ex: "SP", "BA")**: o estado, marcada no centroide dele.
-- **Ausência de hexágono**: nenhum avistamento reportado ali — não significa
-  "zero aves", só "zero avistamentos DESTE app nessa célula".
+- **Ausência de hexágono**: nenhum avistamento reportado ali.
+
+<div class="pull-quote pull-quote-direita clearfix">não significa "zero aves", só "zero avistamentos DESTE app nessa célula"</div>
 
 Passe o cursor num hexágono pra ver a contagem exata e o estado onde ele está.
 
@@ -72,18 +75,16 @@ Earth em 1:50m, também embutida no pacote — inclui nome, sigla e centroide
 de cada estado prontos, sem precisar calcular nada).
 
 A versão interativa **não recalcula o binning do zero** — ela lê de volta a
-própria célula que o `ggplot2` já calculou (`ggplot_build(p)$data[[i]]`: centro,
-contagem e cor final de cada hexágono) e o formato exato de UM hexágono
-(`hexbin::hexcoords()`, os 6 vértices em torno do centro, iguais pra toda a
-grade). O D3 só projeta longitude/latitude pra pixel — com a mesma correção
-de aspecto do `coord_quickmap()` (1° de longitude vale `cos(latitude média)`
-vezes 1° de latitude em distância real) — e desenha cada hexágono nesse
-ponto. Sem esse reaproveitamento, reproduzir a MESMA grade (mesmo `bins`,
-mesmo alinhamento) numa segunda implementação em D3 arriscaria uma grade
-sutilmente diferente da estática. Em qual estado cada hexágono cai também é
-resolvido **uma vez só no R** (`sf::st_join()`, ponto-em-polígono contra o
-mesmo contorno estadual) e exportado pronto — o tooltip da versão
-interativa só exibe o resultado, não recalcula.
+própria célula que o `ggplot2` já calculou (`ggplot_build(p)$data[[i]]`:
+centro, contagem e cor final de cada hexágono) e o formato exato de UM
+hexágono (`hexbin::hexcoords()`, os 6 vértices em torno do centro, iguais
+pra toda a grade — a fórmula certa não foi óbvia, ver "Notas do coletor").
+O D3 só projeta longitude/latitude pra pixel — com a mesma correção de
+aspecto do `coord_quickmap()` — e desenha cada hexágono nesse ponto. Sem
+esse reaproveitamento, reproduzir a MESMA grade numa segunda implementação
+em D3 arriscaria uma grade sutilmente diferente da estática. Em qual
+estado cada hexágono cai também é resolvido **uma vez só no R**
+(`sf::st_join()`) e exportado pronto.
 
 Dados fictícios: ~2500 avistamentos de aves migratórias (`set.seed(6114)`)
 concentrados em 5 áreas úmidas/estuários reais onde observação de aves
@@ -136,3 +137,42 @@ geográfico nenhum).
   do que a distribuição mais uniforme de distância que o hexágono garante.
 - Aplicar a mesma técnica sobre qualquer nuvem de pontos geográfica —
   chamados de suporte, ocorrências de trânsito, localização de lojas.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../mapa-coropletico-conectividade" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Mapa coroplético: acesso à internet banda larga</span>
+    <span class="parecido-razao">O oposto direto quando a unidade do dado já é uma região definida: pinta fronteiras políticas reais em vez de agregar numa grade artificial de hexágonos.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Reconstruir o formato de um hexágono em D3 a partir do que o
+`ggplot2::geom_hex()` já tinha calculado exigia uma fórmula que não estava
+documentada em lugar nenhum acessível. `hexbin::hexcoords()` recebe uma
+largura e uma altura e devolve os 6 vértices de um hexágono — mas as duas
+tentativas mais óbvias de largura/altura saíram erradas, e de formas
+diferentes: passar `width`/`height` direto desenhava um hexágono 2x largo e
+4x alto demais; a correção "óbvia" de dividir os dois por 2 ainda saía
+73% alto demais. Nenhuma das duas dava erro — a tesselação simplesmente
+ficava visualmente quebrada, hexágonos virando losangos verticais
+sobrepostos, só perceptível comparando um screenshot real contra o
+esperado.
+
+A fórmula certa só apareceu lendo o código-fonte instalado do próprio
+`ggplot2` (`asNamespace("ggplot2")$GeomHex$draw_group`, já que
+`hexcoords()` não tem página de ajuda própria que explique a relação):
+`dx = width/2, dy = height/sqrt(3)/2`. O fator `1/sqrt(3)` no `dy` não
+aparece em nenhuma leitura ingênua dos nomes das colunas — é geometria de
+hexágono regular (a razão entre o lado e a altura de um hexágono não é
+1:1), embutida na implementação sem estar no nome de nenhum parâmetro.
+
+A técnica que resolveu isso generaliza: quando uma função de geometria de
+um pacote R/ggplot2 não tem página de ajuda que explique a relação entre
+parâmetros e resultado, `asNamespace("<pacote>")$<função>` mostra o
+código-fonte de verdade, instalado na máquina — muitas vezes mais rápido
+do que adivinhar por tentativa e erro, e a única forma confiável quando as
+duas tentativas óbvias já saíram erradas.
