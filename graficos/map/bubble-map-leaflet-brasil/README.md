@@ -5,6 +5,8 @@ date: 2026-07-27
 source: "https://r-graph-gallery.com/19-map-leafletr.html"
 interactive: true
 resumo: "Bolhas posicionadas por coordenadas geográficas, com tamanho e cor proporcionais a um valor, sobre um mapa navegável."
+veredito_uso: "os dados estão associados a pontos específicos (cidades, lojas, estações), e a localização é parte da análise."
+veredito_evita: "o dado se refere a áreas, não a pontos — um mapa coroplético é a representação correta pra isso."
 pacotes: ["leaflet", "htmltools", "webshot2"]
 dados: "latitude, longitude e um valor numérico por ponto"
 nivel: básico
@@ -31,9 +33,12 @@ estado, por exemplo. Nesse caso o mapa coroplético, que pinta a área inteira, 
 representação correta; reduzir um estado a um ponto no centro distorce a leitura.
 
 **Cuidado com a sobreposição**: em regiões densas as bolhas se cobrem e as de baixo
-somem. E lembre-se de que área de círculo cresce com o quadrado do raio — mapear o
-valor direto no raio exagera as diferenças, o que torna a escala de cores um apoio
-importante para a leitura correta.
+somem.
+
+<div class="pull-quote pull-quote-direita clearfix">área de círculo cresce com o quadrado do raio</div>
+
+Mapear o valor direto no raio exagera as diferenças, o que torna a escala de
+cores um apoio importante para a leitura correta.
 
 ## Que dados você precisa
 
@@ -72,7 +77,8 @@ Os rótulos são HTML, montados com `sprintf()` e convertidos com `htmltools::HT
 para que as quebras de linha sejam interpretadas.
 
 Como não há equivalente estático em `ggplot2`, a miniatura veio de uma captura de
-tela do widget com `webshot2::webshot()`.
+tela do widget com `webshot2::webshot()`. Este é também um dos poucos gráficos
+do acervo que a versão interativa NÃO reencena em D3 — ver "Notas do coletor".
 
 Dados fictícios: vendas mensais inventadas (`set.seed(2026)`) para 20 capitais e
 grandes cidades brasileiras. As coordenadas das cidades são reais; os valores, não.
@@ -112,3 +118,42 @@ grandes cidades brasileiras. As coordenadas das cidades são reais; os valores, 
 - Sobrepor polígonos de estados ou municípios e combinar bolhas com coroplético.
 - Adicionar controle de camadas (`addLayersControl`) para o leitor alternar entre
   diferentes métricas.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../mapa-coropletico-conectividade" style="--cat-link: var(--cat-map); --cat-link-ink: var(--cat-map-ink);">
+    <span class="parecido-cat">map</span>
+    <span class="parecido-titulo">Mapa coroplético: acesso à internet banda larga</span>
+    <span class="parecido-razao">O oposto direto quando o dado é sobre ÁREAS, não pontos: pinta o polígono inteiro em vez de reduzir cada região a uma bolha no centro.</span>
+  </a>
+  <a class="parecido-item" href="../../correlation/bolhas-investimento-startups" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+    <span class="parecido-cat">correlation</span>
+    <span class="parecido-titulo">Bubble chart: investimento x crescimento x porte</span>
+    <span class="parecido-razao">Mesma técnica de bolha (raio em raiz quadrada, redundância entre tamanho e cor), sem a geografia — os eixos aqui são variáveis quaisquer, não latitude/longitude.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Quase todo gráfico interativo deste acervo segue o mesmo padrão: o
+`script.R` exporta um `data.json` com os números, e um módulo D3 desenha a
+versão interativa dentro do próprio fluxo da página, herdando fonte e
+paleta do site — sem `<iframe>`. Este gráfico é uma das exceções
+deliberadas: a versão interativa continua sendo o widget `leaflet` puro,
+dentro de um iframe, exatamente como o R gerou.
+
+O motivo não é preguiça, é que o mapa de fundo — as ruas, os limites, o
+relevo — não é dado que dá pra exportar num JSON e redesenhar: são ladrilhos
+de imagem (*tiles*) buscados de um serviço de mapas externo em tempo real,
+conforme o usuário arrasta e dá zoom. Recriar isso em D3 significaria
+reimplementar um cliente de tiles inteiro, ou depender do mesmo serviço
+externo de qualquer forma — nenhuma das duas opções ganha nada em relação a
+simplesmente manter o widget que o `leaflet` já gera pronto, testado e
+completo.
+
+A consequência prática, coerente com essa escolha: sem conexão de internet,
+o mapa de fundo não aparece (fica cinza), mesmo com o resto do widget
+funcionando offline — é uma limitação real de qualquer mapa com camada de
+terceiros, aceita de propósito em vez de escondida atrás de uma
+reimplementação que teria a mesma dependência de qualquer jeito.
