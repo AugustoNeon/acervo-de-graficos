@@ -1,5 +1,4 @@
 ---
-import { formatDate } from '../lib/format';
 import { corDaCategoria } from '../lib/categoria';
 import { tiltFor } from '../lib/tilt';
 
@@ -7,8 +6,6 @@ interface Props {
   href: string;
   title: string;
   category: string;
-  date: Date;
-  interactive: boolean;
   thumbnail: string;
   resumo: string;
   id: string;
@@ -23,8 +20,6 @@ const {
   href,
   title,
   category,
-  date,
-  interactive,
   thumbnail,
   resumo,
   id,
@@ -45,13 +40,11 @@ const tilt = tiltFor(id);
   <span class="tape" aria-hidden="true"></span>
   <div class="specimen-photo">
     <img src={thumbnail} alt="" loading="lazy" decoding="async" />
-    {interactive && <span class="stamp">interativo</span>}
   </div>
   <div class="specimen-label">
     <span class="specimen-category">{category}</span>
     <h3 class="specimen-title">{title}</h3>
     <p class="specimen-resumo">{resumo}</p>
-    <span class="specimen-date">{formatDate(date)}</span>
   </div>
 </a>
 
@@ -121,22 +114,6 @@ const tilt = tiltFor(id);
     object-fit: cover;
   }
 
-  .stamp {
-    position: absolute;
-    bottom: var(--space-2xs);
-    right: var(--space-2xs);
-    padding: 0.2em 0.6em;
-    border: 1.5px solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-primary);
-    background: color-mix(in oklch, var(--paper) 80%, transparent);
-    transform: rotate(-3deg);
-  }
-
   .specimen-label {
     padding-top: var(--space-xs);
     display: flex;
@@ -170,13 +147,6 @@ const tilt = tiltFor(id);
     color: var(--color-ink-muted);
     line-height: var(--leading-snug);
     text-wrap: pretty;
-  }
-
-  .specimen-date {
-    margin-top: 0.15em;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-ink-muted);
   }
 
   /* Entrada escalonada — o espécime é fixado no mural um a um, não aparece
