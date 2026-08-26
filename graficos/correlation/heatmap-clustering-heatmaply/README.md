@@ -5,6 +5,8 @@ date: 2026-07-22
 source: "https://www.data-to-viz.com/graph/heatmap.html"
 interactive: true
 resumo: "Matriz de valores em cores, com linhas e colunas reordenadas por similaridade e dendrogramas mostrando os agrupamentos."
+veredito_uso: "você tem uma matriz de tamanho médio e quer explorar padrões sem saber de antemão o que procurar."
+veredito_evita: "a ordem das linhas/colunas já tem significado próprio (meses, faixas etárias) — o clustering embaralha e destrói a leitura."
 pacotes: ["pheatmap", "viridis", "jsonlite", "d3"]
 dados: "uma matriz numérica (linhas × colunas), com nomes em ambas as dimensões"
 nivel: intermediário
@@ -34,9 +36,10 @@ faz os blocos aparecerem sozinhos.
 ano, faixas etárias, etapas de um processo) — o clustering vai embaralhar essa
 ordem e destruir a leitura. Nesses casos, use um heatmap com ordem fixa.
 
-Cuidado também com a tentação de interpretar demais: o algoritmo **sempre** produz
-agrupamentos, mesmo em dados sem estrutura nenhuma. A existência de um dendrograma
-não prova que os grupos são reais.
+<div class="pull-quote pull-quote-direita clearfix">a existência de um dendrograma não prova que os grupos são reais</div>
+
+Cuidado com a tentação de interpretar demais: o algoritmo **sempre** produz
+agrupamentos, mesmo em dados sem estrutura nenhuma.
 
 ## Que dados você precisa
 
@@ -65,31 +68,30 @@ Passe o mouse sobre qualquer célula para ver linha, coluna e valor exato.
 
 ## Como foi feito
 
-`pheatmap()` faz o trabalho pesado no R: calcula as distâncias, roda o
-clustering hierárquico (ligação completa, distância euclidiana) nas duas
-dimensões, reordena a matriz e desenha o `output.png` direto — sem precisar de
-um widget/screenshot no meio, ao contrário da versão anterior deste gráfico.
+**Clustering**: `pheatmap()` calcula as distâncias, roda o clustering
+hierárquico (ligação completa, distância euclidiana) nas duas dimensões,
+reordena a matriz e desenha o `output.png` direto — sem precisar de um
+widget/screenshot no meio (a história de por que o gráfico se chama
+"heatmaply" mas não usa mais esse pacote está em "Notas do coletor").
 
-O mesmo objeto que o `pheatmap()` devolve (`$tree_row`, `$tree_col`) é reaproveitado
-pra montar a versão interativa: cada `hclust` é convertido de `merge`/`height`
-(o formato interno do R) pra uma árvore aninhada exportada no `data.json`, com
-a posição de cada folha já no lugar que ela ocupa depois do clustering — o D3
-só calcula onde cada nó cai no espaço e traça os segmentos em "cotovelo" de um
-dendrograma, sem recalcular nenhum clustering no navegador. Isso garante que a
-ordem e a árvore batem exatamente entre as duas versões, por construção — não
-por tentar reproduzir o clustering de uma biblioteca diferente.
+**Paridade estático/interativo**: o mesmo objeto que `pheatmap()` devolve
+(`$tree_row`, `$tree_col`) é reaproveitado pra montar a versão interativa —
+cada `hclust` vira uma árvore aninhada exportada no `data.json`, com a
+posição de cada folha já no lugar que ela ocupa depois do clustering. O D3 só
+calcula onde cada nó cai no espaço, sem recalcular clustering nenhum: ordem e
+árvore batem entre as duas versões por construção, não por tentar reproduzir
+o cálculo de uma biblioteca diferente.
 
-A escala de cores usa `viridis(256, option = "magma")` no lado do R e
-`d3.interpolateMagma` (mesma rampa, nome equivalente no D3) no lado interativo —
-perceptualmente uniforme: diferenças iguais de valor produzem diferenças
-visuais iguais, o que nem toda paleta garante. A cor de cada célula reflete o
-valor **padronizado por coluna** (`scale = "column"`: cada métrica vira
-z-score antes de colorir e agrupar), não o valor bruto — é o que evita que uma
-métrica de escala maior domine tanto as cores quanto o clustering; o valor
-bruto continua disponível no hover.
+**Cor**: `viridis(256, option = "magma")` no R e `d3.interpolateMagma` (mesma
+rampa) no D3 — perceptualmente uniforme, diferenças iguais de valor produzem
+diferenças visuais iguais. Reflete o valor **padronizado por coluna**
+(`scale = "column"`: cada métrica vira z-score antes de colorir e agrupar),
+não o valor bruto — evita que uma métrica de escala maior domine cores e
+clustering ao mesmo tempo; o valor bruto continua disponível no hover.
 
-Dados fictícios: matriz 12 × 6 (`Produto_01`…`Produto_12` × `Metrica_A`…`Metrica_F`),
-valores de `rnorm(mean = 50, sd = 15)` com `set.seed(2026)`.
+**Dado fictício**: matriz 12 × 6 (`Produto_01`…`Produto_12` ×
+`Metrica_A`…`Metrica_F`), valores de `rnorm(mean = 50, sd = 15)` com
+`set.seed(2026)`.
 
 ## Possíveis problemas pelo caminho
 
@@ -127,3 +129,34 @@ valores de `rnorm(mean = 50, sd = 15)` com `set.seed(2026)`.
   negativo.
 - Colorir o dendrograma por "corte" (agrupar em k clusters e dar uma cor por
   grupo aos galhos), destacando visualmente os blocos que a árvore sugere.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../part-of-whole/dendrograma-interativo" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+    <span class="parecido-cat">part-of-whole</span>
+    <span class="parecido-titulo">Dendrograma interativo colapsável</span>
+    <span class="parecido-razao">Mesma técnica de base (clustering hierárquico) isolada e aprofundada — sem a matriz de valores ao lado, só a árvore de agrupamento, colapsável.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Este gráfico se chama "heatmap-clustering-heatmaply" mas não usa mais o
+pacote `heatmaply` — o nome ficou de uma versão anterior, e trocar o nome da
+pasta quebraria os links já publicados, então ficou. A primeira versão
+usava `heatmaply()`, que reordena com "optimal leaf ordering" via um pacote
+de dependência (`seriation`) difícil de reproduzir exatamente no D3, e
+precisava de `webshot2`/pandoc rodando num navegador headless só pra gerar
+o `output.png` — mais uma peça móvel, mais uma coisa pra travar num ambiente
+sem GUI.
+
+A troca pra `pheatmap()` resolveu os dois problemas de uma vez, sem ser esse
+o plano original. `pheatmap(..., filename = "output.png")` desenha direto
+num device PNG, sem widget nem screenshot no meio. E, quase de brinde, a
+chamada devolve os próprios objetos `hclust` que ela usou internamente
+(`tree_row`/`tree_col`) — reaproveitar esses objetos pra montar a versão
+interativa garante que a ordem e a árvore batem exatamente com o
+`output.png`, por construção, em vez de precisar reproduzir o clustering do
+`seriation` numa segunda linguagem. Às vezes a correção mais simples resolve
+um problema que nem era o que se estava tentando resolver.
