@@ -5,6 +5,8 @@ date: 2026-08-24
 source: "https://r-graph-gallery.com/parallel-plot-ggally.html"
 interactive: true
 resumo: "90 vinhos fictícios comparados em 5 variáveis ao mesmo tempo — acidez, corpo, tanino, doçura e preço — cada um como uma linha atravessando os cinco eixos."
+veredito_uso: "há 4+ variáveis numéricas e a pergunta é sobre o perfil completo de cada observação."
+veredito_evita: "há centenas/milhares de observações sem interatividade — vira um emaranhado ilegível."
 pacotes: ["ggplot2", "GGally", "patchwork"]
 dados: "5 variáveis numéricas (um eixo cada) + 1 categórica (cor)"
 nivel: intermediário
@@ -97,12 +99,9 @@ numa cor da legenda isola o grupo inteiro em vez de uma linha só.
   `output.png` deste gráfico mostra os dois lados lado a lado de propósito,
   como ilustração do problema.
 - **Problema**: passar o cursor perto de uma linha fina não ativa o
-  tooltip, mesmo mirando bem em cima dela visualmente. **Por quê**: a área
-  de detecção de ponteiro de um `<path>` fino (1–2px de largura) é pequena
-  demais pra mirar com precisão, principalmente em meio a outras 89 linhas
-  próximas. **Solução**: desenhar uma segunda cópia invisível da mesma
-  linha, com traço bem mais grosso (`stroke: transparent`, largura maior),
-  só pra capturar o ponteiro — a linha visível continua fina.
+  tooltip. **Solução**: desenhe uma segunda cópia invisível da mesma linha,
+  com traço bem mais grosso, só pra capturar o ponteiro — a história
+  completa está em "Notas do coletor", no fim da página.
 
 ## Variações possíveis
 
@@ -110,11 +109,38 @@ numa cor da legenda isola o grupo inteiro em vez de uma linha só.
   mostra a distribuição de cada grupo em cada eixo, em vez de cada
   observação individual; perde o rastro de uma linha específica, mas ganha
   legibilidade quando há centenas de observações.
-- Reordenar os eixos manualmente pra colocar variáveis correlacionadas
-  lado a lado — a leitura de correlação só funciona bem entre eixos
-  VIZINHOS, então a ordem dos eixos é uma decisão de design, não só
-  estética.
 - Adicionar um eixo categórico (não numérico) no meio dos outros,
   representando cada categoria como uma posição igualmente espaçada no
   eixo — útil pra incluir uma variável categórica como mais uma dimensão
   de comparação, não só como cor.
+
+<div class="pull-quote">a ordem dos eixos é uma decisão de design, não só estética</div>
+
+Reordenar os eixos manualmente pra colocar variáveis correlacionadas lado a
+lado ajuda — a leitura de correlação só funciona bem entre eixos VIZINHOS.
+
+## Gráficos parecidos
+
+<div class="parecidos-lista">
+  <a class="parecido-item" href="../../ranking/radar-multiplos-grupos" style="--cat-link: var(--cat-ranking); --cat-link-ink: var(--cat-ranking-ink);">
+    <span class="parecido-cat">ranking</span>
+    <span class="parecido-titulo">Radar chart com múltiplos grupos</span>
+    <span class="parecido-razao">O mesmo problema — comparar o perfil de um grupo em várias variáveis de uma vez — resolvido em layout circular em vez de eixos paralelos.</span>
+  </a>
+</div>
+
+## Notas do coletor
+
+Passar o cursor perto de uma linha do gráfico não ativava o tooltip, mesmo
+mirando bem em cima dela visualmente — e o problema piorava justo onde mais
+importava, no meio de um feixe de 30 linhas próximas do mesmo grupo. A área
+de detecção de ponteiro de um `<path>` de 1-2px de largura é pequena demais
+pra mirar com precisão, e reduzir a densidade de linhas não era opção (é o
+próprio dado).
+
+A correção não foi engrossar a linha visível — isso mudaria a aparência do
+gráfico pra resolver um problema de interação, trade-off ruim. Em vez disso,
+cada linha ganhou uma segunda cópia invisível por baixo, com o mesmo
+caminho SVG mas `stroke: transparent` e um traço bem mais grosso, só pra
+capturar o ponteiro. A linha visível continua fina exatamente como
+desenhada; a área clicável é maior sem que ninguém veja isso.
