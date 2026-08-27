@@ -24,7 +24,8 @@ nenhum dado alterado — desenhado por três algoritmos de layout distintos:
   comunidades de forma mais agressiva.
 - **Aleatório**: posições sorteadas, sem nenhuma otimização. Serve de controle.
 
-**Para que serve**: demonstrar que o layout não é detalhe estético.
+**Para que serve**: demonstrar que o layout não é detalhe estético — é
+parte da análise.
 
 <div class="pull-quote pull-quote-direita clearfix">é parte da análise</div>
 
