@@ -70,7 +70,8 @@ A diferença entre as duas colunas não precisa existir no dado de entrada; ela
 <div class="pull-quote pull-quote-direita clearfix">a posição de uma haste no eixo não diz nada sobre o tamanho dela</div>
 
 Uma especialidade pode estar entre as piores em valor absoluto e ainda assim
-ter melhorado bastante, e vice-versa. Ler as duas coisas ao mesmo tempo é
+ter melhorado bastante, e vice-versa — a posição de uma haste no eixo não diz
+nada sobre o tamanho dela. Ler as duas coisas ao mesmo tempo é
 exatamente o que o gráfico oferece, e exatamente onde a leitura apressada
 erra.
 
