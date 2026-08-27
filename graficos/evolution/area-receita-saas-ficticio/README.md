@@ -30,7 +30,8 @@ neste gráfico com um seletor.
 categoria individualmente, sem se importar com o total. **Use a empilhada
 quando** o total importa tanto quanto a composição — a altura do topo da
 pilha já é a soma. **Use a 100% quando** só a proporção interessa, não o volume absoluto — ótima
-pra revelar uma mudança de mix que o volume total esconde.
+pra revelar uma mudança de mix que o volume total esconde: uma categoria
+pode crescer em volume e ainda assim perder participação.
 
 <div class="pull-quote pull-quote-direita clearfix">uma categoria pode crescer em volume e ainda assim perder participação</div>
 
