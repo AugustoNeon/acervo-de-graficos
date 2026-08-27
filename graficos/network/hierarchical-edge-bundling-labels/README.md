@@ -22,7 +22,9 @@ meio).
 
 O truque que dá nome à técnica é o *bundling*: em vez de ligar dois pontos com uma
 reta, cada conexão é curvada para acompanhar o caminho pela árvore — subindo até o
-ancestral comum dos dois itens e descendo de novo.
+ancestral comum dos dois itens e descendo de novo. Conexões que percorrem
+trajetos parecidos se encostam e formam feixes, como cabos amarrados
+juntos.
 
 <div class="pull-quote pull-quote-direita clearfix">conexões que percorrem trajetos parecidos se encostam e formam feixes, como cabos amarrados juntos</div>
 
