@@ -82,8 +82,9 @@ que os pares formam juntos:
 Trocar a ordem das linhas e colunas não muda nenhum número, mas muda
 completamente o que se enxerga — agrupadas por afinidade, as comunidades
 saltam como blocos; em ordem alfabética, os mesmos valores viram um chuvisco
-sem padrão. Escolher a ordem aqui é o equivalente a escolher o layout num
-diagrama de nós, e é por isso que a versão interativa deixa trocar entre elas.
+sem padrão — a matriz não tem uma ordem natural. Escolher a ordem aqui é o
+equivalente a escolher o layout num diagrama de nós, e é por isso que a
+versão interativa deixa trocar entre elas.
 
 ## Como foi feito
 
@@ -175,6 +176,6 @@ divergem, porque os dois espaços de cor não são uma transformação linear um
 do outro.
 
 A correção não foi escolher "o interpolador certo" — nenhum dos dois é mais
-certo. Foi parar de calcular duas vezes: a cor de cada célula nasce uma única
-vez, em R, e viaja pronta no `data.json`. `ggplot2` e D3 só pintam o valor que
+certo. Foi parar de calcular duas vezes: a cor nasce uma vez, no R, e viaja
+como dado dentro do `data.json`. `ggplot2` e D3 só pintam o valor que
 recebem. Virou o padrão do acervo pra qualquer gráfico com duas versões.
