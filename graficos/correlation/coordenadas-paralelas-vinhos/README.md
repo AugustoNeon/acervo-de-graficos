@@ -116,8 +116,9 @@ numa cor da legenda isola o grupo inteiro em vez de uma linha só.
 
 <div class="pull-quote">a ordem dos eixos é uma decisão de design, não só estética</div>
 
-Reordenar os eixos manualmente pra colocar variáveis correlacionadas lado a
-lado ajuda — a leitura de correlação só funciona bem entre eixos VIZINHOS.
+A ordem dos eixos é uma decisão de design, não só estética: reordenar os
+eixos manualmente pra colocar variáveis correlacionadas lado a lado ajuda —
+a leitura de correlação só funciona bem entre eixos VIZINHOS.
 
 ## Gráficos parecidos
 
