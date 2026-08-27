@@ -49,7 +49,9 @@ deixa investigar um período específico sem perder a visão geral por perto.
 **Use o 1 quando** quiser uma seleção que persista enquanto quem está lendo
 examina os números, sem precisar manter o mouse parado.
 
-**Evite o 3 em uso sério**: sombra e traço tracejado chamam atenção para o efeito, não para o dado.
+**Evite o 3 em uso sério**: sombra e traço tracejado chamam atenção para o
+efeito, não para o dado — está aqui como demonstração do que é possível,
+não como recomendação.
 
 <div class="pull-quote">está aqui como demonstração do que é possível, não como recomendação</div>
 
