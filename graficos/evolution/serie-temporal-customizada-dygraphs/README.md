@@ -47,7 +47,8 @@ sobrepostas (a técnica é mais forte com uma ou poucas).
 <div class="pull-quote">ela é ferramenta de exploração, não conclusão</div>
 
 Um período de suavização escolhido de forma conveniente pode fazer qualquer
-tendência parecer existir ou desaparecer.
+tendência parecer existir ou desaparecer — ela é ferramenta de exploração,
+não conclusão.
 
 ## Que dados você precisa
 
