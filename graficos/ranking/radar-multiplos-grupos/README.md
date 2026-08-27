@@ -18,9 +18,9 @@ tags: ["ranking", "comparação"]
 Um radar (ou spider) chart mostra várias variáveis numéricas, todas na mesma
 escala, como eixos que saem de um centro comum e se espalham igualmente ao
 redor de um círculo. Cada grupo comparado vira um polígono, ligando o valor
-que ele tem em cada eixo. **Para que serve**: comparar o *perfil* de poucos
-itens — não um número isolado, mas o padrão de pontos fortes e fracos em
-várias dimensões ao mesmo tempo, como uma ficha de atributos.
+que ele tem em cada eixo, todas as dimensões ao mesmo tempo. **Para que
+serve**: comparar o *perfil* de poucos itens — não um número isolado, mas
+o padrão de pontos fortes e fracos — como uma ficha de atributos.
 
 <div class="pull-quote pull-quote-direita clearfix">não um número isolado, mas o padrão de pontos fortes e fracos — como uma ficha de atributos</div>
 
