@@ -56,9 +56,10 @@ inteira na forma de desenhar, não no dado.
 
 <div class="pull-quote pull-quote-direita clearfix">não dá pra comparar a altura entre dois painéis</div>
 
-Como cada painel tem sua própria escala vertical, isso vale mesmo que os dois
-pareçam do mesmo tamanho — pra saber qual categoria vale mais é preciso olhar
-o número no eixo de cada um, não a altura da curva.
+Como cada painel tem sua própria escala vertical, não dá pra comparar a
+altura entre dois painéis — isso vale mesmo que os dois pareçam do mesmo
+tamanho. Pra saber qual categoria vale mais é preciso olhar o número no eixo
+de cada um, não a altura da curva.
 
 ## Como foi feito
 
