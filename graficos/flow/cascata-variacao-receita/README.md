@@ -60,9 +60,11 @@ derivado, não fornecido — basta percorrer as parcelas somando.
 
 - **Altura de uma barra do meio**: o tamanho daquela parcela.
 - **Posição vertical da barra**: onde o total estava naquele ponto do caminho.
-  Duas parcelas de mesmo tamanho aparecem em alturas diferentes.
+  Duas parcelas de mesmo tamanho aparecem em alturas diferentes — a posição
+  conta a história, o tamanho conta a magnitude.
 
 <div class="pull-quote pull-quote-direita clearfix">a posição conta a história, o tamanho conta a magnitude</div>
+
 - **Cor**: o sinal. Verde soma, vinho subtrai, e as duas barras escuras das
   pontas são totais, não variação.
 - **Linha ligando as barras**: o encadeamento. É o único elemento que separa
