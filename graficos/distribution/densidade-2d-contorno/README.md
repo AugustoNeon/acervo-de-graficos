@@ -27,7 +27,8 @@ isso.
 ## Quando usar (e quando evitar)
 
 **Use quando** houver muitos pontos e a sobreposição estiver escondendo a
-estrutura.
+estrutura: quanto mais dados, melhor funciona — é o oposto da maioria das
+técnicas.
 
 <div class="pull-quote pull-quote-direita clearfix">quanto mais dados, melhor funciona — é o oposto da maioria das técnicas</div>
 
