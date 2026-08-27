@@ -55,7 +55,8 @@ antes.
 - **Linha fina entre hexágonos**: fronteira estadual — deixa dá pra situar
   cada aglomerado num estado, sem precisar decorar a geografia do Brasil.
 - **Sigla (ex: "SP", "BA")**: o estado, marcada no centroide dele.
-- **Ausência de hexágono**: nenhum avistamento reportado ali.
+- **Ausência de hexágono**: nenhum avistamento reportado ali — não significa
+  "zero aves", só "zero avistamentos DESTE app nessa célula".
 
 <div class="pull-quote pull-quote-direita clearfix">não significa "zero aves", só "zero avistamentos DESTE app nessa célula"</div>
 
