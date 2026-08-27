@@ -32,7 +32,8 @@ linha de base flutuante reduz as distorções de forma que atrapalham as áreas
 empilhadas comuns.
 
 **Evite quando** o leitor precisar ler valores exatos: sem uma linha de base
-fixa, comparar espessuras de faixas em alturas diferentes é pouco confiável.
+fixa, comparar espessuras de faixas em alturas diferentes é pouco confiável
+— o olho compara mal áreas que não compartilham a mesma origem.
 
 <div class="pull-quote pull-quote-direita clearfix">o olho compara mal áreas que não compartilham a mesma origem</div>
 
