@@ -53,7 +53,8 @@ numéricas já na mesma linha (não é preciso pivotar).
 - **Cor do ponto**: gradiente do início ao fim do período, um reforço visual
   pra direção do tempo (do azul pro laranja), redundante com os rótulos de
   ano.
-- **Pontos onde o caminho muda de direção**: o que vale mais atenção.
+- **Pontos onde o caminho muda de direção**: o que vale mais atenção — é
+  onde a relação entre as duas variáveis mudou de regime.
 
 <div class="pull-quote pull-quote-direita clearfix">é onde a relação entre as duas variáveis mudou de regime</div>
 
