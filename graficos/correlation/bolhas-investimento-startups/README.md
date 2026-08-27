@@ -78,7 +78,8 @@ uma com um "porte" latente que gera investimento captado E número de
 funcionários JUNTOS (empresa maior tende a captar mais e empregar mais gente
 ao mesmo tempo — não são sorteados de forma independente), mas o crescimento
 de receita tem sua própria aleatoriedade, quase independente do porte — de
-propósito, pra revelar essa pergunta clássica de investimento. Nomes de
+propósito, pra revelar essa pergunta clássica de investimento: quem captou
+mais não é sempre quem cresce mais rápido. Nomes de
 empresa gerados por combinação (prefixo + sufixo temático por setor) em vez
 de rótulo genérico tipo "Fintech 1".
 
