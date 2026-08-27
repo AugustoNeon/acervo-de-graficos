@@ -36,8 +36,8 @@ versão 2D com contornos é superior.
 
 <div class="pull-quote pull-quote-direita clearfix">3D em visualização de dados costuma ser decoração</div>
 
-Aqui se justifica porque a terceira dimensão carrega informação real e o
-giro é possível.
+3D em visualização de dados costuma ser decoração; aqui se justifica porque
+a terceira dimensão carrega informação real e o giro é possível.
 
 ## Que dados você precisa
 
