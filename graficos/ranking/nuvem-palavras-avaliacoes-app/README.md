@@ -18,9 +18,10 @@ tags: ["texto", "frequência"]
 Uma nuvem de palavras posiciona um conjunto de termos livremente no espaço,
 com o tamanho de cada palavra proporcional à sua frequência (quantas vezes
 ela aparece num texto ou conjunto de textos). **Para que serve**: dar uma
-primeira impressão rápida de quais termos dominam um corpo de texto — é
-essencialmente um ranking (a pergunta é "quais palavras aparecem mais"),
-só que lido pelo tamanho da fonte em vez de pela altura de uma barra.
+primeira impressão rápida de quais termos dominam um corpo de texto — a
+pergunta de fundo é sempre "quais palavras aparecem mais". É essencialmente
+um ranking, só que lido pelo tamanho da fonte em vez de pela altura de uma
+barra.
 
 <div class="pull-quote pull-quote-direita clearfix">essencialmente um ranking, só que lido pelo tamanho da fonte em vez de pela altura de uma barra</div>
 
