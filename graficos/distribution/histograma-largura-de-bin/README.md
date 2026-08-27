@@ -54,7 +54,8 @@ descreve uma distribuição só, não compara grupos.
   muda de forma quando você mexe no controle, só de escala (pra continuar do
   tamanho certo em relação ao eixo Y, que muda com o número de bins).
   Comparar a curva (fixa na forma) com as barras (que mudam) é o ponto do
-  gráfico.
+  gráfico: as barras são só uma forma, entre várias possíveis, de resumir a
+  mesma distribuição.
 - **Controle deslizante**: arraste pra mudar o número de bins — poucos bins
   (esquerda) fundem os dois grupos etários numa forma só; muitos bins
   (direita) fragmentam os dados em ruído.
