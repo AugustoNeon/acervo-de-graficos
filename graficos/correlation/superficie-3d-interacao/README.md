@@ -55,7 +55,8 @@ altura por célula da grade, organizado como matriz.
   amarelado é mais baixo
 
 Se a superfície fosse um plano perfeitamente reto, as duas variáveis teriam
-efeitos independentes (a contribuição de uma não muda com o valor da outra).
+efeitos independentes (a contribuição de uma não muda com o valor da outra):
+qualquer torção visível na malha é a interação entre elas.
 
 <div class="pull-quote pull-quote-direita clearfix">qualquer torção visível na malha é a interação entre elas</div>
 
