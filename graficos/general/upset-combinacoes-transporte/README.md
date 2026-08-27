@@ -58,9 +58,11 @@ raras.
 ## Como ler o gráfico
 
 - **Barra de cima**: quantos indivíduos formam **aquela combinação exata** — e
-  só ela.
+  só ela. A primeira barra deste gráfico é "só carro", não "todos que usam
+  carro".
 
 <div class="pull-quote">a primeira barra deste gráfico é "só carro", não "todos que usam carro"</div>
+
 - **Pontos escuros na coluna abaixo da barra**: quais meios aquela combinação
   reúne. Pontos claros são ausência.
 - **Linha ligando os pontos**: junta os pontos de uma mesma combinação, para
