@@ -69,7 +69,8 @@ retas inclinadas, não blocos retos, que dão o formato clássico de funil.
 Dados fictícios: um funil de checkout de uma loja online fictícia, começando
 em 12.480 visitantes (`set.seed(7742)`), com uma queda percentual sorteada
 etapa a etapa — deliberadamente maior nas duas primeiras etapas e menor nas
-duas últimas, o perfil típico de e-commerce real.
+duas últimas, o perfil típico de e-commerce real: a maior parte do abandono
+acontece bem no início da jornada, não perto do pagamento.
 
 <div class="pull-quote pull-quote-direita clearfix">a maior parte do abandono acontece bem no início da jornada, não perto do pagamento</div>
 
