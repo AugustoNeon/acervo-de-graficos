@@ -19,7 +19,8 @@ Um diagrama de cordas dispõe um conjunto de categorias em volta de um círculo 
 liga cada par com uma fita cuja espessura é proporcional à quantidade que flui
 entre elas. **Para que serve**: responder "quem troca com quem, e quanto" quando
 as relações são **mútuas** — ao contrário do Sankey, que separa origem e destino
-em colunas diferentes.
+em colunas diferentes, aqui todo mundo vive no mesmo círculo e pode mandar e
+receber ao mesmo tempo.
 
 <div class="pull-quote">todo mundo vive no mesmo círculo e pode mandar e receber ao mesmo tempo</div>
 
