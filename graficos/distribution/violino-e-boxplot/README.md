@@ -30,7 +30,8 @@ especialmente se houver risco de multimodalidade (mais de um grupo misturado
 na mesma categoria, cada um com seu próprio pico). É exatamente o caso que
 motivou este gráfico: veja "ConectaSul" na variação "Violino + caixa" — a
 caixa mostra uma mediana e um IQR gigante, sem avisar que existem dois grupos
-de clientes bem distintos (fibra e DSL) escondidos dentro dela.
+de clientes bem distintos (fibra e DSL) escondidos dentro dela — só o
+violino revela isso.
 
 <div class="pull-quote">só o violino revela isso</div>
 
