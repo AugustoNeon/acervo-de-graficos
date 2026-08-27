@@ -38,7 +38,8 @@ ordem e destruir a leitura. Nesses casos, use um heatmap com ordem fixa.
 
 <div class="pull-quote pull-quote-direita clearfix">a existência de um dendrograma não prova que os grupos são reais</div>
 
-Cuidado com a tentação de interpretar demais: o algoritmo **sempre** produz
+Cuidado com a tentação de interpretar demais: a existência de um dendrograma
+não prova que os grupos são reais — o algoritmo **sempre** produz
 agrupamentos, mesmo em dados sem estrutura nenhuma.
 
 ## Que dados você precisa
