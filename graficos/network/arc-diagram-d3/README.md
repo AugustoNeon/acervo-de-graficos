@@ -35,9 +35,9 @@ mesmo grupo estiverem adjacentes, as conexões internas viram arcos curtos e
 densos, e as pontes entre grupos viram arcos longos que saltam à vista.
 
 **Evite quando** a ordem dos nós for arbitrária — e aqui está a armadilha
-principal da técnica. Com os nós embaralhados, todos os arcos ficam com
-comprimentos parecidos e o gráfico não comunica absolutamente nada, mesmo
-estando tecnicamente correto.
+principal da técnica: a ordenação é a análise. Com os nós embaralhados,
+todos os arcos ficam com comprimentos parecidos e o gráfico não comunica
+absolutamente nada, mesmo estando tecnicamente correto.
 
 <div class="pull-quote">a ordenação é a análise</div>
 
