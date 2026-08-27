@@ -60,7 +60,8 @@ os valores somam 24 (horas) por coincidência temática, não por exigência té
 
 Fatias vizinhas com tamanho parecido são as mais difíceis de comparar só de
 olho — é aí que passar o mouse (na versão interativa) ajuda, mostrando o
-percentual exato.
+percentual exato. Vale repetir a regra de leitura: o buraco no centro: sem
+significado — é só espaço negativo.
 
 <div class="pull-quote pull-quote-direita clearfix">o buraco no centro: sem significado — é só espaço negativo</div>
 
