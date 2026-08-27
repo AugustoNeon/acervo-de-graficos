@@ -26,7 +26,8 @@ de milhares de testes simultâneos.
 
 <div class="pull-quote pull-quote-direita clearfix">os agrupamentos que ultrapassam a linha de significância lembram os arranha-céus do horizonte de Manhattan</div>
 
-É daí que vem o nome.
+Os agrupamentos que ultrapassam a linha de significância lembram os
+arranha-céus do horizonte de Manhattan — é daí que vem o nome.
 
 ## Quando usar (e quando evitar)
 
