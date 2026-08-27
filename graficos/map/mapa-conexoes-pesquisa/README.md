@@ -50,7 +50,9 @@ de calcular a geometria de cada rota — não uma tabela só.
   daquele centro (o quanto ele funciona como polo da rede)
 - **Traçado da linha**: o caminho mais curto entre as duas cidades sobre a
   esfera (não uma reta na tela) — por isso as rotas de longa distância
-  aparecem curvadas, arqueando em direção aos polos.
+  aparecem curvadas, arqueando em direção aos polos: voos entre América do
+  Norte e Ásia costumam passar perto do Alasca, embora pareçam
+  desnecessários numa reta.
 - **Espessura e opacidade da linha**: quantidade de pesquisadores naquela
   rota especificamente
 - **Cor da linha**: região de origem da rota
