@@ -37,8 +37,9 @@ somem.
 
 <div class="pull-quote pull-quote-direita clearfix">área de círculo cresce com o quadrado do raio</div>
 
-Mapear o valor direto no raio exagera as diferenças, o que torna a escala de
-cores um apoio importante para a leitura correta.
+Área de círculo cresce com o quadrado do raio: mapear o valor direto no raio
+exagera as diferenças, o que torna a escala de cores um apoio importante
+para a leitura correta.
 
 ## Que dados você precisa
 
