@@ -39,10 +39,16 @@ dados <- data.frame(
 
 # Rotulos de mes: um por mes, na semana do dia 1 -- usados nos dois lados
 # (eixo do output.png e cabecalho da versao D3), pra nao dessincronizar.
+# Abreviacao escrita a mao, sem depender de "%b" -- essa formatacao le o
+# locale de tempo do sistema (`LC_TIME`), que nesta maquina e C.UTF-8 e
+# devolveria abreviacoes em INGLES ("Jan", "Feb"...) mesmo com o resto do
+# script em portugues. Sem erro nenhum -- só sai errado se ninguém olhar a
+# imagem renderizada.
+abrev_mes_pt <- c("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 primeiros_dias <- seq(inicio, fim, by = "month")
 rotulos_mes <- data.frame(
   semana = semana[match(primeiros_dias, datas)],
-  mes = format(primeiros_dias, "%b")
+  mes = abrev_mes_pt[as.integer(format(primeiros_dias, "%m"))]
 )
 
 # Rotulos de dia da semana: so Seg/Qua/Sex, mesma convencao do calendario de
@@ -113,7 +119,10 @@ viz <- list(
       continua = as.list(paleta_continua[c(1, 25, 50, 75, 100)]),
       faixas = as.list(cores_faixas),
       cortesFaixas = as.list(cortes_faixas)
-    )
+    ),
+    mesesRotulo = lapply(seq_len(nrow(rotulos_mes)), function(i) {
+      list(semana = rotulos_mes$semana[i], rotulo = rotulos_mes$mes[i])
+    })
   ),
   dias = lapply(seq_len(nrow(dados)), function(i) {
     list(
