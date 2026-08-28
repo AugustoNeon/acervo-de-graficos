@@ -129,12 +129,12 @@ motor de renderização recalcula a resolução interna sozinho.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="bolhas-investimento-startups" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../bolhas-investimento-startups" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Bubble chart: investimento x crescimento x porte</span>
     <span class="parecido-razao">O oposto direto: a mesma necessidade de mostrar três variáveis numéricas, resolvida com tamanho de bolha num plano 2D em vez de um eixo Z de verdade.</span>
   </a>
-  <a class="parecido-item" href="superficie-3d-interacao" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../superficie-3d-interacao" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Superfície 3D de interação (rgl)</span>
     <span class="parecido-razao">Mesma técnica (rgl, mesmo modo headless, mesmas armadilhas de legenda) — mas uma superfície contínua no lugar de pontos discretos.</span>
