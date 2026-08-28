@@ -78,6 +78,16 @@ const tilt = tiltFor(id);
     grid-row: span 2;
   }
 
+  /* Abaixo de 40rem o grid já é 1 coluna (minmax(260px, 1fr) não cabe 2) —
+     sem isso, o span de 2 força uma coluna implícita extra e o card em
+     destaque estoura a largura da viewport. */
+  @media (max-width: 40rem) {
+    .specimen.is-featured {
+      grid-column: span 1;
+      grid-row: span 1;
+    }
+  }
+
   /* Fita washi presa no canto — o sinal de categoria vira objeto, não bloco
      de fundo. Pontas em bisel simulam o corte/rasgo da fita. */
   .tape {
