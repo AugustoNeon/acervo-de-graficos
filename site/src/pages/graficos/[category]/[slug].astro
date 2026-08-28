@@ -47,7 +47,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
 ---
 
 <Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title} surface="paper">
-  <div class="page" style={corDaCategoria(entry.data.category)}>
+  <main class="page" style={corDaCategoria(entry.data.category)}>
     <a class="back" href={`${base}/`}>« voltar ao caderno</a>
     <p class="site-orientacao">Acervo de Gráficos — catálogo pessoal de tipos de gráfico em R, cada um replicado e documentado.</p>
 
@@ -135,7 +135,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
         <Code code={code} lang="r" theme="github-light" />
       </section>
     )}
-  </div>
+  </main>
 
   <dialog id="lightbox">
     <button type="button" class="lightbox-close" aria-label="Fechar">✕</button>

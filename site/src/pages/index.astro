@@ -14,7 +14,7 @@ const base = import.meta.env.BASE_URL;
 ---
 
 <Base title="Acervo de Gráficos" surface="board">
-  <div class="mural">
+  <main class="mural">
     <header class="masthead">
       <span class="pin" aria-hidden="true"></span>
       <h1>Um caderno de campo sobre gráficos em R.</h1>
@@ -25,11 +25,11 @@ const base = import.meta.env.BASE_URL;
     </header>
 
     <nav class="drawer-tabs" aria-label="Filtrar por categoria">
-      <button type="button" class="tab is-active" data-filter="all">
+      <button type="button" class="tab is-active" data-filter="all" aria-pressed="true">
         Tudo<span>{entries.length}</span>
       </button>
       {categories.map((category) => (
-        <button type="button" class="tab" data-filter={category} style={corDaCategoria(category)}>
+        <button type="button" class="tab" data-filter={category} style={corDaCategoria(category)} aria-pressed="false">
           {category}<span>{entries.filter((e) => e.data.category === category).length}</span>
         </button>
       ))}
@@ -63,7 +63,7 @@ const base = import.meta.env.BASE_URL;
         caderno aos poucos, quase todo dia.
       </p>
     )}
-  </div>
+  </main>
 </Base>
 
 <style>
@@ -202,7 +202,11 @@ const base = import.meta.env.BASE_URL;
   tabs.forEach((button) => {
     button.addEventListener('click', () => {
       const target = button.dataset.filter;
-      tabs.forEach((b) => b.classList.toggle('is-active', b === button));
+      tabs.forEach((b) => {
+        const active = b === button;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
       grid?.querySelectorAll<HTMLElement>('.specimen').forEach((card) => {
         const show = target === 'all' || card.dataset.category === target;
         card.hidden = !show;
