@@ -480,6 +480,12 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     margin-bottom: var(--space-sm);
     padding-top: var(--space-xs);
     border-top: 3px solid var(--cat, var(--color-border-strong));
+    /* .pull-quote-direita flutua (float: right) e sua propria classe
+       clearfix so limpa DENTRO dela -- nao limpa quem vem depois no
+       Markdown. Sem isso, um H2 logo depois de um pull-quote-direita sem
+       paragrafo no meio (18 READMEs tem esse padrao) comeca a fluir ao
+       lado do float ainda ativo, e essa borda nova cruza por dentro dele. */
+    clear: both;
   }
 
   .notes :global(ul) {
