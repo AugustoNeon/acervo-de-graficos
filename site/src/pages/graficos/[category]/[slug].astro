@@ -82,7 +82,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
         <span class="tape tape-b" aria-hidden="true"></span>
         {entry.data.interactive ? (
           <div class="visual-mount widget-frame">
-            <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
+            <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy" data-fallback-src={`${assetBase}output.png`}></iframe>
           </div>
         ) : (
           /* Fallback pra grafico sem widget.html nem modulo D3 (temViz) --
@@ -306,6 +306,18 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     height: 32rem;
     border: none;
     display: block;
+  }
+
+  .widget-frame img {
+    width: 100%;
+    display: block;
+  }
+
+  .widget-fallback-nota {
+    margin-top: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
   }
 
   /* Ficha técnica — etiqueta de espécime, cartolina kraft. Nunca leva texto
@@ -761,6 +773,31 @@ const assetBase = `${base}/graficos/${entry.id}/`;
         const contentHeight = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
         if (contentHeight > frame.clientHeight) {
           frame.style.height = `${Math.min(contentHeight + 4, MAX_ALTURA_PX)}px`;
+        }
+
+        // Mapa leaflet depende de tiles buscados de um servico externo (ver
+        // "Notas do coletor" do bubble map) -- sem essa checagem, rede
+        // bloqueada/offline deixa so um retangulo cinza sem explicacao
+        // nenhuma, mesmo com o output.png certo ja salvo na mesma pasta.
+        // Espera os tiles terem tempo de chegar (ou falhar) antes de decidir.
+        if (doc.querySelector('.leaflet-container')) {
+          setTimeout(() => {
+            const tiles = doc.querySelectorAll<HTMLImageElement>('img.leaflet-tile');
+            const carregouAlgum = Array.from(tiles).some((img) => img.naturalWidth > 0);
+            const fallbackSrc = frame.dataset.fallbackSrc;
+            const wrapper = frame.closest<HTMLElement>('.widget-frame');
+            if (tiles.length > 0 && !carregouAlgum && fallbackSrc && wrapper) {
+              wrapper.innerHTML = '';
+              const img = document.createElement('img');
+              img.src = fallbackSrc;
+              img.alt = frame.title;
+              wrapper.appendChild(img);
+              const nota = document.createElement('p');
+              nota.className = 'widget-fallback-nota';
+              nota.textContent = 'Mapa base indisponível agora — mostrando a versão estática.';
+              wrapper.insertAdjacentElement('afterend', nota);
+            }
+          }, 4000);
         }
       } catch {
         // widget em outra origem (nao deveria acontecer aqui) -- mantem a altura padrao
