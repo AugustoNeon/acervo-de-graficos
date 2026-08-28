@@ -115,12 +115,12 @@ colorir por categoria revela e um scatter de uma cor só esconderia.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="correlograma-indicadores" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../correlograma-indicadores" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Correlograma: indicadores municipais</span>
     <span class="parecido-razao">O oposto direto: em vez de examinar UM par de variáveis a fundo, resume a correlação de TODOS os pares numa grade — bom primeiro passo antes de abrir um par específico aqui.</span>
   </a>
-  <a class="parecido-item" href="../distribution/histograma-largura-de-bin" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+  <a class="parecido-item" href="../../distribution/histograma-largura-de-bin" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
     <span class="parecido-cat">distribution</span>
     <span class="parecido-titulo">Histograma: largura de bin variável</span>
     <span class="parecido-razao">A técnica de cada histograma marginal, isolada e aprofundada — inclusive a mesma armadilha de bins que não batem entre R e D3.</span>
