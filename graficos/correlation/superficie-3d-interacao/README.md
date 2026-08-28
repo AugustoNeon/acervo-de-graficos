@@ -127,12 +127,12 @@ pra qualquer ângulo, parar, dar zoom — mais informação com menos peça móv
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Dispersão 3D de cafés especiais (rgl)</span>
     <span class="parecido-razao">Mesma técnica (rgl, mesmo modo headless, mesma armadilha de legenda) — mas pontos discretos de observações reais em vez de uma superfície contínua calculada.</span>
   </a>
-  <a class="parecido-item" href="../distribution/superficie-3d-densidade" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+  <a class="parecido-item" href="../../distribution/superficie-3d-densidade" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
     <span class="parecido-cat">distribution</span>
     <span class="parecido-titulo">Superfície 3D de densidade (plotly + MASS::kde2d)</span>
     <span class="parecido-razao">O mesmo formato — superfície 3D colorida por altura — noutro pacote (plotly) e outro domínio: densidade de uma distribuição, não interação entre variáveis.</span>
