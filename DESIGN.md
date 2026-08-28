@@ -27,7 +27,9 @@ Estratégia **paleta completa**: 8 categorias, cada uma com seu matiz (`--cat-<c
 
 Regra dura: **`--cat-X-ink` nunca em cima de `--tag-stock`** (o kraft da ficha técnica) — cai a 3,81:1 no matiz mais fraco, abaixo dos 4,5:1 de texto normal. A ficha usa só `--color-ink`/`--color-ink-muted` (13,4:1 / 5,7:1 nela).
 
-Papel de interface fora do sistema categórico: `--color-primary`, um azul-tinteiro (`oklch(0.4 0.15 258)`, 9:1 contra `--paper`) — foco, links, o "carimbo" de data/entrada, o badge "interativo". Nunca uma cor de categoria: foco é papel do sistema, não do acervo.
+Papel de interface fora do sistema categórico: `--color-primary`, um azul-tinteiro (`oklch(0.4 0.15 258)`, 9:1 contra `--paper`) — foco, links. Nunca uma cor de categoria: foco é papel do sistema, não do acervo.
+
+> **Nota (2026-08-28)**: esta seção descrevia até aqui também o "carimbo" de data/entrada e o badge "interativo" como usos de `--color-primary`. Os dois foram removidos do site numa sessão de 2026-08-26 (ver `docs/pendencias-reformulacao-pagina-grafico.md`) — a data e o Nº de entrada saíram da página do gráfico, e o selo "interativo" saiu do card da galeria porque os 58 gráficos do acervo já são todos interativos, a tag parou de distinguir qualquer coisa. Este documento nunca tinha sido atualizado depois dessa remoção.
 
 ## Tipografia
 
@@ -42,7 +44,7 @@ Par por contraste de eixo (serifada robusta × humanista neutra), evitando delib
 
 - **`GraphCard.astro`** → espécime preso por fita washi (`lib/tilt.ts` dá a inclinação, hash determinístico do id — nunca `Math.random()`, pra SSR e revisita baterem). Card `is-featured` (o mais recente) ganha `grid-column: span 2` e crop 16:10 — nunca `grid-row: span 2` (span de linha com `grid-auto-rows: auto` e conteúdo de altura variável quebra o encaixe do resto da grade).
 - **`index.astro`** → mural: masthead é uma ficha de papel pregada (não texto direto no board), abas de categoria são divisórias de gaveta (`border-top` na cor da categoria, "puxam" pra cima quando ativas).
-- **`[slug].astro`** → página de caderno: carimbo de entrada com número sequencial cronológico (`Nº 0XX`, calculado em `getStaticPaths` — ordem de quando o gráfico entrou no acervo, não a ordem de exibição mais-recente-primeiro da home), fita washi nos dois cantos do espécime, ficha técnica em cartolina kraft.
+- **`[slug].astro`** → página de caderno: fita washi nos dois cantos do espécime, ficha técnica em cartolina kraft. (O carimbo de entrada com número sequencial — `Nº 0XX` — descrito numa versão anterior desta linha saiu do site em 2026-08-26, junto com a data visível; ver nota acima.)
 
 ## Motion
 
