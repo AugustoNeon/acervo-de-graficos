@@ -41,13 +41,17 @@ export async function getStaticPaths() {
 }
 
 const { entry, code, temViz } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+// Astro ja gera um id (slug) em cada heading do Markdown -- so precisa
+// filtrar pro nivel certo pra virar sumario, sem tocar em como o
+// <Content /> renderiza.
+const sumario = headings.filter((h) => h.depth === 2);
 const base = import.meta.env.BASE_URL;
 const assetBase = `${base}/graficos/${entry.id}/`;
 ---
 
 <Base title={`${entry.data.title} · Acervo de Gráficos`} description={entry.data.title} surface="paper">
-  <main class="page" style={corDaCategoria(entry.data.category)}>
+  <main class="page" id="topo" style={corDaCategoria(entry.data.category)}>
     <a class="back" href={`${base}/`}>« voltar ao caderno</a>
     <p class="site-orientacao">Acervo de Gráficos — catálogo pessoal de tipos de gráfico em R, cada um replicado e documentado.</p>
 
@@ -125,6 +129,16 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       </div>
     </dl>
 
+    <nav class="sumario" aria-label="Sumário da página">
+      <p class="sumario-titulo">Nesta página</p>
+      <ol>
+        {sumario.map((h) => (
+          <li><a href={`#${h.slug}`}>{h.text}</a></li>
+        ))}
+        {code && <li><a href="#o-protocolo">O protocolo</a></li>}
+      </ol>
+    </nav>
+
     <section class="notes">
       <Content />
     </section>
@@ -132,15 +146,24 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     {code && (
       <section class="codigo">
         <div class="codigo-head">
-          <h2>O protocolo</h2>
+          <h2 id="o-protocolo">O protocolo</h2>
           <button type="button" class="copy-btn" data-copy-label="Copiar código">Copiar código</button>
         </div>
         <p class="codigo-hint">
           Script completo que gera este gráfico — roda do zero, sem depender de arquivo externo.
         </p>
-        <Code code={code} lang="r" theme="github-light" />
+        <details class="codigo-details">
+          <summary>Ver o código completo ({code.split('\n').length} linhas)</summary>
+          <Code code={code} lang="r" theme="github-light" />
+        </details>
       </section>
     )}
+
+    <footer class="page-footer">
+      <a href="#topo" class="footer-link">↑ Voltar ao topo</a>
+      <a href={`${base}/?cat=${entry.data.category}`} class="footer-link">Mais de {entry.data.category}</a>
+      <a href={`${base}/`} class="footer-link">« Voltar ao caderno</a>
+    </footer>
   </main>
 
   <dialog id="lightbox">
@@ -398,15 +421,65 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     }
   }
 
+  /* Sumario -- pagina de referencia costuma passar de 10.000px numa tela
+     grande, com 10 secoes e nenhum jeito de pular direto pra uma delas.
+     Lista simples, mono, discreta -- nao compete com a ficha tecnica
+     logo acima, so resolve "ir direto pro Quando usar" sem rolar tudo. */
+  .sumario {
+    max-width: var(--measure);
+    margin: 0 0 var(--space-xl);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px dashed var(--color-border-strong);
+  }
+
+  .sumario-titulo {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .sumario ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs) var(--space-md);
+    list-style: none;
+    counter-reset: sumario;
+  }
+
+  .sumario li {
+    counter-increment: sumario;
+    font-size: var(--text-sm);
+  }
+
+  .sumario li::before {
+    content: counter(sumario) '. ';
+    color: var(--cat-ink, var(--color-ink-muted));
+    font-family: var(--font-mono);
+  }
+
+  .sumario a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .sumario a:hover {
+    border-bottom-color: var(--color-ink);
+  }
+
   .notes {
     max-width: var(--measure);
     color: var(--color-ink);
   }
 
   .notes :global(h2) {
-    font-size: var(--text-lg);
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-xs);
+    font-size: var(--text-xl);
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-sm);
+    padding-top: var(--space-xs);
+    border-top: 3px solid var(--cat, var(--color-border-strong));
   }
 
   .notes :global(ul) {
@@ -662,6 +735,35 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     color: var(--color-ink-muted);
   }
 
+  /* Fechado por padrao -- eram ~4.000px de script sempre abertos, 40% da
+     pagina, entre o gráfico ser lido de verdade (as secoes de referencia
+     acima) e a pagina simplesmente acabar. Continua tudo no DOM (o botao
+     de copiar le o texto de qualquer jeito, recolhido ou nao). */
+  .codigo-details summary {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-primary);
+    padding: var(--space-2xs) 0;
+    list-style: none;
+  }
+
+  .codigo-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .codigo-details summary::before {
+    content: '▸ ';
+  }
+
+  .codigo-details[open] summary::before {
+    content: '▾ ';
+  }
+
+  .codigo-details summary:hover {
+    text-decoration: underline;
+  }
+
   .codigo :global(.astro-code) {
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--color-border);
@@ -702,6 +804,27 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       width: 3.5rem;
       height: 1.3rem;
     }
+  }
+
+  /* A pagina terminava literalmente na ultima linha do script -- sem
+     fechamento nenhum, sem jeito de continuar navegando dali. */
+  .page-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px dashed var(--color-border-strong);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .footer-link {
+    color: var(--color-ink-muted);
+  }
+
+  .footer-link:hover {
+    color: var(--color-ink);
   }
 </style>
 
