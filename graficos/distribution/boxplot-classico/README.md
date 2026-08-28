@@ -136,12 +136,12 @@ seus próprios parâmetros de mediana/dispersão.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="ridgeline-avaliacoes-bairros" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+  <a class="parecido-item" href="../ridgeline-avaliacoes-bairros" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
     <span class="parecido-cat">distribution</span>
     <span class="parecido-titulo">Ridgeline plot</span>
     <span class="parecido-razao">O oposto direto quando a distribuição é multimodal: o boxplot resume tudo numa caixa só, sem avisar que existem dois picos escondidos ali — o ridgeline mostra a forma de verdade.</span>
   </a>
-  <a class="parecido-item" href="violino-e-boxplot" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
+  <a class="parecido-item" href="../violino-e-boxplot" style="--cat-link: var(--cat-distribution); --cat-link-ink: var(--cat-distribution-ink);">
     <span class="parecido-cat">distribution</span>
     <span class="parecido-titulo">Violino + boxplot: três variações</span>
     <span class="parecido-razao">Mesma técnica, um passo adiante: o boxplot clássico combinado com a densidade do violino no mesmo espaço, em vez de alternável.</span>
