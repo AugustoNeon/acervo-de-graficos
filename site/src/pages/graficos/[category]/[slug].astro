@@ -85,6 +85,12 @@ const assetBase = `${base}/graficos/${entry.id}/`;
             <iframe src={`${assetBase}widget.html`} title={entry.data.title} loading="lazy"></iframe>
           </div>
         ) : (
+          /* Fallback pra grafico sem widget.html nem modulo D3 (temViz) --
+             so imagem + zoom no lightbox. Nenhum dos 58 graficos atuais cai
+             aqui (todos sao interactive: true), mas o WORKFLOW.md passo 5
+             prevê explicitamente essa saida quando não houver equivalente
+             interativo razoável -- não é código morto, é a saída pro
+             próximo gráfico que não tiver um. */
           <>
             <button type="button" class="visual-mount zoom-trigger" data-zoom-src={`${assetBase}output.png`}>
               <img src={`${assetBase}output.png`} alt={entry.data.title} loading="eager" decoding="async" />
@@ -605,8 +611,11 @@ const assetBase = `${base}/graficos/${entry.id}/`;
   }
 
   .copy-btn {
+    display: inline-flex;
+    align-items: center;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
+    min-height: 2.75rem;
     padding: 0.4em 0.8em;
     border: 1px solid var(--color-border-strong);
     color: var(--color-ink-muted);
