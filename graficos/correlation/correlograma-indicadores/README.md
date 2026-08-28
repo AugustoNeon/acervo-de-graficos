@@ -121,12 +121,12 @@ precisar ler célula por célula.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="dispersao-marginais-imoveis" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../dispersao-marginais-imoveis" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Dispersão com histogramas marginais</span>
     <span class="parecido-razao">O oposto direto: quando a relação entre DUAS variáveis específicas precisa de exame direto, não do resumo em grade — inclusive pra flagrar a relação não linear que o correlograma esconde.</span>
   </a>
-  <a class="parecido-item" href="../network/matriz-adjacencia-tags" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+  <a class="parecido-item" href="../../network/matriz-adjacencia-tags" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
     <span class="parecido-cat">network</span>
     <span class="parecido-titulo">Matriz de adjacência: tags que aparecem juntas</span>
     <span class="parecido-razao">Mesma técnica — a mesma grade de células reordenada por semelhança — mas a força na célula vem de coocorrência numa rede, não de correlação estatística.</span>
