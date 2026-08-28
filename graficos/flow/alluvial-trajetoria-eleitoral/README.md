@@ -137,7 +137,7 @@ grossos que trajetos de migração rara. Paleta `RColorBrewer::brewer.pal(4,
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+  <a class="parecido-item" href="../sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
     <span class="parecido-cat">flow</span>
     <span class="parecido-titulo">Sankey diagram simplificado</span>
     <span class="parecido-razao">Mesma técnica por baixo dos panos — um diagrama aluvial de eixos discretos é um Sankey em várias colunas — mas sem a restrição de "mesma unidade repetida", livre pra ligar categorias de naturezas diferentes.</span>
