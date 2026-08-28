@@ -119,6 +119,14 @@ const base = import.meta.env.BASE_URL;
     position: sticky;
     top: var(--space-sm);
     z-index: var(--z-sticky);
+    /* Sem fundo próprio, as abas coladas no topo deixavam o card por baixo
+       vazar pelos vãos entre elas (e, com 2+ linhas, pelo espaço entre
+       linhas) assim que ele passava a rolar por trás -- quebra a
+       ilusão de "coisa pregada num quadro". Um fundo opaco cobrindo a
+       caixa inteira (não só cada aba) resolve os dois. */
+    background: var(--board);
+    padding: var(--space-3xs) 0;
+    box-shadow: 0 6px 10px -6px oklch(0.16 0.03 55 / 0.4);
   }
 
   .tab {
