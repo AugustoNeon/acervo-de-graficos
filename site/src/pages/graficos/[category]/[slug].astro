@@ -52,7 +52,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     <p class="site-orientacao">Acervo de Gráficos — catálogo pessoal de tipos de gráfico em R, cada um replicado e documentado.</p>
 
     <header class="head">
-      <span class="category">{entry.data.category}</span>
+      <a class="category" href={`${base}/?cat=${entry.data.category}`}>{entry.data.category}</a>
       <h1>{entry.data.title}</h1>
       <p class="resumo">{entry.data.resumo}</p>
       {(entry.data.veredito_uso || entry.data.veredito_evita) && (
@@ -120,7 +120,7 @@ const assetBase = `${base}/graficos/${entry.id}/`;
       <div class="ficha-row">
         <dt>Tags</dt>
         <dd class="chips">
-          {entry.data.tags.map((t) => <span class="chip chip-tag">{t}</span>)}
+          {entry.data.tags.map((t) => <a class="chip chip-tag" href={`${base}/?q=${encodeURIComponent(t)}`}>{t}</a>)}
         </dd>
       </div>
     </dl>
@@ -220,6 +220,11 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     font-size: var(--text-xs);
     letter-spacing: 0.07em;
     text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .category:hover {
+    text-decoration: underline;
   }
 
   h1 {
@@ -379,6 +384,11 @@ const assetBase = `${base}/graficos/${entry.id}/`;
     color: var(--cat-ink);
     border-color: transparent;
     background: var(--cat-wash);
+    text-decoration: none;
+  }
+
+  .chip-tag:hover {
+    text-decoration: underline;
   }
 
   @media (max-width: 32rem) {
