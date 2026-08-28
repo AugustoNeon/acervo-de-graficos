@@ -122,12 +122,12 @@ empresa no tooltip; clicar num setor na legenda isola aquele grupo entre as
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
+  <a class="parecido-item" href="../dispersao-3d-cafes" style="--cat-link: var(--cat-correlation); --cat-link-ink: var(--cat-correlation-ink);">
     <span class="parecido-cat">correlation</span>
     <span class="parecido-titulo">Dispersão 3D de cafés especiais (rgl)</span>
     <span class="parecido-razao">O oposto direto: a mesma necessidade de codificar uma terceira variável numérica, resolvida com um eixo Z de verdade em vez de tamanho de bolha.</span>
   </a>
-  <a class="parecido-item" href="../part-of-whole/circle-packing-simples" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+  <a class="parecido-item" href="../../part-of-whole/circle-packing-simples" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
     <span class="parecido-cat">part-of-whole</span>
     <span class="parecido-titulo">Circle packing simples</span>
     <span class="parecido-razao">Mesma técnica — área do círculo como valor — mas sem eixos X/Y: aqui o círculo também organiza hierarquia, não posição.</span>
