@@ -119,12 +119,12 @@ mundo na mesma janela.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
+  <a class="parecido-item" href="../sankey-networkd3-simplificado" style="--cat-link: var(--cat-flow); --cat-link-ink: var(--cat-flow-ink);">
     <span class="parecido-cat">flow</span>
     <span class="parecido-titulo">Sankey diagram simplificado</span>
     <span class="parecido-razao">O oposto direto: quando o fluxo tem direção única e estágios em sequência, em vez de troca mútua entre as mesmas categorias.</span>
   </a>
-  <a class="parecido-item" href="../network/rede-direcionada-ponderada" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
+  <a class="parecido-item" href="../../network/rede-direcionada-ponderada" style="--cat-link: var(--cat-network); --cat-link-ink: var(--cat-network-ink);">
     <span class="parecido-cat">network</span>
     <span class="parecido-titulo">Rede direcionada e ponderada (fluxo entre cidades)</span>
     <span class="parecido-razao">Mesmo tipo de dado (fluxo direcionado e ponderado entre nós), lido como grafo de nós e arestas em vez de fitas ao redor de um círculo.</span>
