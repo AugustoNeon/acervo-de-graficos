@@ -45,6 +45,14 @@ rotulos_mes <- data.frame(
   mes = format(primeiros_dias, "%b")
 )
 
+# Rotulos de dia da semana: so Seg/Qua/Sex, mesma convencao do calendario de
+# contribuicoes que inspirou a tecnica -- os 7 poluiriam a lateral estreita
+# sem acrescentar leitura (a ordem Dom-no-topo/Sáb-embaixo já fica clara com
+# 3 âncoras).
+rotulos_dia <- data.frame(
+  dia_semana_nome = factor(c("Seg", "Qua", "Sex"), levels = rev(nomes_dia))
+)
+
 # Paleta propria: sequencial de creme quase neutro (zero commits, mesmo
 # tratamento do "sem atividade" do original que este acervo nunca copia
 # literalmente) ate um vinho-magenta escuro de alto croma -- nunca o verde
@@ -58,6 +66,10 @@ p <- ggplot(dados, aes(x = semana, y = dia_semana_nome, fill = valor)) +
     data = rotulos_mes, aes(x = semana, y = 7.9, label = mes),
     inherit.aes = FALSE, family = "sans", size = 3.1, colour = "grey35", hjust = 0
   ) +
+  geom_text(
+    data = rotulos_dia, aes(x = -1.4, y = dia_semana_nome, label = dia_semana_nome),
+    inherit.aes = FALSE, family = "sans", size = 2.7, colour = "grey45", hjust = 0
+  ) +
   scale_fill_gradientn(colours = paleta_continua, name = "Commits") +
   coord_cartesian(clip = "off") +
   labs(
@@ -68,7 +80,7 @@ p <- ggplot(dados, aes(x = semana, y = dia_semana_nome, fill = valor)) +
   theme(
     plot.title = element_text(face = "bold", margin = margin(b = 2)),
     plot.subtitle = element_text(colour = "grey35", size = 8.6, margin = margin(b = 14)),
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10),
+    plot.margin = margin(t = 10, r = 20, b = 10, l = 26),
     legend.position = "bottom",
     legend.title = element_text(size = 9),
     legend.key.width = unit(1.1, "cm"),
