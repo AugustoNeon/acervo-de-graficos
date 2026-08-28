@@ -132,6 +132,8 @@ Use as cores **reais** da paleta do gráfico (as mesmas do `script.R`/`colorRamp
 
 `--cat-CATEGORIA`/`--cat-CATEGORIA-ink` são os tokens já definidos em `tokens.css` (`comparison`, `correlation`, `distribution`, `evolution`, `general`, `flow`, `map`, `network`, `part-of-whole`, `ranking`) — troque pela categoria do gráfico **linkado** (a borda colorida do cartão é a cor de destino, não a da página atual). Link relativo, mesma regra de sempre (`../slug` mesma categoria, `../../categoria/slug` categoria diferente).
 
+**Links quebrados falham o build automaticamente**: `scripts/check-internal-links.py` varre todo link relativo (markdown e `href` dos cartões de "Gráficos parecidos") em todos os READMEs e confere se a pasta de destino existe. Ele roda sozinho antes de `npm run dev`/`npm run build` (hooks `predev`/`prebuild` em `site/package.json`, junto com `sync-assets.mjs`) — não precisa rodar à mão, mas dá pra conferir isolado com `python3 scripts/check-internal-links.py` a partir da raiz do repo.
+
 ### Regras de escrita
 
 - **Nunca citar a fonte original** (R Graph Gallery, data-to-viz ou qualquer outra) em texto renderizado — nem nome, nem link, nem "o exemplo original". O site é material autoral; a fonte vive só no `source` do frontmatter. Ver "Decisões fechadas" em [`AGENTS.md`](../AGENTS.md).
