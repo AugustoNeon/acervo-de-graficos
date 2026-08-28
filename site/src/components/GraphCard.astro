@@ -73,9 +73,12 @@ const tilt = tiltFor(id);
     z-index: var(--z-dropdown);
   }
 
+  /* Só grid-column, nunca grid-row (ver DESIGN.md "O que fica de fora
+     deliberadamente"): span de linha com grid-auto-rows: auto e conteúdo de
+     altura variável quebra o encaixe do resto do grid -- risco documentado,
+     não reintroduzir mesmo que os 58 cards atuais não exponham o problema. */
   .specimen.is-featured {
     grid-column: span 2;
-    grid-row: span 2;
   }
 
   /* Abaixo de 40rem o grid já é 1 coluna (minmax(260px, 1fr) não cabe 2) —
@@ -84,7 +87,6 @@ const tilt = tiltFor(id);
   @media (max-width: 40rem) {
     .specimen.is-featured {
       grid-column: span 1;
-      grid-row: span 1;
     }
   }
 
