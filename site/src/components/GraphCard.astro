@@ -9,6 +9,9 @@ interface Props {
   thumbnail: string;
   resumo: string;
   id: string;
+  /** Tags do frontmatter — não aparecem no card, só alimentam a busca por
+      texto (título + tag) sem precisar de mais um campo visível. */
+  tags?: string[];
   /** Posição na grade — alimenta o atraso escalonado da entrada. */
   index?: number;
   /** A entrada mais recente ganha o espaço maior no mural, como a página que
@@ -23,11 +26,13 @@ const {
   thumbnail,
   resumo,
   id,
+  tags = [],
   index = 0,
   featured = false,
 } = Astro.props;
 
 const tilt = tiltFor(id);
+const searchIndex = [title, category, ...tags].join(' ').toLowerCase();
 ---
 
 <a
@@ -35,6 +40,7 @@ const tilt = tiltFor(id);
   class:list={{ 'is-featured': featured }}
   href={href}
   data-category={category}
+  data-search-index={searchIndex}
   style={`${corDaCategoria(category)} --i: ${index}; --tilt: ${tilt}deg;`}
 >
   <span class="tape" aria-hidden="true"></span>

@@ -24,16 +24,23 @@ const base = import.meta.env.BASE_URL;
       </p>
     </header>
 
-    <nav class="drawer-tabs" aria-label="Filtrar por categoria">
-      <button type="button" class="tab is-active" data-filter="all" aria-pressed="true">
-        Tudo<span>{entries.length}</span>
-      </button>
-      {categories.map((category) => (
-        <button type="button" class="tab" data-filter={category} style={corDaCategoria(category)} aria-pressed="false">
-          {category}<span>{entries.filter((e) => e.data.category === category).length}</span>
+    <div class="filter-bar">
+      <nav class="drawer-tabs" aria-label="Filtrar por categoria">
+        <button type="button" class="tab is-active" data-filter="all" aria-pressed="true">
+          Tudo<span>{entries.length}</span>
         </button>
-      ))}
-    </nav>
+        {categories.map((category) => (
+          <button type="button" class="tab" data-filter={category} style={corDaCategoria(category)} aria-pressed="false">
+            {category}<span>{entries.filter((e) => e.data.category === category).length}</span>
+          </button>
+        ))}
+      </nav>
+      <label class="search-label" for="search">
+        <span class="visually-hidden">Buscar por título ou tag</span>
+        <input type="search" id="search" placeholder="Buscar por título ou tag…" autocomplete="off" />
+      </label>
+    </div>
+    <p class="filter-empty" id="filter-empty" hidden>Nenhum espécime bate com esse filtro/busca.</p>
 
     {entries.length > 0 ? (
       <div class="board-grid" id="grid">
@@ -47,6 +54,7 @@ const base = import.meta.env.BASE_URL;
               thumbnail={`${base}/graficos/${category}/${slug}/output.png`}
               resumo={entry.data.resumo}
               id={entry.id}
+              tags={entry.data.tags}
               index={i}
               featured={i === 0}
             />
@@ -110,11 +118,12 @@ const base = import.meta.env.BASE_URL;
     line-height: var(--leading-snug);
   }
 
-  .drawer-tabs {
+  .filter-bar {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 0.35rem;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
     margin-bottom: var(--space-xl);
     position: sticky;
     top: var(--space-sm);
@@ -127,6 +136,50 @@ const base = import.meta.env.BASE_URL;
     background: var(--board);
     padding: var(--space-3xs) 0;
     box-shadow: 0 6px 10px -6px oklch(0.16 0.03 55 / 0.4);
+  }
+
+  .drawer-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.35rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .search-label {
+    flex: 0 0 auto;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .search-label input {
+    min-height: 2.75rem;
+    padding: 0.55em 0.9em;
+    background: var(--paper-surface);
+    border: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    width: 14rem;
+  }
+
+  .search-label input::placeholder {
+    color: var(--color-ink-muted);
+  }
+
+  .filter-empty {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--paper);
+    margin-bottom: var(--space-lg);
   }
 
   .tab {
@@ -198,8 +251,17 @@ const base = import.meta.env.BASE_URL;
       padding: var(--space-md) var(--space-md) var(--space-lg);
     }
 
-    .drawer-tabs {
+    .filter-bar {
       position: static;
+      flex-wrap: wrap;
+    }
+
+    .search-label {
+      flex: 1 1 100%;
+    }
+
+    .search-label input {
+      width: 100%;
     }
   }
 </style>
@@ -207,19 +269,74 @@ const base = import.meta.env.BASE_URL;
 <script>
   const grid = document.getElementById('grid');
   const tabs = document.querySelectorAll<HTMLButtonElement>('.tab');
+  const searchInput = document.getElementById('search') as HTMLInputElement | null;
+  const emptyNote = document.getElementById('filter-empty');
+
+  function categoriaAtiva(): string {
+    return document.querySelector<HTMLButtonElement>('.tab.is-active')?.dataset.filter ?? 'all';
+  }
+
+  // Filtro de categoria e busca por texto são independentes, mas o card
+  // final so aparece se passar pelos dois -- filtrar por MAP e digitar
+  // "streaming" restringe dentro de MAP, nao ignora o filtro de categoria.
+  function aplicarFiltros() {
+    const cat = categoriaAtiva();
+    const query = (searchInput?.value ?? '').trim().toLowerCase();
+    let visiveis = 0;
+    grid?.querySelectorAll<HTMLElement>('.specimen').forEach((card) => {
+      const bateCategoria = cat === 'all' || card.dataset.category === cat;
+      const bateBusca = !query || (card.dataset.searchIndex ?? '').includes(query);
+      const show = bateCategoria && bateBusca;
+      card.hidden = !show;
+      if (show) visiveis++;
+    });
+    if (emptyNote) emptyNote.hidden = visiveis > 0;
+  }
+
+  // O filtro/busca fica na URL (?cat=/?q=) pra sobreviver ao "voltar" de
+  // dentro de um grafico e pra dar pra compartilhar uma vista filtrada --
+  // sem isso, voltar de qualquer especime sempre reiniciava em "Tudo".
+  // replaceState (nao pushState): cada tecla digitada ou clique de aba nao
+  // deveria empilhar uma entrada nova no historico do navegador.
+  function sincronizarUrl() {
+    const cat = categoriaAtiva();
+    const query = searchInput?.value.trim() ?? '';
+    const params = new URLSearchParams();
+    if (cat !== 'all') params.set('cat', cat);
+    if (query) params.set('q', query);
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+  }
+
+  function restaurarDaUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('cat') ?? 'all';
+    const query = params.get('q') ?? '';
+    tabs.forEach((b) => {
+      const active = b.dataset.filter === cat;
+      b.classList.toggle('is-active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    if (searchInput) searchInput.value = query;
+    aplicarFiltros();
+  }
 
   tabs.forEach((button) => {
     button.addEventListener('click', () => {
-      const target = button.dataset.filter;
       tabs.forEach((b) => {
         const active = b === button;
         b.classList.toggle('is-active', active);
         b.setAttribute('aria-pressed', String(active));
       });
-      grid?.querySelectorAll<HTMLElement>('.specimen').forEach((card) => {
-        const show = target === 'all' || card.dataset.category === target;
-        card.hidden = !show;
-      });
+      aplicarFiltros();
+      sincronizarUrl();
     });
   });
+
+  searchInput?.addEventListener('input', () => {
+    aplicarFiltros();
+    sincronizarUrl();
+  });
+
+  restaurarDaUrl();
 </script>
