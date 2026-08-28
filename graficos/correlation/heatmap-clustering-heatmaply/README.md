@@ -134,7 +134,7 @@ clustering ao mesmo tempo; o valor bruto continua disponível no hover.
 ## Gráficos parecidos
 
 <div class="parecidos-lista">
-  <a class="parecido-item" href="../part-of-whole/dendrograma-interativo" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
+  <a class="parecido-item" href="../../part-of-whole/dendrograma-interativo" style="--cat-link: var(--cat-part-of-whole); --cat-link-ink: var(--cat-part-of-whole-ink);">
     <span class="parecido-cat">part-of-whole</span>
     <span class="parecido-titulo">Dendrograma interativo colapsável</span>
     <span class="parecido-razao">Mesma técnica de base (clustering hierárquico) isolada e aprofundada — sem a matriz de valores ao lado, só a árvore de agrupamento, colapsável.</span>
