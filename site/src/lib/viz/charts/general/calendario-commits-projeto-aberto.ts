@@ -45,8 +45,16 @@ const MODOS: { id: ModoId; rotulo: string }[] = [
 ];
 
 const VB_W = 1100;
-const VB_H = 260;
 const MARGEM = { topo: 26, dir: 12, baixo: 8, esq: 34 };
+// A grade é sempre bem mais larga que alta (53 semanas × 7 dias) — a célula
+// acaba limitada pela LARGURA, não pela altura. `VB_H` é calculado pra que
+// a altura útil bata exatamente com `7 células de largura`, então a grade
+// preenche o viewBox inteiro em vez de sobrar espaço em branco embaixo
+// (o que acontecia com uma altura "just because" escolhida antes de fazer
+// essa conta).
+const SEMANAS_REFERENCIA = 53;
+const CEL_REFERENCIA = (VB_W - MARGEM.esq - MARGEM.dir) / SEMANAS_REFERENCIA;
+const VB_H = Math.round(CEL_REFERENCIA * 7 + MARGEM.topo + MARGEM.baixo);
 const GAP = 0.14; // fração da célula que vira respiro entre quadrados
 
 const NOMES_DIA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
