@@ -56,6 +56,32 @@ Sem bounce/elastic em lugar nenhum — o papel assenta, não pula (`--ease-out-e
 - Sem `--cat-X-ink` em fundo kraft (ver tabela de contraste acima).
 - Sem `feTurbulence`/filtro SVG em `background-image` de elemento com muita altura de rolagem — bug de repintura do Chromium, não reintroduzir sem testar em página longa de verdade.
 
+## A exceção declarada (2026-09-01)
+
+`site/src/pages/especiais/sismografo-kaiju.astro` **não segue nada do que está
+escrito acima**, de propósito — é um exercício de direção de arte pedido pelo
+usuário, com estética de cinema kaiju (preto, ciano atômico, âmbar de perigo,
+tipografia gorda de transmissão de emergência). Ela não importa o `Base.astro`
+nem o `tokens.css`: define o próprio mundo no `:root` da própria página, o que
+inclui redefinir os nomes que `lib/viz/theme.ts` lê (`--color-ink`,
+`--color-bg`, …) pra que o gráfico nasça no mundo dela sem exceção nenhuma
+dentro do módulo D3.
+
+**Não é o começo de uma terceira superfície.** O mundo do acervo continua sendo
+papel/mural; esta é uma página só, alcançada por um único card fora da grade na
+home (`.anomalia`), que não entra na contagem das abas porque não é um espécime
+do catálogo. Se aparecer uma segunda página assim, aí sim vale rediscutir o
+sistema em vez de acumular exceções.
+
+**O que ela não abre mão**, por não ser negociável nem em página de exceção:
+contraste medido (ink 17,2:1, muted 6,9:1, atômico 12,2:1, âmbar 10,6:1 e
+alerta 5,5:1 sobre `#05070A`; o `--ink-dim` de 4,5:1 fica só em régua e
+moldura, nunca em texto pequeno), `prefers-reduced-motion` desligando toda
+animação, nenhum efeito piscando acima de 3 Hz (WCAG 2.3.1 — o "rugido" é uma
+passagem só de 1,6 s) e a tabela completa dos dados pra quem não pode ler o
+gráfico. O ruído de textura respeita a regra acima: camada `position: fixed`
+do tamanho da viewport, nunca ladrilho em elemento de rolagem longa.
+
 ## Nota de processo
 
 Construído seguindo o skill `impeccable` (fluxo `new-work` pra mundo novo): direção sorteada por `concept-seed.mjs --scope direction --mode read` (candidato próprio nº3, "caderno de campo", entre 7 candidatos derivados do mundo do público — arquivo naturalista, gaveta de fichário, diário de laboratório, carta sinótica, atlas celeste, amostra de tricô, catálogo de vinil), confirmada pelo usuário contra 3 desafiantes do catálogo (mesa de edição de filme, arte de dados estilo Ikeda, j-card de fita cassete). Sem subagentes `impeccable-finish-reviewer`/`impeccable-documenter` disponíveis neste harness (tipos de agente registrados: `claude`, `claude-code-guide`, `Explore`, `general-purpose`, `Plan`, `statusline-setup`) — a revisão final e este documento foram feitos em thread pelo mesmo agente que construiu, com screenshots reais via Chrome (não o pane de preview interno, que não composita frames de forma confiável — ver memória de sessão) em vez de subagente fresco.
