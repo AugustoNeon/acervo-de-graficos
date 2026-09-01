@@ -71,6 +71,24 @@ const base = import.meta.env.BASE_URL;
         caderno aos poucos, quase todo dia.
       </p>
     )}
+
+    {/*
+      O caderno cataloga espécimes; este é o que não coube na página. Fica
+      fora da grade e fora do filtro de propósito — não é uma categoria a
+      mais, é uma exceção declarada (uma página com direção de arte própria,
+      ver src/pages/especiais/). Preso ao mesmo mural, com fita de perigo no
+      lugar da fita washi.
+    */}
+    <a class="anomalia" href={`${base}/especiais/sismografo-kaiju/`}>
+      <span class="anomalia-fita" aria-hidden="true"></span>
+      <span class="anomalia-selo">FORA DO CATÁLOGO</span>
+      <strong>Sismógrafo Kaiju</strong>
+      <span class="anomalia-texto">
+        Oito estações, onze minutos, uma coisa muito grande andando pra dentro da cidade.
+        Um exercício de direção de arte — a página inteira sai do caderno.
+      </span>
+      <span class="anomalia-seta" aria-hidden="true">→</span>
+    </a>
   </main>
 </Base>
 
@@ -240,6 +258,75 @@ const base = import.meta.env.BASE_URL;
     font-size: var(--text-sm);
     margin-top: var(--space-lg);
     font-family: var(--font-mono);
+  }
+
+  /* ------------------------------------------------------------- anomalia
+     Uma ficha a mais no mural, deliberadamente diferente das outras: papel
+     escuro em vez de claro, fita de perigo no lugar da washi. Ela não entra
+     na grade nem na contagem das abas porque não é um espécime do acervo — é
+     a porta pra única página com mundo visual próprio. */
+  .anomalia {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-2xs) var(--space-md);
+    align-items: center;
+    margin-top: var(--space-2xl);
+    padding: var(--space-lg) var(--space-lg) var(--space-md);
+    background: oklch(0.16 0.02 250);
+    border: 1px solid oklch(0.32 0.03 250);
+    box-shadow: var(--shadow-lift);
+    text-decoration: none;
+    transform: rotate(0.4deg);
+    transition: transform var(--duration-base) var(--ease-out-expo),
+      box-shadow var(--duration-base) var(--ease-out-expo);
+  }
+
+  .anomalia:hover,
+  .anomalia:focus-visible {
+    transform: rotate(0deg) translateY(-3px);
+    box-shadow: 0 26px 46px oklch(0.2 0.03 40 / 0.42);
+  }
+
+  /* Fita de perigo no topo, no lugar exato onde os espécimes levam washi. */
+  .anomalia-fita {
+    position: absolute;
+    inset: -1px -1px auto -1px;
+    height: 6px;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      oklch(0.8 0.16 85) 0 10px,
+      oklch(0.2 0.01 250) 10px 20px
+    );
+  }
+
+  .anomalia-selo {
+    grid-column: 1 / -1;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.2em;
+    color: oklch(0.8 0.16 85);
+  }
+
+  .anomalia strong {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: oklch(0.97 0.01 240);
+    letter-spacing: var(--tracking-title);
+  }
+
+  .anomalia-texto {
+    grid-column: 1;
+    max-width: 52ch;
+    font-size: var(--text-sm);
+    color: oklch(0.78 0.02 240);
+  }
+
+  .anomalia-seta {
+    grid-row: 2 / 4;
+    grid-column: 2;
+    font-size: var(--text-xl);
+    color: oklch(0.8 0.16 85);
   }
 
   @media (max-width: 40rem) {
