@@ -56,6 +56,7 @@
   --cat-correlation: oklch(0.62 0.108 262);
   --cat-distribution: oklch(0.62 0.108 305);
   --cat-network: oklch(0.62 0.108 350);
+  --cat-timeline: oklch(0.62 0.108 327);
 
   --cat-part-of-whole-ink: oklch(0.525 0.092 28);
   --cat-ranking-ink: oklch(0.525 0.092 70);
@@ -67,6 +68,7 @@
   --cat-correlation-ink: oklch(0.525 0.092 262);
   --cat-distribution-ink: oklch(0.525 0.092 305);
   --cat-network-ink: oklch(0.525 0.092 350);
+  --cat-timeline-ink: oklch(0.525 0.092 327);
 
   --cat-part-of-whole-wash: oklch(0.955 0.038 28);
   --cat-ranking-wash: oklch(0.955 0.038 70);
@@ -78,6 +80,7 @@
   --cat-correlation-wash: oklch(0.955 0.038 262);
   --cat-distribution-wash: oklch(0.955 0.038 305);
   --cat-network-wash: oklch(0.955 0.038 350);
+  --cat-timeline-wash: oklch(0.955 0.038 327);
 
   /* Fallback pra quando a categoria não resolve (categoria nova ainda sem
      matiz). Cinza neutro, nunca uma das oito. */

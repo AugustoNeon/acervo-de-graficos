@@ -23,6 +23,7 @@ const COM_COR = new Set([
   'network',
   'part-of-whole',
   'ranking',
+  'timeline',
 ]);
 
 /**
