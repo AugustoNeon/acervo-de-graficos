@@ -1,0 +1,1030 @@
+---
+/**
+ * Página especial — fora do padrão editorial do acervo, de propósito.
+ *
+ * O caderno de campo (ver DESIGN.md) é o mundo de TODAS as outras páginas:
+ * papel, cortiça, fita washi. Esta é a exceção declarada: um exercício de
+ * direção de arte pedido pelo usuário, com a estética inteira — tipografia,
+ * paleta, movimento — referenciando o cinema de kaiju. Por isso ela não usa
+ * o Base.astro nem o tokens.css: define o próprio mundo do zero e não vaza
+ * nada dele pro resto do site.
+ *
+ * O que ela NÃO abre mão, porque não é enfeite: contraste medido (tudo AA+
+ * sobre o fundo), `prefers-reduced-motion` em cada animação, nenhum efeito
+ * que pisque acima de 3 Hz (WCAG 2.3.1), e a tabela completa dos dados pra
+ * quem não pode ler o gráfico.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import '@fontsource-variable/public-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/600.css';
+import Viz from '../../components/Viz.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const dados = JSON.parse(
+  readFileSync(
+    join(process.cwd(), '..', 'graficos', 'especiais', 'sismografo-kaiju', 'data.json'),
+    'utf-8'
+  )
+);
+const { meta, estacoes } = dados;
+
+const shindoMax = Math.max(...estacoes.map((e: any) => e.shindo));
+const epicentro = estacoes.reduce((a: any, b: any) => (b.pgv > a.pgv ? b : a));
+const mmss = (s: number) =>
+  `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+
+// As placas dorsais pulsam no compasso do dado (uma volta por pegada), não num
+// intervalo escolhido no olho.
+//
+// Placa dorsal em caixa 26x44. Três regras, cada uma aprendida errando:
+// (1) a BASE É RETA -- ela se prende ao lombo; qualquer ponta apontando pra
+// baixo vira floco de neve; (2) as lobas são VARRIDAS PRA CIMA (a ponta da
+// loba fica mais alta que o entalhe antes dela) -- lobas horizontais leem
+// como pinheiro; (3) mais alta que larga, com a ponta principal bem longa.
+const PLACAS = 13;
+const placa =
+  'M13,0 L16,11 L23,7 L19,21 L26,17 L20,31 L23,44 L3,44 L6,31 L0,17 L7,21 L3,7 L10,11 Z';
+
+const telemetria = [
+  { chave: 'tempo', rotulo: 'DECORRIDO', valor: '00:00', sufixo: '' },
+  { chave: 'pgv', rotulo: 'PGV MÁX', valor: '0.0', sufixo: 'mm/s' },
+  { chave: 'estacao', rotulo: 'FRENTE ATIVA', valor: '—', sufixo: '' },
+  { chave: 'shindo', rotulo: 'SHINDO', valor: '0', sufixo: '/ 7' },
+];
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Registro sísmico fictício de 8 estações durante a passagem de uma criatura pelo corredor Tóquio-baía — um exercício de direção de arte no acervo."
+    />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <title>Sismógrafo Kaiju — Acervo de Gráficos</title>
+  </head>
+  <body>
+    <!-- Camadas de textura: FIXAS na viewport, nunca ladrilhadas na página
+         inteira. O global.css registra que o Chromium falha em repintar
+         ladrilhos de ruído em páginas longas (blocos somem ao rolar); uma
+         camada fixa do tamanho da tela é pintada uma vez e não tem esse
+         defeito. -->
+    <div class="grao" aria-hidden="true"></div>
+    <div class="varredura-crt" aria-hidden="true"></div>
+
+    <div class="faixa-perigo" aria-hidden="true"></div>
+
+    <main class="console">
+      <!-- ------------------------------------------------------------ HUD -->
+      <header class="hud">
+        <div class="hud-linha">
+          <span class="hud-orgao">
+            <span lang="ja" aria-hidden="true">特殊災害対策本部</span>
+            <span>CENTRO DE CONTRAMEDIDAS ESPECIAIS</span>
+          </span>
+          <span class="hud-rec"><i></i>REGISTRANDO</span>
+          <span class="hud-coord">35°32′N 139°46′L · SETOR 04</span>
+        </div>
+
+        <div class="titulo-bloco">
+          <p class="kicker">
+            REGISTRO SÍSMICO Nº 1954 — CLASSIFICAÇÃO
+            <b>巨大不明生物</b>
+            <span>/ CRIATURA GIGANTE NÃO IDENTIFICADA</span>
+          </p>
+
+          <h1 class="titulo">
+            <span class="titulo-l1">SISMÓGRAFO</span>
+            <span class="titulo-l2">KAIJU</span>
+          </h1>
+
+          <div class="hud-corpo">
+            <p class="lede">
+              Oito estações entre a baía e o centro, onze minutos de registro. Cada coluna é
+              um segundo; cada salto, uma pegada. O que o gráfico mostra e nenhuma tabela
+              mostraria é a <b>diagonal</b>: o pico descendo de estação em estação é a
+              criatura andando pra dentro da cidade.
+            </p>
+
+            <!-- A rota não é enfeite: sem ela não dá pra saber que as trilhas
+                 do gráfico estão ordenadas por distância da água, que é
+                 exatamente a premissa que faz a diagonal significar alguma
+                 coisa. Mesma ordem, de cima pra baixo, das linhas do gráfico. -->
+            <figure class="rota">
+              <figcaption>ROTA DE AVANÇO · 6,0 km</figcaption>
+              <ol>
+                {
+                  estacoes.map((e: any, i: number) => (
+                    <li>
+                      <span class="rota-ponto" data-primeiro={i === 0 ? '' : undefined} />
+                      <span class="rota-nome">{e.nome}</span>
+                      <span class="rota-km">{e.km.toFixed(1)} km</span>
+                    </li>
+                  ))
+                }
+              </ol>
+            </figure>
+          </div>
+        </div>
+
+        <div class="ticker" aria-hidden="true">
+          <div class="ticker-trilho">
+            {
+              Array.from({ length: 2 }).map(() => (
+                <span>
+                  ALERTA DE EVACUAÇÃO — SETORES 01 A 07 · ORIGEM CONFIRMADA EM TÓQUIO-BAÍA ·
+                  PGV MÁXIMO {meta.pgvMaximo} mm/s EM {epicentro.nome} · SHINDO {shindoMax} ·
+                  EMERSÃO {mmss(meta.emersao)} · RUGIDO {mmss(meta.rugido)} · DADOS
+                  INTEIRAMENTE FICTÍCIOS ·
+                </span>
+              ))
+            }
+          </div>
+        </div>
+      </header>
+
+      <!-- ---------------------------------------------------- telemetria -->
+      <section class="telemetria" aria-label="Leitura em tempo real do registro">
+        {
+          telemetria.map((t) => (
+            <div class="tile">
+              <span class="tile-rotulo">{t.rotulo}</span>
+              <span class="tile-valor" data-hud={t.chave}>
+                {t.valor}
+              </span>
+              {t.sufixo && <span class="tile-sufixo">{t.sufixo}</span>}
+            </div>
+          ))
+        }
+      </section>
+
+      <!-- --------------------------------------------------------- painel -->
+      <section class="painel">
+        <div class="painel-topo">
+          <span class="painel-id">SIS-01 / PAREDE DE SISMOGRAMAS</span>
+          <span class="painel-legenda">
+            <i class="pt calmo"></i>calmo
+            <i class="pt alerta"></i>alerta
+            <i class="pt critico"></i>crítico
+          </span>
+          <button type="button" class="botao-rugido" data-rugido>
+            ▶ REPRODUZIR RUGIDO <b>{mmss(meta.rugido)}</b>
+          </button>
+        </div>
+
+        <Viz
+          id="especiais/sismografo-kaiju"
+          dataUrl={`${base}/graficos/especiais/sismografo-kaiju/data.json`}
+          fallbackSrc={`${base}/graficos/especiais/sismografo-kaiju/output.png`}
+          title="Parede de sismogramas de oito estações durante a passagem da criatura"
+          aspectRatio={1000 / 680}
+        />
+      </section>
+
+      <!-- ------------------------------------------------------- espinha -->
+      <div class="espinha" aria-hidden="true">
+        <svg viewBox="0 0 620 72" role="presentation" preserveAspectRatio="xMidYMax meet">
+          <line class="dorso" x1="40" y1="66" x2="580" y2="66" />
+          {
+            Array.from({ length: PLACAS }).map((_, i) => {
+              const centro = (PLACAS - 1) / 2;
+              // Sino forte (0,34 nas pontas, 1,35 no meio): numa espinha real a
+              // diferença entre a placa do lombo e a da cauda é enorme, e é ela
+              // que faz a fileira ler como um corpo em vez de uma régua de
+              // ícones iguais. No meio as placas chegam a se encostar — placa
+              // dorsal é fileira apertada, não itens espaçados.
+              const escala = 0.34 + 1.01 * Math.cos(((i - centro) / PLACAS) * 2.4) ** 2;
+              const x = 78 + i * (464 / (PLACAS - 1));
+              return (
+                <path
+                  d={placa}
+                  class="placa"
+                  style={`--i:${i}`}
+                  transform={`translate(${x - 13 * escala} ${66 - 44 * escala}) scale(${escala})`}
+                />
+              );
+            })
+          }
+        </svg>
+      </div>
+
+      <!-- -------------------------------------------------------- dossiê -->
+      <section class="dossie">
+        <div class="dossie-texto">
+          <h2>Leitura</h2>
+          <p>
+            A fonte é um corpo de massa alta se deslocando a pé: cada passo despeja
+            energia no solo e vira um impulso amortecido, atenuado pela distância até a
+            estação. Por isso a estação mais próxima da água satura primeiro
+            (<b>{mmss(estacoes[0].tPico)}</b>) e a mais interior por último
+            (<b>{mmss(estacoes[estacoes.length - 1].tPico)}</b>).
+          </p>
+          <p>
+            Em <b>{mmss(meta.rugido)}</b> as oito trilhas saltam quase juntas — assinatura
+            de um evento <b>acústico</b>, não sísmico: o som cobre os 6 km em segundos,
+            enquanto as pegadas chegam uma estação por vez. É o único momento do registro
+            em que a diagonal se rompe.
+          </p>
+          <p class="aviso">
+            Dados inteiramente fictícios, gerados por simulação em R. Nenhuma medição real,
+            nenhuma criatura.
+          </p>
+        </div>
+
+        <div class="tabela-caixa">
+          <h2 class="tabela-titulo">Registro por estação</h2>
+          <div class="tabela-rolagem">
+            <table>
+              <caption class="visually-hidden">
+                Pico, instante do pico, distância e intensidade sísmica por estação
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Estação</th>
+                  <th scope="col">km</th>
+                  <th scope="col">Pico</th>
+                  <th scope="col">PGV</th>
+                  <th scope="col">Shindo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  estacoes.map((e: any) => (
+                    <tr>
+                      <th scope="row">{e.nome}</th>
+                      <td>{e.km.toFixed(1)}</td>
+                      <td>{mmss(e.tPico)}</td>
+                      <td>{e.pgv.toFixed(1)} mm/s</td>
+                      <td>{e.shindo}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <footer class="rodape">
+        <a class="voltar" href={`${base}/`}>← VOLTAR AO CADERNO</a>
+        <span class="rodape-nota">
+          Exercício de direção de arte · simulação em R · <span lang="ja" aria-hidden="true">ゴジラ</span>
+          <span>GOJIRA 1954</span>
+        </span>
+      </footer>
+    </main>
+
+    {/* Bloco de dados, não código: `is:inline` explícito porque é isso que o
+        Astro faria de qualquer jeito (o atributo `type` desliga o
+        processamento) — declarado, para de sair como aviso de build. */}
+    <script is:inline type="application/json" id="dados-hud" set:html={JSON.stringify({
+      duracao: meta.duracao,
+      estacoes: estacoes.map((e: any) => ({ nome: e.nome, codigo: e.codigo, tPico: e.tPico, pgv: e.pgv, shindo: e.shindo })),
+    })} />
+
+    <script>
+      // ------------------------------------------------------------- HUD vivo
+      // Os quatro mostradores não são decoração: acompanham a varredura do
+      // gráfico e mostram o que já foi registrado ATÉ aquele segundo — o mesmo
+      // dado, lido como instrumento em vez de como imagem.
+      const bruto = document.getElementById('dados-hud')?.textContent;
+      const hud = bruto ? JSON.parse(bruto) : null;
+
+      const alvo = (chave: string) => document.querySelector<HTMLElement>(`[data-hud="${chave}"]`);
+      const mmss = (s: number) =>
+        `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+
+      if (hud) {
+        const campos = {
+          tempo: alvo('tempo'),
+          pgv: alvo('pgv'),
+          estacao: alvo('estacao'),
+          shindo: alvo('shindo'),
+        };
+
+        document.addEventListener('sismo:varredura', (evento) => {
+          const { segundo } = (evento as CustomEvent<{ segundo: number }>).detail;
+          // "Já registrado" = estações cujo pico o cabeçote de gravação já
+          // passou. Antes disso o valor ainda não existe no papel.
+          const passadas = hud.estacoes.filter((e: any) => e.tPico <= segundo);
+          const frente = passadas.at(-1);
+
+          if (campos.tempo) campos.tempo.textContent = mmss(segundo);
+          if (campos.pgv)
+            campos.pgv.textContent = passadas.length
+              ? Math.max(...passadas.map((e: any) => e.pgv)).toFixed(1)
+              : '0.0';
+          if (campos.estacao) campos.estacao.textContent = frente ? frente.nome : '—';
+          if (campos.shindo)
+            campos.shindo.textContent = String(
+              passadas.length ? Math.max(...passadas.map((e: any) => e.shindo)) : 0
+            );
+        });
+      }
+
+      // ----------------------------------------------------------- rugido
+      const botao = document.querySelector<HTMLButtonElement>('[data-rugido]');
+      const canvas = () => document.querySelector<HTMLElement>('[data-viz] .viz-canvas');
+
+      botao?.addEventListener('click', () => {
+        canvas()?.dispatchEvent(new CustomEvent('sismo:rugido', { bubbles: true }));
+        document.body.classList.add('rugindo');
+        // Uma passagem só, ~1,6 s: o efeito acompanha o bloom do gráfico e
+        // termina. Nada aqui pisca em ciclo.
+        window.setTimeout(() => document.body.classList.remove('rugindo'), 1600);
+      });
+    </script>
+
+    <style is:global>
+      /* ------------------------------------------------------------- mundo
+         Paleta medida contra o fundo (#05070A): ink 17.2:1, muted 6.9:1,
+         atômico 12.2:1, âmbar 10.6:1, alerta 5.5:1 — todos AA ou melhor.
+         --ink-dim (4.5:1) fica reservado pra régua e moldura, nunca pra
+         texto pequeno. */
+      :root {
+        --void: #05070a;
+        --painel: #0b0f14;
+        --painel-alto: #121820;
+        --ink: #e8eef2;
+        --ink-muted: #8a99a6;
+        --ink-dim: #6b7885;
+        --atomico: #3ddcf2;
+        --hazard: #f2b01e;
+        --alerta: #ff2e4d;
+        --rule: #1e2a33;
+        --passo: 2.8s;
+
+        /* Contrato do runtime de gráficos (lib/viz/theme.ts lê estes nomes do
+           :root). Redefinidos aqui, o gráfico nasce no mundo desta página em
+           vez de no do caderno — sem nenhuma exceção dentro do módulo. */
+        --color-bg: var(--void);
+        --color-surface: var(--painel);
+        --color-ink: var(--ink);
+        --color-ink-muted: var(--ink-muted);
+        --color-border: var(--rule);
+        --color-border-strong: #35454f;
+        --color-primary: var(--atomico);
+        --font-body: 'Public Sans Variable', system-ui, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+        /* Só decorativo: se a máquina não tiver fonte japonesa, o que se perde
+           é ornamento — nenhuma informação mora só aqui. */
+        --font-jp: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, 'Noto Sans JP',
+          'IPAGothic', sans-serif;
+
+        color-scheme: dark;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      * {
+        margin: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--void);
+        color: var(--ink);
+        font-family: var(--font-body);
+        line-height: 1.55;
+        overflow-x: hidden;
+      }
+
+      img,
+      svg {
+        display: block;
+        max-width: 100%;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--atomico);
+        outline-offset: 3px;
+      }
+
+      /* Tooltip compartilhado do runtime: ele se estiliza inline a partir do
+         tema claro do caderno. `!important` numa folha de estilo vence estilo
+         inline sem !important — é o único jeito de trazê-lo pra este mundo
+         sem tocar no runtime que as outras 60 páginas usam. */
+      [role='tooltip'] {
+        background: var(--painel-alto) !important;
+        color: var(--ink) !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: 0 !important;
+        font-family: var(--font-mono) !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.02em !important;
+        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), 0 10px 30px rgb(0 0 0 / 0.55) !important;
+      }
+      .sismo-tt-km,
+      .sismo-tt-pico {
+        color: var(--ink-muted);
+      }
+
+      /* ------------------------------------------------------------ texturas */
+      .grao,
+      .varredura-crt {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+      }
+
+      .grao {
+        opacity: 0.16;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+      }
+
+      .varredura-crt {
+        opacity: 0.22;
+        background-image: repeating-linear-gradient(
+          0deg,
+          rgb(0 0 0 / 0.5) 0 1px,
+          transparent 1px 4px
+        );
+      }
+
+      /* ------------------------------------------------------- faixa-perigo */
+      .faixa-perigo {
+        height: 10px;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          var(--hazard) 0 14px,
+          #0a0a0a 14px 28px
+        );
+        background-size: 39.6px 39.6px;
+        animation: correr 1.6s linear infinite;
+      }
+
+      @keyframes correr {
+        to {
+          background-position: 39.6px 0;
+        }
+      }
+
+      /* --------------------------------------------------------------- HUD */
+      .console {
+        max-width: 78rem;
+        margin-inline: auto;
+        padding: 0 clamp(1rem, 4vw, 3rem) 5rem;
+      }
+
+      .hud-linha {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 0;
+        border-bottom: 1px solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        color: var(--ink-muted);
+      }
+
+      .hud-orgao {
+        display: inline-flex;
+        gap: 0.7rem;
+        align-items: baseline;
+      }
+      .hud-orgao [lang='ja'] {
+        font-family: var(--font-jp);
+        color: var(--ink);
+        letter-spacing: 0.24em;
+      }
+
+      .hud-rec {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--alerta);
+      }
+      .hud-rec i {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: var(--alerta);
+        animation: pisca 2.4s steps(1) infinite;
+      }
+      /* 2,4 s por ciclo = 0,42 Hz. Muito abaixo do limite de 3 flashes por
+         segundo da WCAG 2.3.1, e a área é minúscula. */
+      @keyframes pisca {
+        0%,
+        55% {
+          opacity: 1;
+        }
+        56%,
+        100% {
+          opacity: 0.15;
+        }
+      }
+
+      .titulo-bloco {
+        padding: clamp(2rem, 6vw, 4rem) 0 1.5rem;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        color: var(--hazard);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: baseline;
+      }
+      .kicker b {
+        font-family: var(--font-jp);
+        font-weight: 400;
+        color: var(--ink);
+        letter-spacing: 0.2em;
+      }
+      .kicker span {
+        color: var(--ink-muted);
+      }
+
+      .titulo {
+        /* O acento do "Ó" sobe acima da altura de caixa alta e, com
+           line-height abaixo de 1, saía por cima do kicker. A folga aqui é o
+           que separa os dois sem afrouxar a entrelinha do próprio título. */
+        margin: 1.6rem 0 0;
+        /* Alinha a haste do S com a margem do texto: a lateral da letra deixa
+           um vão óptico que a margem de layout não enxerga. */
+        margin-left: -0.045em;
+        font-weight: 900;
+        line-height: 0.86;
+        letter-spacing: -0.045em;
+        /* 13vw, não 15vw, e mínimo abaixo dele: a 375px de largura "SISMÓGRAFO"
+           a 15vw mede 376px e vaza a viewport. O `overflow-x: hidden` do body
+           esconderia o vazamento, mas esconder não é caber — o mínimo do clamp
+           precisa ficar ABAIXO do valor em vw, senão é ele que ganha na tela
+           estreita e o vazamento volta. */
+        font-size: clamp(2.9rem, 13vw, 11rem);
+        text-transform: uppercase;
+        display: grid;
+      }
+      .titulo-l1 {
+        color: var(--ink);
+        /* Desalinhamento cromático de tubo: a mesma franja ciano/vermelha de
+           um sinal de vídeo mal registrado. 2px, não mais — acima disso vira
+           efeito, abaixo some. */
+        text-shadow:
+          2px 0 0 rgb(255 46 77 / 0.55),
+          -2px 0 0 rgb(61 220 242 / 0.5);
+      }
+      .titulo-l2 {
+        color: var(--alerta);
+        -webkit-text-stroke: 1px rgb(255 46 77 / 0.4);
+      }
+
+      .hud-corpo {
+        margin-top: 1.8rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 2rem 4rem;
+        align-items: start;
+      }
+      @media (max-width: 54rem) {
+        .hud-corpo {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .lede {
+        max-width: 46ch;
+        font-size: clamp(1rem, 1.6vw, 1.15rem);
+        color: var(--ink-muted);
+      }
+      .lede b {
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      /* ------------------------------------------------------------- rota */
+      .rota {
+        margin: 0;
+        min-width: 15rem;
+      }
+      .rota figcaption {
+        font-family: var(--font-mono);
+        font-size: 0.63rem;
+        letter-spacing: 0.2em;
+        color: var(--hazard);
+        padding-bottom: 0.7rem;
+      }
+      .rota ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        /* A linha que liga as estações é a própria borda da lista: um traço
+           só, sempre alinhado aos pontos, sem elemento extra pra manter. */
+        border-left: 1px solid var(--rule);
+        margin-left: 0.28rem;
+      }
+      .rota li {
+        position: relative;
+        display: flex;
+        gap: 0.75rem;
+        align-items: baseline;
+        padding: 0.18rem 0 0.18rem 1.1rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+      }
+      .rota-ponto {
+        position: absolute;
+        left: -0.28rem;
+        top: 0.5rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        background: var(--rule);
+        border-radius: 50%;
+      }
+      /* Só o ponto de emersão é destacado — é de onde a diagonal parte. */
+      .rota-ponto[data-primeiro] {
+        background: var(--alerta);
+        box-shadow: 0 0 0 3px rgb(255 46 77 / 0.18);
+      }
+      .rota-nome {
+        color: var(--ink-muted);
+        flex: 1;
+      }
+      .rota li:first-child .rota-nome {
+        color: var(--ink);
+      }
+      .rota-km {
+        color: var(--ink-dim);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ------------------------------------------------------------ ticker */
+      .ticker {
+        margin-top: 2.5rem;
+        border-block: 1px solid var(--rule);
+        background: var(--painel);
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .ticker-trilho {
+        display: inline-flex;
+        gap: 3rem;
+        padding: 0.55rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.16em;
+        color: var(--ink-muted);
+        animation: desliza 46s linear infinite;
+      }
+      .ticker:hover .ticker-trilho {
+        animation-play-state: paused;
+      }
+      @keyframes desliza {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ------------------------------------------------------- telemetria */
+      .telemetria {
+        margin-top: 2.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: 1px;
+        background: var(--rule);
+        border: 1px solid var(--rule);
+      }
+      .tile {
+        background: var(--painel);
+        padding: 1rem 1.1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .tile-rotulo {
+        font-family: var(--font-mono);
+        font-size: 0.63rem;
+        letter-spacing: 0.2em;
+        color: var(--ink-muted);
+      }
+      .tile-valor {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+        line-height: 1.1;
+        color: var(--atomico);
+        font-variant-numeric: tabular-nums;
+      }
+      .tile-sufixo {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        color: var(--ink-dim);
+      }
+
+      /* ----------------------------------------------------------- painel */
+      .painel {
+        margin-top: 2.5rem;
+        position: relative;
+        background: var(--painel);
+        border: 1px solid var(--rule);
+        padding: 0 clamp(0.5rem, 2vw, 1.25rem) clamp(0.75rem, 2vw, 1.25rem);
+      }
+      /* Cantos de enquadramento (mira). Dois cantos opostos já leem como
+         moldura de instrumento; quatro exigiriam DOM só pra decoração. */
+      .painel::before,
+      .painel::after {
+        content: '';
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--hazard);
+        pointer-events: none;
+      }
+      .painel::before {
+        top: -1px;
+        left: -1px;
+        border-right: 0;
+        border-bottom: 0;
+      }
+      .painel::after {
+        right: -1px;
+        bottom: -1px;
+        border-left: 0;
+        border-top: 0;
+      }
+
+      .painel-topo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        color: var(--ink-muted);
+      }
+      .painel-id {
+        color: var(--ink);
+      }
+      .painel-legenda {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .painel-legenda .pt {
+        width: 0.55rem;
+        height: 0.55rem;
+        margin-left: 0.6rem;
+      }
+      .painel-legenda .pt:first-child {
+        margin-left: 0;
+      }
+      .pt.calmo {
+        background: var(--atomico);
+      }
+      .pt.alerta {
+        background: var(--hazard);
+      }
+      .pt.critico {
+        background: var(--alerta);
+      }
+
+      .botao-rugido {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        color: var(--void);
+        background: var(--alerta);
+        border: 0;
+        padding: 0.6rem 0.9rem;
+        cursor: pointer;
+        min-height: 2.75rem;
+        transition: background 150ms ease-out, transform 150ms ease-out;
+      }
+      .botao-rugido b {
+        font-weight: 600;
+        opacity: 0.75;
+      }
+      .botao-rugido:hover {
+        background: #ff5c75;
+      }
+      .botao-rugido:active {
+        transform: translateY(1px);
+      }
+
+      /* Onda do rugido: UMA passagem, 1,6 s, sem repetição. */
+      body.rugindo .painel {
+        animation: tremor 1.6s ease-out;
+      }
+      body.rugindo .placa {
+        animation: carga-surto 1.6s ease-out;
+      }
+      @keyframes tremor {
+        0% { transform: translate(0, 0); box-shadow: 0 0 0 0 rgb(255 46 77 / 0.5); }
+        12% { transform: translate(-3px, 1px); box-shadow: 0 0 90px 10px rgb(255 46 77 / 0.28); }
+        26% { transform: translate(2px, -2px); }
+        40% { transform: translate(-2px, 0); }
+        60% { transform: translate(1px, 1px); box-shadow: 0 0 60px 4px rgb(61 220 242 / 0.16); }
+        100% { transform: translate(0, 0); box-shadow: 0 0 0 0 rgb(0 0 0 / 0); }
+      }
+
+      /* ---------------------------------------------------------- espinha */
+      .espinha {
+        margin: 3.5rem 0 3rem;
+      }
+      .espinha svg {
+        width: 100%;
+        /* Altura fixa + preserveAspectRatio: com `height:auto` a proporção do
+           viewBox mandaria, e um `max-height` por cima disso deixaria a
+           renderização dependente da largura da janela. */
+        height: 112px;
+        /* Inclinação pra trás: placa dorsal nasce puxada na direção contrária
+           à do movimento, nunca perpendicular ao lombo. */
+        transform: skewX(-7deg);
+      }
+      .dorso {
+        stroke: var(--rule);
+        stroke-width: 2;
+      }
+      .placa {
+        fill: #142b33;
+        stroke: var(--atomico);
+        stroke-width: 0.8;
+        stroke-linejoin: round;
+        /* Uma volta por pegada: o compasso vem do dado (meta.passo), não de um
+           número escolhido no olho. */
+        animation: carga var(--passo) linear infinite;
+        animation-delay: calc(var(--i) * var(--passo) / 13 * -1);
+      }
+      @keyframes carga {
+        0%, 72% { fill: #17323a; filter: none; }
+        84% { fill: var(--atomico); filter: drop-shadow(0 0 6px var(--atomico)); }
+        100% { fill: #17323a; filter: none; }
+      }
+      @keyframes carga-surto {
+        0% { fill: var(--atomico); filter: drop-shadow(0 0 14px var(--atomico)); }
+        100% { fill: #17323a; filter: none; }
+      }
+
+      /* ----------------------------------------------------------- dossiê */
+      .dossie {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+        gap: 2.5rem;
+        padding-top: 2.5rem;
+        border-top: 1px solid var(--rule);
+      }
+      .dossie h2 {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        color: var(--hazard);
+        margin-bottom: 1rem;
+      }
+      .dossie p {
+        max-width: 54ch;
+        color: var(--ink-muted);
+        margin-bottom: 1rem;
+      }
+      .dossie b {
+        color: var(--ink);
+        font-family: var(--font-mono);
+        font-weight: 600;
+      }
+      .aviso {
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+        border-left: 2px solid var(--rule);
+        padding-left: 0.9rem;
+      }
+
+      .tabela-caixa {
+        border: 1px solid var(--rule);
+        background: var(--painel);
+        align-self: start;
+      }
+      .tabela-titulo {
+        padding: 0.9rem 1rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        color: var(--hazard);
+        margin: 0;
+      }
+      .tabela-rolagem {
+        overflow-x: auto;
+      }
+      .tabela-caixa table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+      }
+      .tabela-caixa th,
+      .tabela-caixa td {
+        padding: 0.5rem 1rem;
+        text-align: right;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tabela-caixa thead th {
+        color: var(--ink-muted);
+        font-weight: 400;
+        letter-spacing: 0.1em;
+      }
+      /* O cabeçalho da primeira coluna segue o alinhamento das células dela
+         (nomes à esquerda), não o dos números. */
+      .tabela-caixa thead th:first-child {
+        text-align: left;
+      }
+      .tabela-caixa tbody th {
+        text-align: left;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .tabela-caixa td {
+        color: var(--ink-muted);
+      }
+
+      /* ----------------------------------------------------------- rodapé */
+      .rodape {
+        margin-top: 3.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--rule);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+      }
+      .voltar {
+        color: var(--atomico);
+        text-decoration: none;
+        padding: 0.5rem 0;
+        min-height: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+      }
+      .voltar:hover {
+        text-decoration: underline;
+      }
+      .rodape-nota {
+        color: var(--ink-dim);
+        display: inline-flex;
+        gap: 0.6rem;
+        align-items: baseline;
+      }
+      .rodape-nota [lang='ja'] {
+        font-family: var(--font-jp);
+        color: var(--ink-muted);
+      }
+
+      /* ------------------------------------------------- movimento reduzido
+         Tudo que se move aqui é atmosfera, nada é informação — então tudo
+         para, sem perda de conteúdo. */
+      @media (prefers-reduced-motion: reduce) {
+        .faixa-perigo,
+        .ticker-trilho,
+        .hud-rec i,
+        .placa {
+          animation: none !important;
+        }
+        .placa {
+          fill: #17323a;
+        }
+        body.rugindo .painel,
+        body.rugindo .placa {
+          animation: none !important;
+        }
+        .grao {
+          display: none;
+        }
+      }
+    </style>
+  </body>
+</html>
