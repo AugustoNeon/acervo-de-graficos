@@ -4,13 +4,13 @@ category: timeline
 date: 2026-09-01
 source: "https://r-graph-gallery.com/web-time-line-with-ggplot2.html (domínio bloqueado nesta sessão; URL não conferida)"
 interactive: true
-resumo: "Marcos de uma startup fictícia entre 2019 e 2024, posicionados por data real ao longo de um eixo — não um marco por ano, o espaçamento entre eles já mostra o ritmo dos acontecimentos."
+resumo: "Marcos de uma startup fictícia entre 2019 e 2024, posicionados por data real ao longo de um eixo e coloridos por categoria (fundação/produto/financeiro/crescimento) — o espaçamento mostra o ritmo, a cor mostra a frente de cada marco."
 veredito_uso: "os eventos são discretos e o espaçamento real entre eles importa (o que aconteceu rápido, o que demorou)."
 veredito_evita: "o que você tem é uma métrica contínua mudando no tempo — isso é gráfico de evolução, não linha do tempo."
 pacotes: ["ggplot2"]
-dados: "1 data + 1 rótulo por marco (lista de eventos, não série temporal)"
+dados: "1 data + 1 rótulo + 1 categoria por marco (lista de eventos, não série temporal)"
 nivel: básico
-tags: ["temporal", "eventos", "narrativa"]
+tags: ["temporal", "eventos", "narrativa", "categorização"]
 ---
 
 ## O que é
@@ -45,6 +45,15 @@ ponto como um evento nomeado, não como uma amostra de uma série.
   sobrepor o vizinho — não codifica nenhum dado.
 - **Ponto**: marca a data exata sobre o eixo; a data curta aparece perto
   dele, o nome do marco no fim da haste.
+- **Cor**: a categoria do marco — o eixo em si (a linha horizontal)
+  continua neutro, só o evento carrega cor.
+
+<div class="legenda-swatches">
+  <div><span class="swatch" style="background:#4A7B6D"></span> Fundação</div>
+  <div><span class="swatch" style="background:#3B6E8F"></span> Produto</div>
+  <div><span class="swatch" style="background:#C1673A"></span> Financeiro</div>
+  <div><span class="swatch" style="background:#8B5FA8"></span> Crescimento</div>
+</div>
 
 ## Como foi feito
 
@@ -54,17 +63,26 @@ dados), e dois `geom_text()` colocam o nome do marco e a data curta em
 alturas diferentes da mesma haste. `coord_cartesian(clip = "off")` +
 `scale_x_date(expand = expansion(mult = 0.1))` evitam que o primeiro/último
 rótulo saia cortado na borda — sem os dois, o marco mais recente ficava com
-o texto cortado na lateral direita.
+o texto cortado na lateral direita. A cor de cada categoria (`cor_categoria`,
+um vetor nomeado) alimenta só a haste e o ponto — o eixo horizontal e o
+texto dos rótulos continuam numa cor neutra, pra cor ficar reservada ao
+evento em si.
 
 **Dado fictício**: 8 marcos de uma startup entre 2019 e 2024, com datas
 propositalmente irregulares (não um marco por trimestre) — é o que torna
-visível a diferença de ritmo entre os intervalos.
+visível a diferença de ritmo entre os intervalos. Cada marco também carrega
+uma categoria (Fundação/Produto/Financeiro/Crescimento) que conta a mesma
+história por um segundo ângulo: rodadas de investimento puxando o próximo
+patamar de produto, que puxa o próximo patamar de usuários.
 
 **Na versão interativa**: o `lado` de cada marco vem pronto do `data.json`
 (calculado uma vez em R), nunca recalculado em D3 — pra estático e
-interativo nunca discordarem de qual marco fica de que lado. A entrada
-anima as hastes crescendo a partir do eixo em ordem cronológica, e passar o
-cursor sobre um ponto mostra a data completa.
+interativo nunca discordarem de qual marco fica de que lado. A cor de cada
+categoria também nasce uma única vez em R (`meta.cores`) e alimenta as duas
+versões. A entrada anima as hastes crescendo a partir do eixo em ordem
+cronológica; passar o cursor sobre um ponto mostra categoria e data
+completa; apontar ou clicar um ponto (ou a legenda) acende todos os marcos
+da mesma categoria e apaga o resto.
 
 ## Possíveis problemas pelo caminho
 
@@ -85,12 +103,12 @@ cursor sobre um ponto mostra a data completa.
 - Trocar o alternado fixo (par/ímpar) por um algoritmo que decide o lado
   observando a distância pro vizinho mais próximo, útil quando os eventos
   não estão espalhados de forma tão regular quanto neste exemplo.
-- Colorir os marcos por categoria (ex: produto, financeiro, time) em vez de
-  uma cor única — vira também um gráfico de categorização, não só de tempo.
 - Trocar a haste reta por uma curva suave (S-curve) entre o eixo e o
   rótulo, estética comum em linhas do tempo de storytelling.
 - Agrupar marcos muito próximos numa única "faixa" expansível, pra caber
-  mais eventos sem lotar o eixo.
+  mais eventos sem lotar o eixo — o gráfico [linha do tempo
+  densa](../linha-do-tempo-densa-releases) desta mesma categoria resolve
+  esse mesmo problema, só que para dezenas de eventos em vez de poucos.
 
 ## Notas do coletor
 
@@ -115,3 +133,12 @@ no ambiente delas). O ambiente de container não é garantidamente o mesmo
 entre sessões, mesmo pro mesmo projeto — vale testar uma string acentuada
 de verdade (não só rodar sem erro) em qualquer script novo neste tipo de
 ambiente, antes de assumir que UTF-8 "só funciona".
+
+**2026-09-02**: evoluído a pedido do usuário com uma categoria por marco.
+A decisão mais deliberada não foi a cor em si, mas onde ELA não entra: o
+eixo horizontal continua neutro. Testado mentalmente colorir a linha
+inteira por segmento entre marcos — descartado antes de implementar,
+porque o eixo representa o tempo em si (contínuo, sem categoria própria),
+e colori-lo criaria uma leitura falsa de "trecho de tempo pertence a uma
+categoria", quando na verdade é o evento pontual que carrega a categoria,
+não o intervalo entre eventos.
