@@ -48,6 +48,19 @@ const PLACAS = 13;
 const placa =
   'M13,0 L16,11 L23,7 L19,21 L26,17 L20,31 L23,44 L3,44 L6,31 L0,17 L7,21 L3,7 L10,11 Z';
 
+// Envoltória do registro: a maior amplitude entre as 8 estações a cada
+// segundo. É o que conduz o som (ver lib/kaiju-som.ts) — calculada aqui, no
+// build, a partir do mesmo `traco` que desenha o gráfico, pra que ouvido e
+// olho não possam discordar. 660 números arredondados a 2 casas, ~2,6 KB.
+const envelope = Array.from({ length: meta.bins }, (_, b) => {
+  let maior = 0;
+  for (const e of estacoes) {
+    const v = Math.max(Math.abs(e.traco[b * 2]), Math.abs(e.traco[b * 2 + 1])) / meta.escala;
+    if (v > maior) maior = v;
+  }
+  return Math.round(maior * 100) / 100;
+});
+
 const telemetria = [
   { chave: 'tempo', rotulo: 'DECORRIDO', valor: '00:00', sufixo: '' },
   { chave: 'pgv', rotulo: 'PGV MÁX', valor: '0.0', sufixo: 'mm/s' },
@@ -202,6 +215,12 @@ const telemetria = [
 
           <span class="tp-tempo"><b data-tempo>00:00</b> / {mmss(meta.duracao)}</span>
 
+          <!-- Áudio sempre começa desligado: além de o navegador exigir gesto
+               do usuário, som que começa sozinho é hostil. -->
+          <button type="button" class="tp-som" data-som aria-pressed="false">
+            <span data-som-icone>▷</span> SOM
+          </button>
+
           <span class="tp-ganho" role="group" aria-label="Ganho do traço">
             <span class="tp-ganho-rotulo">GANHO</span>
             {
@@ -272,6 +291,14 @@ const telemetria = [
             enquanto as pegadas chegam uma estação por vez. É o único momento do registro
             em que a diagonal se rompe.
           </p>
+          <p>
+            O botão <b>SOM</b> não toca uma gravação — não há arquivo de áudio aqui. O
+            ronco é sintetizado ao vivo e conduzido pela <b>envoltória do próprio
+            registro</b>: o que se ouve é a altura das trilhas que se vê, e o pico sonoro
+            cai exatamente no pico do dado. Como a reprodução comprime onze minutos em
+            três segundos e meio, as pegadas ficam a 14 ms uma da outra e não dariam passos
+            audíveis — daí sonificar a envoltória, e não cada passo.
+          </p>
           <p class="aviso">
             Dados inteiramente fictícios, gerados por simulação em R. Nenhuma medição real,
             nenhuma criatura.
@@ -326,10 +353,14 @@ const telemetria = [
         processamento) — declarado, para de sair como aviso de build. */}
     <script is:inline type="application/json" id="dados-hud" set:html={JSON.stringify({
       duracao: meta.duracao,
+      rugido: meta.rugido,
+      envelope,
       estacoes: estacoes.map((e: any) => ({ nome: e.nome, codigo: e.codigo, tPico: e.tPico, pgv: e.pgv, shindo: e.shindo })),
     })} />
 
     <script>
+      import { criarSom } from '../../lib/kaiju-som';
+
       // ------------------------------------------------------------- HUD vivo
       // Os quatro mostradores não são decoração: acompanham a varredura do
       // gráfico e mostram o que já foi registrado ATÉ aquele segundo — o mesmo
@@ -401,8 +432,32 @@ const telemetria = [
       // O gráfico é a fonte da verdade do tempo: ele avisa, os controles
       // seguem. Assim tocar, arrastar e o fim do registro convergem pro mesmo
       // estado sem a página manter um relógio paralelo que pode divergir.
+      // ------------------------------------------------------------- som
+      // Sintetizado a partir da envoltória do próprio registro — sem arquivo
+      // de áudio no projeto. Ver lib/kaiju-som.ts.
+      const som = hud ? criarSom({ envelope: hud.envelope, duracao: hud.duracao }) : null;
+      const botaoSom = document.querySelector<HTMLButtonElement>('[data-som]');
+
+      botaoSom?.addEventListener('click', async () => {
+        const ligado = (await som?.alternar()) ?? false;
+        botaoSom.setAttribute('aria-pressed', String(ligado));
+        botaoSom.classList.toggle('is-ativo', ligado);
+        const ic = botaoSom.querySelector('[data-som-icone]');
+        if (ic) ic.textContent = ligado ? '▶' : '▷';
+      });
+
+      let segundoAnterior = 0;
+
       document.addEventListener('sismo:varredura', (evento) => {
         const { segundo, tocando } = (evento as CustomEvent<{ segundo: number; tocando: boolean }>).detail;
+
+        som?.atualizar(segundo, tocando);
+        // Rugido no instante em que o cabeçote cruza 07:50 — a marca sonora
+        // do único evento que atinge as 8 estações juntas. Só na passagem
+        // pra frente, senão arrastar pra trás dispararia de novo.
+        if (hud && tocando && segundoAnterior < hud.rugido && segundo >= hud.rugido) som?.rugir();
+        segundoAnterior = segundo;
+
         if (scrub && document.activeElement !== scrub) scrub.value = String(segundo);
         if (scrub) scrub.setAttribute('aria-valuetext', mmss(segundo));
         if (tempo) tempo.textContent = mmss(segundo);
@@ -420,6 +475,7 @@ const telemetria = [
 
       botao?.addEventListener('click', () => {
         mandar('sismo:rugido');
+        som?.rugir();
         document.body.classList.add('rugindo');
         // Uma passagem só, ~1,6 s: o efeito acompanha o bloom do gráfico e
         // termina. Nada aqui pisca em ciclo.
@@ -1004,6 +1060,26 @@ const telemetria = [
       .tp-tempo b {
         color: var(--ink);
         font-weight: 600;
+      }
+
+      .tp-som {
+        min-height: 2.75rem;
+        padding: 0.4rem 0.7rem;
+        border: 1px solid var(--rule);
+        background: none;
+        color: var(--ink-muted);
+        font: inherit;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+        transition: color 150ms ease-out, border-color 150ms ease-out;
+      }
+      .tp-som:hover {
+        color: var(--ink);
+        border-color: var(--ink-dim);
+      }
+      .tp-som.is-ativo {
+        color: var(--atomico);
+        border-color: var(--atomico);
       }
 
       .tp-ganho {
