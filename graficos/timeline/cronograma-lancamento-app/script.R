@@ -64,6 +64,23 @@ tarefas$duracao <- as.numeric(tarefas$fim - tarefas$inicio)
 marcos <- tarefas[tarefas$duracao == 0, ]
 barras <- tarefas[tarefas$duracao > 0, ]
 
+# Dependencias reais entre tarefas (o que precisa terminar pra outra comecar
+# de verdade), NAO derivadas so da ordem de datas -- duas tarefas vizinhas no
+# tempo podem so estar rodando em paralelo sem uma depender da outra (esse e'
+# o proprio ponto da sobreposicao ja registrada acima). So entram aqui pares
+# com uma razao de negocio real de por que B so faz sentido depois de A.
+# Usado so na versao interativa (camada oculta por padrao, ligada por um
+# botao) -- o output.png/estado padrao do widget continuam identicos, sem
+# nenhuma seta.
+dependencias <- data.frame(
+  de   = c("Pesquisa de mercado", "Definicao de escopo", "Wireframes", "Design visual",
+           "Definicao de escopo", "Definicao de escopo", "Backend da API", "App mobile",
+           "Integracao de pagamento", "QA e testes", "Beta fechado", "Marketing de lancamento"),
+  para = c("Definicao de escopo", "Wireframes", "Design visual", "Testes de usabilidade",
+           "Backend da API", "App mobile", "Integracao de pagamento", "QA e testes",
+           "QA e testes", "Beta fechado", "Lancamento publico", "Lancamento publico")
+)
+
 p <- ggplot() +
   geom_segment(
     data = barras,
@@ -107,6 +124,9 @@ viz <- list(
       inicio = format(tarefas$inicio[i], "%Y-%m-%d"),
       fim = format(tarefas$fim[i], "%Y-%m-%d")
     )
+  }),
+  dependencias = lapply(seq_len(nrow(dependencias)), function(i) {
+    list(de = dependencias$de[i], para = dependencias$para[i])
   })
 )
 
