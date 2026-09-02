@@ -8,21 +8,28 @@
  * de cor). Entrada escalonada da esquerda pra direita: as hastes crescem a
  * partir do eixo em ordem cronológica, o próprio gesto da história se
  * revelando no tempo, não só decoração.
+ *
+ * Cor por CATEGORIA do marco (Fundação/Produto/Financeiro/Crescimento),
+ * nunca por posição no tempo -- o eixo/espinha continua neutro (cinza), só o
+ * evento em si carrega cor. Legenda clicável (mesmo `tornarFixavel` do
+ * cronograma de lançamento) acende os marcos da categoria apontada/clicada.
  */
 
 import { select, scaleUtc, axisBottom, utcYear } from 'd3';
 import { DURATION, EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo, formatarDataUtc } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Evento {
   data: string;
   marco: string;
+  categoria: string;
   lado: 1 | -1;
 }
 
 interface Dados {
-  meta: { cor: string };
+  meta: { corEixo: string; cores: Record<string, string> };
   eventos: Evento[];
 }
 
@@ -127,7 +134,7 @@ const chart: VizChart = {
       .attr('x2', larguraUtil)
       .attr('y1', 0)
       .attr('y2', 0)
-      .attr('stroke', meta.cor)
+      .attr('stroke', meta.corEixo)
       .attr('stroke-width', px(2.4));
 
     const hastes = g
@@ -137,7 +144,7 @@ const chart: VizChart = {
       .attr('class', 'haste')
       .attr('x1', (d) => x(d.dataObj))
       .attr('x2', (d) => x(d.dataObj))
-      .attr('stroke', meta.cor)
+      .attr('stroke', (d) => meta.cores[d.categoria])
       .attr('stroke-width', px(1.4));
 
     const rotulos = g
@@ -179,16 +186,60 @@ const chart: VizChart = {
       .attr('cx', (d) => x(d.dataObj))
       .attr('cy', 0)
       .attr('r', px(5))
-      .attr('fill', meta.cor)
+      .attr('fill', (d) => meta.cores[d.categoria])
       .attr('stroke', theme.bg)
       .attr('stroke-width', px(1.5))
       .attr('data-interactive', '');
 
     circulos
       .on('pointermove', (evento: PointerEvent, d: (typeof pontos)[number]) => {
-        tooltip.show(`<strong>${d.marco}</strong><br>${formatarDataUtc(d.dataObj, { day: 'numeric', month: 'long', year: 'numeric' })}`, evento);
+        tooltip.show(
+          `<span class="viz-swatch" style="background:${meta.cores[d.categoria]}"></span>` +
+            `<strong>${d.marco}</strong><br>${d.categoria} · ${formatarDataUtc(d.dataObj, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          evento
+        );
       })
       .on('pointerleave', () => tooltip.hide());
+
+    // -------------------------------------------------------------- realce
+    // Apontar/clicar um marco OU a legenda acende todos os marcos da mesma
+    // categoria e apaga o resto — mesmo padrão do cronograma de lançamento
+    // (fixável, clique fora desfixa).
+    function realcar(categoria: string) {
+      hastes.attr('opacity', (d) => (d.categoria === categoria ? 1 : 0.2));
+      circulos.attr('opacity', (d) => (d.categoria === categoria ? 1 : 0.2));
+      rotulos.attr('opacity', (d) => (d.categoria === categoria ? 1 : 0.35));
+      rotulosData.attr('opacity', (d) => (d.categoria === categoria ? 1 : 0.35));
+      legenda.attr('opacity', (c) => (c === categoria ? 1 : 0.5));
+    }
+    function limpar() {
+      hastes.attr('opacity', 1);
+      circulos.attr('opacity', 1);
+      rotulos.attr('opacity', 1);
+      rotulosData.attr('opacity', 1);
+      legenda.attr('opacity', 1);
+    }
+
+    const categorias = Object.keys(meta.cores);
+    const legenda = select(root)
+      .append('div')
+      .attr('class', 'viz-legenda')
+      .selectAll('button')
+      .data(categorias)
+      .join('button')
+      .attr('type', 'button')
+      .attr('data-interactive', '')
+      .html((c) => `<span class="viz-swatch" style="background:${meta.cores[c]}"></span>${c}`);
+
+    tornarFixavel(
+      root,
+      [
+        { selecao: circulos, chaveDe: (d: (typeof pontos)[number]) => d.categoria },
+        { selecao: legenda, chaveDe: (c: string) => c },
+      ],
+      realcar,
+      limpar
+    );
 
     if (animate) {
       // As hastes nascem fechadas no eixo (altura 0) e crescem pra fora em
