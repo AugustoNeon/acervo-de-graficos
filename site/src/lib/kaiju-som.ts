@@ -63,7 +63,7 @@ export function criarSom({ envelope, duracao }: Config): Som {
     ctx = new AC();
 
     mestre = ctx.createGain();
-    mestre.gain.value = 0.28; // discreto de propósito — isto acompanha, não anuncia
+    mestre.gain.value = 0.17; // discreto de propósito — isto acompanha, não anuncia
     mestre.connect(ctx.destination);
 
     // ------------------------------------------------------------- ronco
@@ -153,19 +153,36 @@ export function criarSom({ envelope, duracao }: Config): Som {
     rugir() {
       if (!ativo || !ctx) return;
       const t = ctx.currentTime;
-      const dur = 1.7;
+      const dur = 2;
 
+      // Fundamental baixa. O que impede isso de sumir em alto-falante de
+      // notebook (que mal reproduz abaixo de ~150 Hz) é a distorção logo
+      // adiante: ela gera harmônicos em 2x, 3x, 4x da fundamental, então o
+      // ouvido reconstrói o grave a partir deles mesmo quando o alto-falante
+      // não o emite. É por isso que dá pra ir fundo sem ficar inaudível.
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(62, t);
-      osc.frequency.exponentialRampToValueAtTime(104, t + 0.5);
-      osc.frequency.exponentialRampToValueAtTime(44, t + dur);
+      osc.frequency.setValueAtTime(46, t);
+      osc.frequency.exponentialRampToValueAtTime(72, t + 0.5);
+      osc.frequency.exponentialRampToValueAtTime(30, t + dur);
+
+      // Sub uma oitava abaixo, em senoide pura: peso. Um rugido lido como
+      // "grave" precisa de corpo embaixo, não só de fundamental menor.
+      const sub = ctx.createOscillator();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(23, t);
+      sub.frequency.exponentialRampToValueAtTime(36, t + 0.5);
+      sub.frequency.exponentialRampToValueAtTime(15, t + dur);
+      const subGanho = ctx.createGain();
+      subGanho.gain.value = 0.5;
 
       // Vibrato: a instabilidade de altura é o que separa "bicho" de "sirene".
+      // Desvio menor que antes porque a fundamental caiu — 7 Hz sobre 46 Hz
+      // soaria como afinação errada, não como voz.
       const lfo = ctx.createOscillator();
-      lfo.frequency.value = 5.5;
+      lfo.frequency.value = 4.8;
       const lfoGanho = ctx.createGain();
-      lfoGanho.gain.value = 7;
+      lfoGanho.gain.value = 3.5;
       lfo.connect(lfoGanho).connect(osc.frequency);
 
       const aspero = ctx.createWaveShaper();
@@ -174,24 +191,27 @@ export function criarSom({ envelope, duracao }: Config): Som {
       const filtro = ctx.createBiquadFilter();
       filtro.type = 'lowpass';
       filtro.Q.value = 8;
-      filtro.frequency.setValueAtTime(300, t);
-      filtro.frequency.exponentialRampToValueAtTime(1500, t + 0.45);
-      filtro.frequency.exponentialRampToValueAtTime(180, t + dur);
+      filtro.frequency.setValueAtTime(170, t);
+      filtro.frequency.exponentialRampToValueAtTime(620, t + 0.45);
+      filtro.frequency.exponentialRampToValueAtTime(95, t + dur);
 
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.9, t + 0.12);
+      g.gain.exponentialRampToValueAtTime(0.85, t + 0.14);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 
       osc.connect(aspero).connect(filtro).connect(g).connect(mestre);
+      sub.connect(subGanho).connect(g);
       osc.start(t);
+      sub.start(t);
       lfo.start(t);
       osc.stop(t + dur + 0.05);
+      sub.stop(t + dur + 0.05);
       lfo.stop(t + dur + 0.05);
       // Nós de uso único precisam ser soltos, senão cada rugido deixa uma
       // cadeia viva pendurada no grafo de áudio.
       osc.onended = () => {
-        [osc, lfo, lfoGanho, aspero, filtro, g].forEach((n) => n.disconnect());
+        [osc, sub, subGanho, lfo, lfoGanho, aspero, filtro, g].forEach((n) => n.disconnect());
       };
     },
   };
