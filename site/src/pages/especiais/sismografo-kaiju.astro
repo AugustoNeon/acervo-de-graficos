@@ -36,17 +36,119 @@ const epicentro = estacoes.reduce((a: any, b: any) => (b.pgv > a.pgv ? b : a));
 const mmss = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 
+// ------------------------------------------------------------------ espinha
 // As placas dorsais pulsam no compasso do dado (uma volta por pegada), não num
 // intervalo escolhido no olho.
 //
-// Placa dorsal em caixa 26x44. Três regras, cada uma aprendida errando:
-// (1) a BASE É RETA -- ela se prende ao lombo; qualquer ponta apontando pra
-// baixo vira floco de neve; (2) as lobas são VARRIDAS PRA CIMA (a ponta da
-// loba fica mais alta que o entalhe antes dela) -- lobas horizontais leem
-// como pinheiro; (3) mais alta que larga, com a ponta principal bem longa.
-const PLACAS = 13;
-const placa =
-  'M13,0 L16,11 L23,7 L19,21 L26,17 L20,31 L23,44 L3,44 L6,31 L0,17 L7,21 L3,7 L10,11 Z';
+// Cada placa é GERADA, não copiada. A primeira versão repetia um path só,
+// escalado por uma curva suave, e lia como régua de ícones: numa espinha de
+// verdade nenhuma placa é igual à vizinha, elas se sobrepõem formando massa, e
+// as pontas são finas e compridas. Aqui variam altura, largura, número de
+// lobas, profundidade de cada entalhe, assimetria entre os dois lados e
+// inclinação — tudo por sorteio.
+//
+// Três regras de forma, cada uma aprendida errando: (1) a BASE É RETA — ela se
+// prende ao lombo, e qualquer ponta apontando pra baixo vira floco de neve;
+// (2) as lobas são VARRIDAS PRA CIMA (a ponta fica mais alta que o entalhe
+// antes dela) — lobas horizontais leem como pinheiro; (3) mais alta que larga.
+
+/** PRNG determinístico: sem semente fixa o SVG mudaria a cada build e sujaria
+ *  o diff do HTML gerado sem razão nenhuma. 1954 = ano do Gojira original. */
+function semear(estado: number) {
+  return () => {
+    estado = (estado + 0x6d2b79f5) | 0;
+    let t = Math.imul(estado ^ (estado >>> 15), 1 | estado);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Uma placa com a base centrada em (0,0) e a ponta em (0,-altura). */
+function gerarPlaca(rnd: () => number, altura: number, largura: number): string {
+  const meia = largura / 2;
+
+  // Descendo da ponta pelo lado direito: entalhe (pra dentro) e depois loba
+  // (pra fora E pra cima). É essa subida da loba em relação ao entalhe que
+  // produz a farpa em vez de um degrau.
+  const descer = (n: number) => {
+    const p: string[] = [];
+    for (let k = 1; k <= n; k++) {
+      const t = (k / n) * 0.92;
+      const larguraT = meia * t;
+      const yEntalhe = -altura * (1 - t);
+      p.push(`L${(larguraT * (0.26 + rnd() * 0.22)).toFixed(1)},${yEntalhe.toFixed(1)}`);
+      p.push(
+        `L${(larguraT * (0.9 + rnd() * 0.55)).toFixed(1)},${(yEntalhe - altura * (0.05 + rnd() * 0.1)).toFixed(1)}`
+      );
+    }
+    p.push(`L${(meia * (0.34 + rnd() * 0.18)).toFixed(1)},0`);
+    return p.join('');
+  };
+
+  // Subindo pelo lado esquerdo: mesma sequência espelhada e em ordem inversa,
+  // com sorteios PRÓPRIOS — é a assimetria entre os dois lados que tira o ar
+  // de recorte de papel dobrado ao meio.
+  const subir = (n: number) => {
+    const p: string[] = [`L${(-meia * (0.34 + rnd() * 0.18)).toFixed(1)},0`];
+    for (let k = n; k >= 1; k--) {
+      const t = (k / n) * 0.92;
+      const larguraT = meia * t;
+      const yEntalhe = -altura * (1 - t);
+      p.push(
+        `L${(-larguraT * (0.9 + rnd() * 0.55)).toFixed(1)},${(yEntalhe - altura * (0.05 + rnd() * 0.1)).toFixed(1)}`
+      );
+      p.push(`L${(-larguraT * (0.26 + rnd() * 0.22)).toFixed(1)},${yEntalhe.toFixed(1)}`);
+    }
+    return p.join('');
+  };
+
+  // Lados sorteados separados: 2 a 4 lobas cada.
+  return `M0,${-altura}${descer(3 + Math.floor(rnd() * 3))}${subir(3 + Math.floor(rnd() * 3))}Z`;
+}
+
+const BASE_Y = 88;
+const rnd = semear(1954);
+
+/** Sino + ruído: o sino dá a silhueta de lombo, o ruído impede que ela saia
+ *  como uma curva lisa demais pra ser um bicho. */
+const alturaEm = (i: number, total: number, pico: number) => {
+  const t = (i - (total - 1) / 2) / total;
+  return pico * (0.26 + 0.9 * Math.cos(t * 2.5) ** 2) * (0.6 + rnd() * 0.8);
+};
+
+// Camada de trás: placas menores e apagadas, entre as da frente, pra fileira
+// ler como massa com profundidade em vez de recorte único.
+const placasFundo = Array.from({ length: 17 }, (_, i) => {
+  const altura = alturaEm(i, 17, 50);
+  return {
+    d: gerarPlaca(rnd, altura, altura * (0.36 + rnd() * 0.2)),
+    x: 52 + i * 51 + (rnd() - 0.5) * 30,
+    giro: (rnd() - 0.5) * 16,
+  };
+});
+
+// Camada da frente: espaçamento MENOR que a largura das placas, então elas se
+// encostam e se sobrepõem — placa dorsal é fileira apertada, não itens soltos.
+const placasFrente = Array.from({ length: 23 }, (_, i) => {
+  const altura = alturaEm(i, 23, 78);
+  return {
+    d: gerarPlaca(rnd, altura, altura * (0.34 + rnd() * 0.26)),
+    x: 34 + i * 38.5 + (rnd() - 0.5) * 20,
+    giro: (rnd() - 0.5) * 18,
+  };
+});
+
+// O lombo: as placas precisam SAIR de uma massa, não ficar plantadas numa
+// linha de 1px como grama num canteiro. Topo irregular, sorteado pela mesma
+// semente.
+const lombo = (() => {
+  const passos = 26;
+  const topo = Array.from({ length: passos + 1 }, (_, i) => {
+    const x = 20 + (i * 880) / passos;
+    return `L${x.toFixed(1)},${(BASE_Y - 6 - rnd() * 7).toFixed(1)}`;
+  }).join('');
+  return `M20,96${topo}L900,96Z`;
+})();
 
 const telemetria = [
   { chave: 'tempo', rotulo: 'DECORRIDO', valor: '00:00', sufixo: '' },
@@ -188,27 +290,26 @@ const telemetria = [
 
       <!-- ------------------------------------------------------- espinha -->
       <div class="espinha" aria-hidden="true">
-        <svg viewBox="0 0 620 72" role="presentation" preserveAspectRatio="xMidYMax meet">
-          <line class="dorso" x1="40" y1="66" x2="580" y2="66" />
+        <svg viewBox="0 0 920 96" role="presentation">
           {
-            Array.from({ length: PLACAS }).map((_, i) => {
-              const centro = (PLACAS - 1) / 2;
-              // Sino forte (0,34 nas pontas, 1,35 no meio): numa espinha real a
-              // diferença entre a placa do lombo e a da cauda é enorme, e é ela
-              // que faz a fileira ler como um corpo em vez de uma régua de
-              // ícones iguais. No meio as placas chegam a se encostar — placa
-              // dorsal é fileira apertada, não itens espaçados.
-              const escala = 0.34 + 1.01 * Math.cos(((i - centro) / PLACAS) * 2.4) ** 2;
-              const x = 78 + i * (464 / (PLACAS - 1));
-              return (
-                <path
-                  d={placa}
-                  class="placa"
-                  style={`--i:${i}`}
-                  transform={`translate(${x - 13 * escala} ${66 - 44 * escala}) scale(${escala})`}
-                />
-              );
-            })
+            placasFundo.map((p) => (
+              <path
+                d={p.d}
+                class="placa placa-fundo"
+                transform={`translate(${p.x.toFixed(1)} ${BASE_Y}) rotate(${p.giro.toFixed(1)})`}
+              />
+            ))
+          }
+          <path class="lombo" d={lombo} />
+          {
+            placasFrente.map((p, i) => (
+              <path
+                d={p.d}
+                class="placa"
+                style={`--i:${i}`}
+                transform={`translate(${p.x.toFixed(1)} ${BASE_Y}) rotate(${p.giro.toFixed(1)})`}
+              />
+            ))
           }
         </svg>
       </div>
@@ -854,28 +955,39 @@ const telemetria = [
       }
       .espinha svg {
         width: 100%;
-        /* Altura fixa + preserveAspectRatio: com `height:auto` a proporção do
-           viewBox mandaria, e um `max-height` por cima disso deixaria a
-           renderização dependente da largura da janela. */
-        height: 112px;
+        /* A proporção do viewBox (920x96) já é a da faixa que eu quero, então
+           `height:auto` acerta sozinho em qualquer largura -- sem
+           preserveAspectRatio na mão nem altura fixa brigando com ela. */
+        height: auto;
         /* Inclinação pra trás: placa dorsal nasce puxada na direção contrária
            à do movimento, nunca perpendicular ao lombo. */
         transform: skewX(-7deg);
       }
-      .dorso {
-        stroke: var(--rule);
-        stroke-width: 2;
+      .lombo {
+        fill: #0c1c22;
+        stroke: #1d4650;
+        stroke-width: 0.8;
       }
       .placa {
         fill: #142b33;
         stroke: var(--atomico);
         stroke-width: 0.8;
-        stroke-linejoin: round;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 8;
         /* Uma volta por pegada: o compasso vem do dado (meta.passo), não de um
            número escolhido no olho. */
         animation: carga var(--passo) linear infinite;
-        animation-delay: calc(var(--i) * var(--passo) / 13 * -1);
+        animation-delay: calc(var(--i) * var(--passo) / 16 * -1);
       }
+      /* Camada de trás: mais escura e sem pulso. Ela existe pra dar massa
+         atrás das placas da frente, não pra competir com elas. */
+      .placa-fundo {
+        fill: #0c1c22;
+        stroke: #1d4650;
+        stroke-width: 0.7;
+        animation: none;
+      }
+
       @keyframes carga {
         0%, 72% { fill: #17323a; filter: none; }
         84% { fill: var(--atomico); filter: drop-shadow(0 0 6px var(--atomico)); }
