@@ -23,6 +23,14 @@ eventos <- data.frame(
     "10 mil usuários ativos", "Rodada série A (R$ 15 mi)",
     "Expansão pra 3 países", "100 mil usuários ativos",
     "Aquisição por concorrente"
+  ),
+  # Categoria de cada marco -- pedido do usuário pra evoluir este gráfico
+  # além de instante+rótulo. As 4 categorias formam a própria narrativa da
+  # startup contada em paralelo à data: um funding puxando o próximo produto,
+  # que puxa o próximo patamar de usuários.
+  categoria = c(
+    "Fundação", "Produto", "Financeiro", "Crescimento",
+    "Financeiro", "Produto", "Crescimento", "Financeiro"
   )
 )
 eventos <- eventos[order(eventos$data), ]
@@ -31,14 +39,27 @@ eventos <- eventos[order(eventos$data), ]
 # pra bater com a mesma alternância na versão D3).
 eventos$lado <- ifelse(seq_len(nrow(eventos)) %% 2 == 0, 1, -1)
 
-cor_linha  <- "#3B6E8F"
+# A cor de cada categoria nasce AQUI, uma única vez -- o data.json exporta os
+# mesmos hex, pra estático e interativo nunca discordarem de que cor é cada
+# categoria (mesma regra do cronograma de lançamento, aplicada a marco em vez
+# de fase). O eixo/espinha continua neutro: cor é atributo do EVENTO, não do
+# tempo em si.
+cor_categoria <- c(
+  "Fundação"    = "#4A7B6D",
+  "Produto"     = "#3B6E8F",
+  "Financeiro"  = "#C1673A",
+  "Crescimento" = "#8B5FA8"
+)
+eventos$categoria <- factor(eventos$categoria, levels = names(cor_categoria))
+
+cor_eixo   <- "grey55"
 cor_texto  <- "grey20"
 altura_haste <- 1
 
 p <- ggplot(eventos, aes(x = data, y = 0)) +
-  geom_hline(yintercept = 0, colour = cor_linha, linewidth = 1) +
-  geom_segment(aes(xend = data, y = 0, yend = lado * altura_haste), colour = cor_linha, linewidth = 0.6) +
-  geom_point(size = 3.2, colour = cor_linha) +
+  geom_hline(yintercept = 0, colour = cor_eixo, linewidth = 1) +
+  geom_segment(aes(xend = data, y = 0, yend = lado * altura_haste, colour = categoria), linewidth = 0.6) +
+  geom_point(aes(colour = categoria), size = 3.2) +
   geom_text(
     aes(y = lado * altura_haste * 1.12, label = marco, vjust = ifelse(lado > 0, 0, 1)),
     colour = cor_texto, size = 3.1, lineheight = 0.9, family = "sans"
@@ -47,6 +68,7 @@ p <- ggplot(eventos, aes(x = data, y = 0)) +
     aes(y = lado * altura_haste * 0.32, label = format(data, "%b/%Y")),
     colour = "grey45", size = 2.5, family = "mono"
   ) +
+  scale_colour_manual(values = cor_categoria, name = NULL) +
   scale_x_date(date_labels = "%Y", date_breaks = "1 year", expand = expansion(mult = 0.1)) +
   scale_y_continuous(limits = c(-altura_haste * 1.65, altura_haste * 1.65)) +
   labs(title = "Linha do tempo: marcos de uma startup fictícia (2019–2024)", x = NULL, y = NULL) +
@@ -58,6 +80,7 @@ p <- ggplot(eventos, aes(x = data, y = 0)) +
     panel.grid.major.y = element_blank(),
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_line(colour = "grey92"),
+    legend.position = "top",
     plot.margin = margin(t = 10, r = 16, b = 10, l = 16)
   ) +
   coord_cartesian(clip = "off")
@@ -71,11 +94,12 @@ ggsave("output.png", plot = p, width = 10, height = 5.5, dpi = 150)
 # lado (mesma regra de "a cor nasce uma vez" aplicada aqui a layout, nao cor).
 # ---------------------------------------------------------------------------
 viz <- list(
-  meta = list(cor = cor_linha),
+  meta = list(corEixo = cor_eixo, cores = as.list(cor_categoria)),
   eventos = lapply(seq_len(nrow(eventos)), function(i) {
     list(
       data = format(eventos$data[i], "%Y-%m-%d"),
       marco = eventos$marco[i],
+      categoria = as.character(eventos$categoria[i]),
       lado = eventos$lado[i]
     )
   })
