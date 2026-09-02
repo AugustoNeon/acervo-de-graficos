@@ -36,46 +36,17 @@ const epicentro = estacoes.reduce((a: any, b: any) => (b.pgv > a.pgv ? b : a));
 const mmss = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 
-// ------------------------------------------------------------------ espinha
 // As placas dorsais pulsam no compasso do dado (uma volta por pegada), não num
 // intervalo escolhido no olho.
 //
-// Quatro regras de forma, cada uma aprendida errando:
-// (1) a BASE É RETA — ela se prende ao lombo; ponta apontando pra baixo vira
-//     floco de neve;
-// (2) as lobas são VARRIDAS PRA CIMA (a ponta fica mais alta que o entalhe
-//     antes dela) — lobas horizontais leem como pinheiro;
-// (3) as lobas descem até ~86% da altura. Paradas em 2/3, o terço de baixo
-//     vira uma reta vertical e a placa ganha um "tronco" retangular;
-// (4) LARGA e em POUCA quantidade. Esta foi a mais cara: uma versão com 23
-//     placas estreitas e muito serrilhadas tinha variação de sobra e mesmo
-//     assim lia como mato, não como lombo de bicho. Silhueta legível manda
-//     em variedade — a variação entra DENTRO dessa proporção, não no lugar
-//     dela.
-// Quatro variantes desenhadas À MÃO, todas na mesma caixa 26x44. Uma tentativa
-// de GERAR as placas por sorteio (número de lobas, profundidade de entalhe,
-// largura) foi descartada: dava variação de sobra e silhueta pior — as formas
-// saíam ora como mato, ora como bandeirinha, porque a qualidade destas vem de
-// proporção ajustada a olho, coisa que ruído não acerta. Variar entre poucas
-// formas boas bate gerar muitas medianas.
-const VARIANTES = [
-  // A — a de referência: três lobas por lado, entalhes fundos.
-  'M13,0 L16,11 L23,7 L19,21 L26,17 L20,31 L23,44 L3,44 L6,31 L0,17 L7,21 L3,7 L10,11 Z',
-  // B — ponta mais longa e lobas puxadas pra cima, silhueta mais agressiva.
-  'M13,0 L15,9 L22,4 L18,19 L25,13 L19,30 L22,44 L4,44 L7,30 L1,13 L8,19 L4,4 L11,9 Z',
-  // C — assimétrica: a loba do meio salta mais de um lado que do outro.
-  'M14,0 L17,12 L24,8 L19,20 L26,13 L21,32 L24,44 L3,44 L6,30 L0,19 L8,22 L4,9 L11,12 Z',
-  // D — quatro lobas de um lado, três do outro; a mais irregular das quatro.
-  'M13,0 L16,10 L23,6 L18,17 L25,13 L19,26 L26,23 L20,34 L23,44 L3,44 L6,34 L0,23 L7,26 L1,13 L8,17 L10,10 Z',
-];
-
-// Ordem fixa em vez de sorteada: garante que nenhuma placa fique ao lado de
-// uma igual, o que um sorteio só faria por sorte.
-const ORDEM = [0, 2, 1, 3, 2, 0, 3, 1, 0, 3, 2, 1];
-// Escalas e inclinações à mão, pelo mesmo motivo das formas — o sino puro
-// saía liso demais, e o ruído aleatório, irregular demais.
-const ESCALAS = [0.4, 0.62, 0.86, 1.12, 1.3, 1.34, 1.2, 1.0, 0.82, 0.66, 0.5, 0.36];
-const GIROS = [-7, 4, -3, 6, -5, 2, -6, 3, -2, 7, -4, 5];
+// Placa dorsal em caixa 26x44. Três regras, cada uma aprendida errando:
+// (1) a BASE É RETA -- ela se prende ao lombo; qualquer ponta apontando pra
+// baixo vira floco de neve; (2) as lobas são VARRIDAS PRA CIMA (a ponta da
+// loba fica mais alta que o entalhe antes dela) -- lobas horizontais leem
+// como pinheiro; (3) mais alta que larga, com a ponta principal bem longa.
+const PLACAS = 13;
+const placa =
+  'M13,0 L16,11 L23,7 L19,21 L26,17 L20,31 L23,44 L3,44 L6,31 L0,17 L7,21 L3,7 L10,11 Z';
 
 const telemetria = [
   { chave: 'tempo', rotulo: 'DECORRIDO', valor: '00:00', sufixo: '' },
@@ -220,19 +191,21 @@ const telemetria = [
         <svg viewBox="0 0 620 72" role="presentation" preserveAspectRatio="xMidYMax meet">
           <line class="dorso" x1="40" y1="66" x2="580" y2="66" />
           {
-            ORDEM.map((v, i) => {
-              const escala = ESCALAS[i];
-              const x = 74 + i * 43;
-              // Ordem das transformações (o SVG aplica da direita pra
-              // esquerda): leva o centro da BASE da placa pra origem, escala,
-              // gira e só então posiciona — assim o giro acontece no pé da
-              // placa, onde ela se prende ao lombo, e não no meio dela.
+            Array.from({ length: PLACAS }).map((_, i) => {
+              const centro = (PLACAS - 1) / 2;
+              // Sino forte (0,34 nas pontas, 1,35 no meio): numa espinha real a
+              // diferença entre a placa do lombo e a da cauda é enorme, e é ela
+              // que faz a fileira ler como um corpo em vez de uma régua de
+              // ícones iguais. No meio as placas chegam a se encostar — placa
+              // dorsal é fileira apertada, não itens espaçados.
+              const escala = 0.34 + 1.01 * Math.cos(((i - centro) / PLACAS) * 2.4) ** 2;
+              const x = 78 + i * (464 / (PLACAS - 1));
               return (
                 <path
-                  d={VARIANTES[v]}
+                  d={placa}
                   class="placa"
                   style={`--i:${i}`}
-                  transform={`translate(${x} 66) rotate(${GIROS[i]}) scale(${escala}) translate(-13 -44)`}
+                  transform={`translate(${x - 13 * escala} ${66 - 44 * escala}) scale(${escala})`}
                 />
               );
             })
@@ -901,7 +874,7 @@ const telemetria = [
         /* Uma volta por pegada: o compasso vem do dado (meta.passo), não de um
            número escolhido no olho. */
         animation: carga var(--passo) linear infinite;
-        animation-delay: calc(var(--i) * var(--passo) / 12 * -1);
+        animation-delay: calc(var(--i) * var(--passo) / 13 * -1);
       }
       @keyframes carga {
         0%, 72% { fill: #17323a; filter: none; }
