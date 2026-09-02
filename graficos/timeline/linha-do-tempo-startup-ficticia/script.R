@@ -52,7 +52,9 @@ cor_categoria <- c(
 )
 eventos$categoria <- factor(eventos$categoria, levels = names(cor_categoria))
 
-cor_eixo   <- "grey55"
+cor_eixo   <- "#8C8C8C" # equivalente hex de "grey55" -- precisa ser valido tambem
+                        # em CSS/SVG, ja que meta.corEixo alimenta o D3 direto
+                        # (nomes tipo "greyNN" so existem na paleta do R)
 cor_texto  <- "grey20"
 altura_haste <- 1
 
