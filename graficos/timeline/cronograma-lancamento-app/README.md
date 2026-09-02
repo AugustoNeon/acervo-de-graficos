@@ -4,7 +4,7 @@ category: timeline
 date: 2026-09-01
 source: "https://r-graph-gallery.com/web-gantt-chart-with-ggplot2.html (domínio bloqueado nesta sessão; URL não conferida)"
 interactive: true
-resumo: "Doze tarefas do lançamento de um app entre janeiro e junho de 2024, cada uma com início e fim — a sobreposição entre fases vizinhas é o próprio ponto do gráfico, não um efeito colateral."
+resumo: "Doze tarefas do lançamento de um app entre janeiro e junho de 2024, cada uma com início e fim — a sobreposição entre fases vizinhas é o próprio ponto do gráfico, não um efeito colateral. Um botão revela as setas de dependência entre tarefas por cima do calendário."
 veredito_uso: "cada item tem duração (início e fim), e ver o que roda em paralelo ou se atrasa é o que importa."
 veredito_evita: "seus eventos são instantes sem duração — aí é a linha do tempo de marcos, o outro gráfico desta categoria."
 pacotes: ["ggplot2"]
@@ -48,6 +48,11 @@ instantes, e forçar uma barra de duração zero não mostra nada.
   só) — não dá pra desenhar como barra sem largura, então vira um ponto.
 - **Duas barras lado a lado no eixo X**: estão rodando ao mesmo tempo — é a
   leitura que só um Gantt entrega de cara.
+- **Seta curva (só na versão interativa, atrás do botão "Mostrar
+  dependências")**: liga o fim de uma tarefa ao início da que depende dela —
+  não é o mesmo que "vem antes no calendário", é uma relação real
+  (o backend precisa existir antes da integração de pagamento rodar em
+  cima dele, por exemplo).
 
 ## Como foi feito
 
@@ -77,6 +82,15 @@ agrupamento que interessa comparar, não a tarefa isolada. A entrada anima
 as barras crescendo da esquerda pra direita em ordem cronológica de início,
 mesmo gesto do outro gráfico da categoria.
 
+Um botão ("Mostrar dependências") revela uma camada de setas curvas ligando
+o fim de uma tarefa ao início da que depende dela — 12 relações reais
+definidas à mão (não derivadas da proximidade de datas: duas tarefas
+vizinhas no calendário podem só estar rodando em paralelo, sem uma depender
+da outra). A camada fica **oculta por padrão**, de propósito: o estado
+inicial do widget precisa continuar idêntico ao `output.png`, e 12 setas
+cruzando 12 barras por cima da leitura de sobreposição — que já é o ponto
+central deste gráfico — viraria ruído se ligada sem pedir.
+
 ## Possíveis problemas pelo caminho
 
 - **Problema**: um marco de duração zero (início = fim) não aparece no
@@ -99,13 +113,14 @@ mesmo gesto do outro gráfico da categoria.
 - Adicionar uma linha vertical de "hoje" fixa, útil quando o cronograma
   representa um projeto em andamento, não um histórico já fechado como
   este.
-- Mostrar dependências entre tarefas com uma seta ligando o fim de uma ao
-  início da próxima, transformando o Gantt num diagrama de rede de projeto
-  (PERT) sem perder a leitura de calendário.
 - Agrupar as barras em facetas por fase em vez de cor, quando o número de
   fases crescer o bastante pra cor sozinha não separar bem visualmente.
 - Colorir por responsável/equipe em vez de por fase, quando o que importa
   comparar é carga de trabalho por pessoa, não progresso por etapa.
+- Filtrar a camada de dependências por tarefa (mostrar só as setas que
+  entram/saem da tarefa apontada), útil quando o número de relações
+  crescer o bastante pra 12 setas ficarem visualmente densas demais mesmo
+  com o botão.
 
 ## Notas do coletor
 
@@ -131,3 +146,16 @@ sem sinal de erro que outros gráficos desta categoria já registraram pra
 locale/formatação). Vale conferir, em qualquer Gantt novo, se algum item
 tem início igual a fim antes de escolher a geometria — só depois disso dá
 pra decidir se um separa ou não em dois grupos.
+
+**2026-09-02**: evoluído a pedido do usuário com uma camada de dependências
+entre tarefas. A parte que exigiu mais cuidado não foi desenhar a seta, foi
+decidir **quais pares de tarefas de fato têm uma**: duas tarefas vizinhas
+no calendário (ex: "Wireframes" terminando perto de "Design visual"
+começar) não implicam dependência real só por estarem perto — a lista de
+12 relações foi escrita à mão como uma decisão de negócio (o que
+literalmente precisa existir antes de outra coisa rodar em cima), não
+derivada de proximidade de datas. A camada nasce oculta e só liga por um
+botão, pela mesma razão que motivou registrar isso aqui: um Gantt já expõe
+sobreposição como o próprio ponto do gráfico, e uma segunda camada de 12
+setas cruzando as barras por cima, ligada sem pedir, competiria com essa
+leitura em vez de complementá-la.
