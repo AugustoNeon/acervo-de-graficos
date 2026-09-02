@@ -177,6 +177,48 @@ const telemetria = [
           </button>
         </div>
 
+        <!-- Transporte: o registro deixa de ser uma abertura de tiro único e
+             vira linha do tempo tocável. Controles em HTML nativo de
+             propósito — <button> e <input type=range> já vêm com teclado,
+             foco e leitor de tela, coisa que um controle desenhado dentro do
+             SVG obrigaria a reimplementar (e que quase sempre sai pior). -->
+        <div class="transporte">
+          <button type="button" class="tp-play" data-tocar aria-pressed="false">
+            <span data-icone>▶</span> <span data-rotulo>TOCAR</span>
+          </button>
+
+          <label class="tp-barra">
+            <span class="visually-hidden">Instante do registro</span>
+            <input
+              type="range"
+              data-scrub
+              min="0"
+              max={meta.duracao}
+              step="1"
+              value="0"
+              aria-valuetext="00:00"
+            />
+          </label>
+
+          <span class="tp-tempo"><b data-tempo>00:00</b> / {mmss(meta.duracao)}</span>
+
+          <span class="tp-ganho" role="group" aria-label="Ganho do traço">
+            <span class="tp-ganho-rotulo">GANHO</span>
+            {
+              [1, 2, 3].map((f) => (
+                <button
+                  type="button"
+                  data-ganho={f}
+                  class={f === 1 ? 'is-ativo' : undefined}
+                  aria-pressed={f === 1 ? 'true' : 'false'}
+                >
+                  ×{f}
+                </button>
+              ))
+            }
+          </span>
+        </div>
+
         <Viz
           id="especiais/sismografo-kaiju"
           dataUrl={`${base}/graficos/especiais/sismografo-kaiju/data.json`}
@@ -327,12 +369,57 @@ const telemetria = [
         });
       }
 
+      // ------------------------------------------------------- transporte
+      const canvas = () => document.querySelector<HTMLElement>('[data-viz] .viz-canvas');
+      const mandar = (nome: string, detalhe?: unknown) =>
+        canvas()?.dispatchEvent(new CustomEvent(nome, { bubbles: true, detail: detalhe }));
+
+      const play = document.querySelector<HTMLButtonElement>('[data-tocar]');
+      const scrub = document.querySelector<HTMLInputElement>('[data-scrub]');
+      const tempo = document.querySelector<HTMLElement>('[data-tempo]');
+      const botoesGanho = document.querySelectorAll<HTMLButtonElement>('[data-ganho]');
+
+      play?.addEventListener('click', () => mandar('sismo:tocar'));
+
+      // `input` e não `change`: arrastar precisa mover a leitura enquanto
+      // arrasta, não só quando solta.
+      scrub?.addEventListener('input', () =>
+        mandar('sismo:ir', { segundo: Number(scrub.value) })
+      );
+
+      botoesGanho.forEach((b) =>
+        b.addEventListener('click', () => {
+          mandar('sismo:ganho', { fator: Number(b.dataset.ganho) });
+          botoesGanho.forEach((o) => {
+            const ativo = o === b;
+            o.classList.toggle('is-ativo', ativo);
+            o.setAttribute('aria-pressed', String(ativo));
+          });
+        })
+      );
+
+      // O gráfico é a fonte da verdade do tempo: ele avisa, os controles
+      // seguem. Assim tocar, arrastar e o fim do registro convergem pro mesmo
+      // estado sem a página manter um relógio paralelo que pode divergir.
+      document.addEventListener('sismo:varredura', (evento) => {
+        const { segundo, tocando } = (evento as CustomEvent<{ segundo: number; tocando: boolean }>).detail;
+        if (scrub && document.activeElement !== scrub) scrub.value = String(segundo);
+        if (scrub) scrub.setAttribute('aria-valuetext', mmss(segundo));
+        if (tempo) tempo.textContent = mmss(segundo);
+        if (play) {
+          play.setAttribute('aria-pressed', String(!!tocando));
+          const icone = play.querySelector('[data-icone]');
+          const rotulo = play.querySelector('[data-rotulo]');
+          if (icone) icone.textContent = tocando ? '❚❚' : '▶';
+          if (rotulo) rotulo.textContent = tocando ? 'PAUSAR' : 'TOCAR';
+        }
+      });
+
       // ----------------------------------------------------------- rugido
       const botao = document.querySelector<HTMLButtonElement>('[data-rugido]');
-      const canvas = () => document.querySelector<HTMLElement>('[data-viz] .viz-canvas');
 
       botao?.addEventListener('click', () => {
-        canvas()?.dispatchEvent(new CustomEvent('sismo:rugido', { bubbles: true }));
+        mandar('sismo:rugido');
         document.body.classList.add('rugindo');
         // Uma passagem só, ~1,6 s: o efeito acompanha o bloom do gráfico e
         // termina. Nada aqui pisca em ciclo.
@@ -830,6 +917,123 @@ const telemetria = [
       }
       .botao-rugido:active {
         transform: translateY(1px);
+      }
+
+      /* ------------------------------------------------------- transporte */
+      .transporte {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.7rem 1rem;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+      }
+
+      .tp-play {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--atomico);
+        background: none;
+        color: var(--atomico);
+        font: inherit;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+        transition: background var(--duracao-rapida, 150ms) ease-out, color 150ms ease-out;
+      }
+      .tp-play:hover,
+      .tp-play[aria-pressed='true'] {
+        background: var(--atomico);
+        color: var(--void);
+      }
+
+      .tp-barra {
+        flex: 1 1 12rem;
+        display: flex;
+        align-items: center;
+        min-width: 8rem;
+      }
+
+      /* Trilho e polegar desenhados à mão: o controle nativo herda a cor de
+         acento do sistema operacional, que aqui apareceria como um azul de
+         formulário no meio de um console. O ELEMENTO continua sendo o nativo
+         (teclado, foco e leitor de tela intactos) -- só a pintura muda. */
+      .tp-barra input {
+        width: 100%;
+        appearance: none;
+        background: transparent;
+        height: 2.75rem;
+        cursor: pointer;
+      }
+      .tp-barra input::-webkit-slider-runnable-track {
+        height: 2px;
+        background: var(--rule);
+      }
+      .tp-barra input::-moz-range-track {
+        height: 2px;
+        background: var(--rule);
+      }
+      .tp-barra input::-webkit-slider-thumb {
+        appearance: none;
+        width: 3px;
+        height: 18px;
+        margin-top: -8px;
+        background: var(--atomico);
+        border: 0;
+        box-shadow: 0 0 8px var(--atomico);
+      }
+      .tp-barra input::-moz-range-thumb {
+        width: 3px;
+        height: 18px;
+        border: 0;
+        border-radius: 0;
+        background: var(--atomico);
+        box-shadow: 0 0 8px var(--atomico);
+      }
+
+      .tp-tempo {
+        color: var(--ink-muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .tp-tempo b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .tp-ganho {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .tp-ganho-rotulo {
+        color: var(--ink-dim);
+        margin-right: 0.2rem;
+      }
+      .tp-ganho button {
+        min-height: 2.75rem;
+        min-width: 2.4rem;
+        padding: 0.4rem 0.5rem;
+        border: 1px solid var(--rule);
+        background: none;
+        color: var(--ink-muted);
+        font: inherit;
+        cursor: pointer;
+        transition: color 150ms ease-out, border-color 150ms ease-out;
+      }
+      .tp-ganho button:hover {
+        color: var(--ink);
+        border-color: var(--ink-dim);
+      }
+      .tp-ganho button.is-ativo {
+        color: var(--void);
+        background: var(--hazard);
+        border-color: var(--hazard);
       }
 
       /* Onda do rugido: UMA passagem, 1,6 s, sem repetição. */

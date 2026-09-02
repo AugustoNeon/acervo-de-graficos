@@ -17,8 +17,8 @@
  * divergir.
  */
 
-import { select, scaleLinear, axisBottom, pointer } from 'd3';
-import { garantirEstadoFinal, prefersReducedMotion } from '../../motion';
+import { select, scaleLinear, axisBottom, pointer, type Selection } from 'd3';
+import { DURATION, garantirEstadoFinal, prefersReducedMotion } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
 
@@ -78,8 +78,10 @@ const MARGEM_REAL = { topo: 34, dir: 64, baixo: 30, esq: 92 };
 /** Abaixo disto o nome por extenso não cabe e as estações viram código IATA-like. */
 const LARGURA_COMPACTA = 560;
 
-/** Duração da varredura de "gravação". Longa de propósito: um sismógrafo que
- *  se preenche instantaneamente não lê como registro, lê como imagem pronta. */
+/** Quanto tempo de relógio leva pra percorrer os 11 minutos de registro — vale
+ *  tanto pra abertura quanto pro botão de tocar. Longa de propósito: um
+ *  sismógrafo que se preenche instantaneamente não lê como registro, lê como
+ *  imagem pronta. */
 const VARREDURA_MS = 3400;
 
 /** Altura de meia trilha, em fração da faixa da estação. */
@@ -172,8 +174,18 @@ const chart: VizChart = {
     const gCalmo = gTrilhas.append('g');
     const gQuente = gTrilhas.append('g').attr('filter', 'url(#sismo-brilho)');
 
+    // Um grupo por estação DENTRO de cada camada, com os caminhos desenhados
+    // relativos a y=0 e a linha de base aplicada no `transform` do grupo. É o
+    // que torna o ganho possível: amplificar vira `scale(1,fator)` no grupo,
+    // em vez de reconstruir 660 colunas por estação a cada mudança. Manter a
+    // divisão calmo/quente preserva a região ÚNICA do filtro de brilho.
+    //
+    // Escala não-uniforme costuma distorcer traço, mas não aqui: cada coluna é
+    // um segmento vertical, e a espessura de um segmento vertical se mede em X
+    // — que o `scale(1,…)` não toca.
+    const trilhas: { i: number; sel: Selection<SVGGElement, unknown, null, undefined> }[] = [];
+
     estacoes.forEach((estacao, i) => {
-      const base = baseY(i);
       const partes = { calmo: '', alerta: '', critico: '' };
 
       for (let b = 0; b < meta.bins; b++) {
@@ -182,10 +194,10 @@ const chart: VizChart = {
         const amp = Math.max(Math.abs(min), Math.abs(max));
         const estado = amp >= limiares.critico ? 'critico' : amp >= limiares.alerta ? 'alerta' : 'calmo';
         const cx = x(b * meta.segundosPorBin).toFixed(2);
-        partes[estado] += `M${cx},${(base - max * meiaAltura).toFixed(2)}L${cx},${(base - min * meiaAltura).toFixed(2)}`;
+        partes[estado] += `M${cx},${(-max * meiaAltura).toFixed(2)}L${cx},${(-min * meiaAltura).toFixed(2)}`;
       }
 
-      const desenhar = (grupo: typeof gCalmo, d: string, cor: string) => {
+      const desenhar = (grupo: Selection<SVGGElement, unknown, null, undefined>, d: string, cor: string) => {
         if (!d) return;
         grupo
           .append('path')
@@ -195,10 +207,28 @@ const chart: VizChart = {
           .attr('fill', 'none');
       };
 
-      desenhar(gCalmo, partes.calmo, paleta.calmo);
-      desenhar(gQuente, partes.alerta, paleta.alerta);
-      desenhar(gQuente, partes.critico, paleta.critico);
+      const gc = gCalmo.append('g').attr('transform', `translate(0,${baseY(i)})`);
+      const gq = gQuente.append('g').attr('transform', `translate(0,${baseY(i)})`);
+      trilhas.push({ i, sel: gc }, { i, sel: gq });
+
+      desenhar(gc, partes.calmo, paleta.calmo);
+      desenhar(gq, partes.alerta, paleta.alerta);
+      desenhar(gq, partes.critico, paleta.critico);
     });
+
+    /** Ganho: recurso de sismógrafo de verdade — amplificar o traço pra ler a
+     *  estrutura das estações calmas, que na escala das fortes some. As
+     *  trilhas passam a invadir a faixa da vizinha, e isso é o comportamento
+     *  correto: numa parede de sismogramas real elas invadem mesmo. */
+    let ganho = 1;
+    const aplicarGanho = (fator: number, animar: boolean) => {
+      ganho = fator;
+      trilhas.forEach(({ i, sel }) => {
+        const alvo =
+          animar && !prefersReducedMotion() ? sel.transition().duration(DURATION.base) : sel;
+        alvo.attr('transform', `translate(0,${baseY(i)}) scale(1,${fator})`);
+      });
+    };
 
     // ------------------------------------------------------------ eventos
     // Duas marcas verticais que atravessam TODAS as estações, porque os dois
@@ -368,44 +398,120 @@ const chart: VizChart = {
       .attr('stroke-width', px(1.4))
       .attr('opacity', 0);
 
-    /** Avisa a página onde a varredura está, pra o painel de leitura acompanhar. */
-    const anunciar = (segundo: number, terminou: boolean) => {
+    // Marcador da frente de avanço: onde a criatura está no instante que está
+    // sendo lido. A posição não é inventada — sai da interpolação entre os
+    // instantes de pico das estações, que é justamente o que a diagonal
+    // desenha. Por isso ele anda pra direita E pra baixo ao mesmo tempo.
+    const frente = g.append('g').attr('opacity', 0).attr('pointer-events', 'none');
+    frente
+      .append('circle')
+      .attr('r', px(6))
+      .attr('fill', 'none')
+      .attr('stroke', paleta.critico)
+      .attr('stroke-width', px(1.5));
+    frente.append('circle').attr('r', px(2.2)).attr('fill', paleta.critico);
+
+    const indiceDaFrente = (s: number) => {
+      const picos = estacoes.map((e) => e.tPico);
+      if (s <= picos[0]) return 0;
+      for (let i = 1; i < picos.length; i++) {
+        if (s <= picos[i]) return i - 1 + (s - picos[i - 1]) / (picos[i] - picos[i - 1] || 1);
+      }
+      return picos.length - 1;
+    };
+
+    // ------------------------------------------------------- transporte
+    // O registro deixa de ser uma abertura de tiro único e vira uma linha do
+    // tempo que dá pra tocar, pausar e arrastar. Os controles moram na página
+    // (HTML nativo, então teclado e leitor de tela vêm de graça) e conversam
+    // com o gráfico por evento, mesmo padrão já usado pelo rugido.
+    let segundoAtual = animate ? 0 : meta.duracao;
+    let tocando = false;
+    let raf = 0;
+    let ultimoQuadro = 0;
+
+    const anunciar = () => {
       root.dispatchEvent(
         new CustomEvent('sismo:varredura', {
           bubbles: true,
-          detail: { segundo, terminou, duracao: meta.duracao },
+          detail: {
+            segundo: Math.round(segundoAtual),
+            terminou: segundoAtual >= meta.duracao,
+            duracao: meta.duracao,
+            tocando,
+            ganho,
+          },
         })
       );
     };
 
-    let pararVarredura = () => {};
+    const aplicarTempo = (s: number) => {
+      segundoAtual = Math.max(0, Math.min(meta.duracao, s));
+      const larguraAtual = larguraUtil * (segundoAtual / meta.duracao);
+      recorte.attr('width', larguraAtual + 2);
+      cabecote
+        .attr('x1', larguraAtual)
+        .attr('x2', larguraAtual)
+        .attr('opacity', segundoAtual > 0 && segundoAtual < meta.duracao ? 0.9 : 0);
 
+      // O marcador só existe enquanto há evento acontecendo: antes da emersão
+      // não há fonte, e no fim do registro o que fica na tela é o documento
+      // completo, não um instante.
+      if (segundoAtual <= meta.emersao || segundoAtual >= meta.duracao) {
+        frente.attr('opacity', 0);
+      } else {
+        frente
+          .attr('opacity', 1)
+          .attr('transform', `translate(${x(segundoAtual)},${baseY(indiceDaFrente(segundoAtual))})`);
+      }
+      anunciar();
+    };
+
+    const pausar = () => {
+      if (!tocando) return;
+      tocando = false;
+      cancelAnimationFrame(raf);
+      anunciar();
+    };
+
+    const quadro = (ts: number) => {
+      if (!tocando) return;
+      // Avanço por tempo real decorrido, não por quadro: num monitor de 120Hz
+      // ou num quadro atrasado a leitura continua andando na mesma velocidade.
+      const dt = ultimoQuadro ? ts - ultimoQuadro : 16;
+      ultimoQuadro = ts;
+      aplicarTempo(segundoAtual + (dt / VARREDURA_MS) * meta.duracao);
+      if (segundoAtual >= meta.duracao) {
+        pausar();
+        return;
+      }
+      raf = requestAnimationFrame(quadro);
+    };
+
+    const tocar = () => {
+      if (tocando) return;
+      if (segundoAtual >= meta.duracao) aplicarTempo(0); // no fim, recomeça
+      tocando = true;
+      ultimoQuadro = 0;
+      raf = requestAnimationFrame(quadro);
+      anunciar();
+    };
+
+    /** Completa o registro e para: é o que qualquer interação de leitura faz.
+     *  Encostar no gráfico quer dizer "quero ler isto", e não dá pra ler o que
+     *  ainda não foi revelado. */
+    const pararVarredura = () => {
+      pausar();
+      if (segundoAtual < meta.duracao) aplicarTempo(meta.duracao);
+    };
+
+    aplicarTempo(segundoAtual);
     if (animate) {
-      const inicio = performance.now();
-      let raf = 0;
-      const passo = (agora: number) => {
-        const t = Math.min(1, (agora - inicio) / VARREDURA_MS);
-        const larguraAtual = larguraUtil * t;
-        recorte.attr('width', larguraAtual + 2);
-        cabecote.attr('x1', larguraAtual).attr('x2', larguraAtual).attr('opacity', t < 1 ? 0.9 : 0);
-        anunciar(Math.round(meta.duracao * t), t >= 1);
-        if (t < 1) raf = requestAnimationFrame(passo);
-      };
-      raf = requestAnimationFrame(passo);
-
-      pararVarredura = () => {
-        cancelAnimationFrame(raf);
-        recorte.attr('width', larguraUtil + 4);
-        cabecote.attr('opacity', 0);
-        anunciar(meta.duracao, true);
-      };
-
+      tocar();
       // Rede de segurança: `requestAnimationFrame` não avança em renderer sem
       // composição (aba em segundo plano, captura headless), e sem isto a
       // varredura deixaria o gráfico recortado em zero — ou seja, vazio.
       garantirEstadoFinal(VARREDURA_MS, pararVarredura);
-    } else {
-      anunciar(meta.duracao, true);
     }
 
     // ------------------------------------------------------------- leitura
@@ -498,8 +604,25 @@ const chart: VizChart = {
         .attr('stdDeviation', 1.6);
     };
 
-    root.addEventListener('sismo:rugido', aoRugir);
-    limpezaPorRaiz.set(root, () => root.removeEventListener('sismo:rugido', aoRugir));
+    // ---------------------------------------------------------- controles
+    // Tudo que a página pode pedir ao gráfico. Guardado num mapa pra que
+    // registrar e desfazer os ouvintes seja a mesma lista — no resize o
+    // runtime redesenha no MESMO root, e sem a limpeza cada redesenho
+    // empilharia mais um jogo de ouvintes apontando pro SVG anterior.
+    const comandos: Record<string, (e: Event) => void> = {
+      'sismo:rugido': aoRugir,
+      'sismo:tocar': () => (tocando ? pausar() : tocar()),
+      'sismo:ir': (e) => {
+        pausar();
+        aplicarTempo((e as CustomEvent<{ segundo: number }>).detail.segundo);
+      },
+      'sismo:ganho': (e) => aplicarGanho((e as CustomEvent<{ fator: number }>).detail.fator, true),
+    };
+
+    Object.entries(comandos).forEach(([nome, fn]) => root.addEventListener(nome, fn));
+    limpezaPorRaiz.set(root, () =>
+      Object.entries(comandos).forEach(([nome, fn]) => root.removeEventListener(nome, fn))
+    );
   },
 };
 
