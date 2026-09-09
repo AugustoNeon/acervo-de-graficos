@@ -53,7 +53,6 @@ const chart: VizChart = {
     const px = (v: number) => v * escala;
 
     const larguraUtil = VB_W - MARGEM.esq - MARGEM.dir;
-    const alturaUtil = VB_H - MARGEM.topo - MARGEM.baixo;
 
     const xs = Array.from({ length: N_AMOSTRAS + 1 }, (_, i) => notaMin + (i * (notaMax - notaMin)) / N_AMOSTRAS);
     const porBairro = new Map(bairros.map((b) => [b.bairro, b]));
@@ -61,14 +60,37 @@ const chart: VizChart = {
     const maxDensidade = Math.max(...[...curvas.values()].flatMap((c) => c.map((p) => p[1])));
 
     const x = scaleLinear().domain([notaMin, notaMax]).range([0, larguraUtil]);
-    // Domínio invertido: ordem[0] (menor mediana) precisa cair no fim do
-    // range (embaixo), ordem[último] (maior mediana) no início (em cima).
-    const yBand = scaleBand<string>().domain([...meta.ordem].reverse()).range([0, alturaUtil]);
-    const peakScale = (yBand.bandwidth() * OVERLAP) / maxDensidade;
-    const baseline = (bairro: string) => (yBand(bairro) ?? 0) + yBand.bandwidth() / 2;
+
+    // Margem superior ajustada ao pico REAL da faixa de cima, não a um valor
+    // fixo: o pico de cada faixa sobe `OVERLAP` vezes a própria largura de
+    // banda acima da baseline (é o que faz as faixas se sobreporem, o efeito
+    // clássico do ridgeline) -- com OVERLAP=2.3 esse pico facilmente ultrapassa
+    // qualquer margem fixa pequena e é cortado pelo topo do viewBox sem erro
+    // nenhum no console, só visível olhando o render. Calcula com uma margem
+    // provisória, mede quanto a faixa do topo realmente ultrapassa o próprio
+    // eixo Y=0, e aumenta a margem se precisar -- como aumentar a margem
+    // ENCOLHE a largura de banda (e portanto o próprio pico, proporcional a
+    // ela), uma única correção já é suficiente e nunca fica sub-corrigida.
+    function calcularLayout(margemTopo: number) {
+      const alturaUtil = VB_H - margemTopo - MARGEM.baixo;
+      const yBand = scaleBand<string>().domain([...meta.ordem].reverse()).range([0, alturaUtil]);
+      const peakScale = (yBand.bandwidth() * OVERLAP) / maxDensidade;
+      const baseline = (bairro: string) => (yBand(bairro) ?? 0) + yBand.bandwidth() / 2;
+      return { alturaUtil, yBand, peakScale, baseline };
+    }
+
+    let layout = calcularLayout(MARGEM.topo);
+    const bairroDoTopo = meta.ordem[meta.ordem.length - 1];
+    const picoDoTopo = Math.max(...(curvas.get(bairroDoTopo)?.map((p) => p[1]) ?? [0])) * layout.peakScale;
+    const ultrapassagem = picoDoTopo - layout.baseline(bairroDoTopo);
+    const PADDING_TOPO = 14;
+    const margemTopoFinal = ultrapassagem > MARGEM.topo - PADDING_TOPO ? ultrapassagem + PADDING_TOPO : MARGEM.topo;
+    if (margemTopoFinal !== MARGEM.topo) layout = calcularLayout(margemTopoFinal);
+
+    const { alturaUtil, yBand, peakScale, baseline } = layout;
 
     const svg = select(root).append('svg').attr('viewBox', `0 0 ${VB_W} ${VB_H}`).attr('aria-hidden', 'true');
-    const g = svg.append('g').attr('transform', `translate(${MARGEM.esq},${MARGEM.topo})`);
+    const g = svg.append('g').attr('transform', `translate(${MARGEM.esq},${margemTopoFinal})`);
 
     const defs = svg.append('defs');
     const NOTA_STOPS = 12;
