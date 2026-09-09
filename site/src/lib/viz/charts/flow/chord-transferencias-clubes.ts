@@ -12,7 +12,7 @@
  * aqui — mesmo princípio já usado no sankey deste acervo.
  */
 
-import { select, chordDirected, ribbonArrow, arc } from 'd3';
+import { select, chordDirected, ribbonArrow, arc, interpolateNumber } from 'd3';
 import type { Chord, ChordGroup, ChordSubgroup } from 'd3';
 import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { tornarFixavel } from '../../shared/interacao';
@@ -225,13 +225,27 @@ const chart: VizChart = {
     // e se expande); as fitas so aparecem depois, em opacidade, pra nao
     // competir com o arco em formacao.
     if (animate) {
+      // attrTween, não `.attr('d', ...)` direto: o interpolador padrão do D3
+      // pra atributos string (`interpolateString`) casa os NÚMEROS dos dois
+      // "d" pela posição no texto, sem saber que alguns deles são flags de
+      // arco SVG (só podem ser 0 ou 1) -- interpolar um raio (num número
+      // qualquer) e um flag (0/1) como se fossem o mesmo tipo de valor
+      // produz um "d" inválido em quase todo frame intermediário (mensagem
+      // do navegador: "Expected arc flag ('0' or '1')"), mesmo com o
+      // estado inicial e final sendo os dois válidos isoladamente. A
+      // correção padrão do D3 pra animar geometria de arco é interpolar o
+      // NÚMERO (aqui, o raio externo) e regerar o path inteiro a cada tick,
+      // nunca deixar o navegador interpolar a string do "d" sozinho.
       arcos
         .attr('d', (d) => arcoGrupo({ ...d, ri: R_IN, ro: R_IN }))
         .transition()
         .delay((_d, i) => stagger(i, grupos.length, 260))
         .duration(DURATION.base)
         .ease(EASE_ENTER)
-        .attr('d', (d) => arcoGrupo({ ...d, ri: R_IN, ro: R_OUT }));
+        .attrTween('d', function (d) {
+          const interpolador = interpolateNumber(R_IN, R_OUT);
+          return (t: number) => arcoGrupo({ ...d, ri: R_IN, ro: interpolador(t) }) ?? '';
+        });
 
       rotulos.attr('fill-opacity', 0).transition().delay(220).duration(DURATION.base).attr('fill-opacity', 1);
 
