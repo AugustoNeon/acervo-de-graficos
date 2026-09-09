@@ -65,6 +65,30 @@ Registro do que já foi instalado/configurado nesta máquina, para não reinstal
   [AGENTS.md](../AGENTS.md) pra worktrees novos) — e `npx astro check`
   pede `@astrojs/check`+`typescript` na primeira vez (`npm install -D
   @astrojs/check typescript`) antes de rodar sem prompt interativo.
+- **`astro dev` roda em background sozinho neste ambiente** (a própria CLI
+  do Astro detecta sessão de agente de IA e liga `--background`
+  automaticamente) — use `npx astro dev --background`, `npx astro dev
+  status`, `npx astro dev stop` e `npx astro dev logs` em vez de rodar em
+  primeiro plano; o log real do processo fica em `.astro/dev.log` (útil
+  pra depurar um `InvalidContentEntryDataError` ou outro erro de build que
+  o `status`/`logs` só resume). Duas armadilhas já vistas:
+  - **Matar o processo com `pkill`/`kill -9` em vez de `astro dev stop`**
+    corrompe o cache de pre-bundle do Vite (`node_modules/.vite`) — o
+    próximo `astro dev --background` sobe normalmente, mas todo asset
+    estático (`data.json`/`output.png` em `public/graficos/...`) responde
+    404 mesmo existindo em disco, com `504 (Outdated Optimize Dep)` no
+    console do navegador. Correção: `rm -rf node_modules/.vite
+    .astro/dev.log` antes de subir de novo.
+  - **Uma pasta nova dentro de uma categoria que já existia em
+    `public/graficos/<categoria>/`** (gráfico novo, categoria já tinha
+    outros) às vezes não é servida (404) mesmo depois do
+    `sync-assets.mjs` rodar e o arquivo existir em disco, com as
+    verificações normais (`stat`, permissão) todas certas — um simples
+    `astro dev stop` + `astro dev --background` (sem precisar limpar cache
+    nenhum, diferente do caso acima) resolve. Sempre confira com `curl` o
+    `data.json` do gráfico novo antes de aceitar a versão interativa como
+    testada — um 404 silencioso faz o site cair pro `output.png` estático
+    sem nenhum erro visível na tela.
 
 ## R
 
