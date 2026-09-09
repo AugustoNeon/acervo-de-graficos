@@ -56,6 +56,17 @@ type LinkSankey = SankeyLink<No, LinkExtra>;
 const VB_W = 900;
 const VB_H = 540;
 const MARGEM_INFERIOR = 34;
+// Rótulo de bloco fica centralizado sobre o próprio nó (16 de largura), não
+// ao lado dele -- num nó tão fino, o texto ("Abstenção" chega a ~73 de
+// largura) sempre transborda bem além das duas bordas do retângulo. Nas
+// colunas do meio isso não é problema (sobra fita dos dois lados pra
+// "esconder" o transbordo); nas colunas da PONTA (primeira e última), o nó
+// fica colado na borda do viewBox, e a metade do rótulo que transborda pra
+// fora do diagrama era cortada pelo clipping padrão do SVG -- "Esquerda"
+// virava "querda", sem erro nenhum no console (só visível olhando o
+// render, não a lista de erros). Essa margem lateral reserva espaço nas
+// duas pontas do layout do sankey pra caber o rótulo mais largo inteiro.
+const MARGEM_LATERAL = 40;
 const OPACIDADE_LINK = 0.55;
 const OPACIDADE_LINK_APAGADO = 0.06;
 
@@ -71,8 +82,8 @@ const chart: VizChart = {
       .nodeWidth(16)
       .nodePadding(12)
       .extent([
-        [1, 6],
-        [VB_W - 1, VB_H - MARGEM_INFERIOR],
+        [MARGEM_LATERAL, 6],
+        [VB_W - MARGEM_LATERAL, VB_H - MARGEM_INFERIOR],
       ]);
 
     const { nodes, links } = gerarSankey({
