@@ -10,7 +10,7 @@
  */
 
 import { select, scaleLinear, scaleBand, axisLeft, max } from 'd3';
-import { DURATION, EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
@@ -142,6 +142,50 @@ const chart: VizChart = {
     }
 
     tornarFixavel(root, { selecao: barras, chaveDe }, realcar, limpar);
+
+    // Reordenar troca só a POSIÇÃO Y de cada categoria -- as mesmas barras
+    // (mesma seleção, mesma chave) deslizam pro lugar novo em vez de sair e
+    // entrar de novo, mesmo princípio de "object constancy" já usado no
+    // barplot clássico desta base. `y` é mutado no lugar (mesma instância de
+    // `scaleBand`, só o domínio muda de ordem) -- qualquer leitura de
+    // `y(categoria)` depois da troca já reflete a posição nova sozinha.
+    const ORDENACOES = [
+      { id: 'variacao', rotulo: 'Variação', comparar: (a: Linha, b: Linha) => b.variacao - a.variacao },
+      { id: 'categoria', rotulo: 'Categoria (A–Z)', comparar: (a: Linha, b: Linha) => a.categoria.localeCompare(b.categoria, 'pt-BR') },
+    ] as const;
+
+    function aplicarOrdem(ordem: (typeof ORDENACOES)[number], transicao: boolean) {
+      y.domain([...dados].sort(ordem.comparar).map((d) => d.categoria));
+
+      const alvoBarras = transicao ? barras.transition().duration(DURATION.slow).ease(EASE_STATE) : barras;
+      alvoBarras.attr('y', (d) => y(d.categoria) ?? 0);
+
+      const alvoRotulos = transicao ? rotulos.transition().duration(DURATION.slow).ease(EASE_STATE) : rotulos;
+      alvoRotulos.attr('y', (d) => (y(d.categoria) ?? 0) + alturaBarra() / 2);
+
+      const alvoGrade = transicao ? gGrade.transition().duration(DURATION.slow) : gGrade;
+      alvoGrade.call(axisLeft(y).tickSize(-larguraUtil).tickFormat(() => ''));
+      gGrade.select('.domain').remove();
+
+      const alvoEixoY = transicao ? gEixoY.transition().duration(DURATION.slow) : gEixoY;
+      alvoEixoY.call(axisLeft(y).tickSizeOuter(0));
+      estilarEixo(gEixoY, theme, px);
+      gEixoY.selectAll('text').attr('font-weight', 700).attr('fill', theme.ink);
+
+      botoesOrdem.attr('aria-pressed', (o) => String(o.id === ordem.id));
+    }
+
+    const controlesOrdem = select(root).append('div').attr('class', 'viz-controles');
+    controlesOrdem.append('span').attr('class', 'viz-controles-rotulo').text('Ordenar por');
+    const botoesOrdem = controlesOrdem
+      .selectAll<HTMLButtonElement, (typeof ORDENACOES)[number]>('button')
+      .data(ORDENACOES)
+      .join('button')
+      .attr('type', 'button')
+      .attr('data-interactive', '')
+      .attr('aria-pressed', (o) => String(o.id === 'variacao'))
+      .text((o) => o.rotulo)
+      .on('click', (_evento, o) => aplicarOrdem(o, true));
 
     const sinais = Object.keys(meta.cores);
     const legenda = select(root)
