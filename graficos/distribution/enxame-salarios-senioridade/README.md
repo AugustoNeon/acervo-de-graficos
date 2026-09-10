@@ -81,7 +81,12 @@ alternados (centro, direita, esquerda, direita mais longe...) até achar o
 primeiro que não colide (por distância euclidiana) com nenhum ponto já
 posicionado nas proximidades verticais. A geometria nunca é exportada
 pronta do R: o `data.json` carrega só nível e salário por pessoa, e o D3
-roda o próprio empacotamento sobre a largura de tela real disponível.
+roda o próprio empacotamento sobre a largura de tela real disponível. Um
+botão "Quartis (Q1–Q3)" liga uma caixa de contorno (sem preenchimento, pra
+não competir com a cor dos pontos) marcando o intervalo interquartil de
+cada nível — os quartis são calculados no próprio D3 a partir dos mesmos
+pontos brutos do enxame, mesma interpolação linear entre postos que o
+quantile padrão do R usa.
 
 ## Possíveis problemas pelo caminho
 
