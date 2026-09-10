@@ -74,6 +74,13 @@ gradual de preço com a base ainda crescendo, e um reajuste forte em
 fica escondida se preço e assinantes forem olhados cada um no seu próprio
 gráfico de linha.
 
+Na versão interativa, passar o mouse (ou clicar pra fixar) num ponto o
+aumenta, esmaece os demais e o próprio traço, e revela o rótulo do ano dele
+mesmo quando não é um dos anos já rotulados no `output.png` — todo ano tem
+um rótulo pronto no DOM desde o início, só escondido por opacidade, pra
+examinar qualquer ano sem precisar decorar em qual deles o `ggrepel`
+decidiu encaixar um rótulo na versão estática.
+
 ## Possíveis problemas pelo caminho
 
 - **Problema**: o gráfico vira um emaranhado de linhas cruzando o próprio

@@ -9,7 +9,8 @@
  */
 
 import { select, scaleLinear, interpolateRgb } from 'd3';
-import { DURATION, EASE_ENTER, garantirEstadoFinal } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal } from '../../motion';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Ponto {
@@ -142,29 +143,28 @@ const chart: VizChart = {
     const pontosSel = g
       .append('g')
       .selectAll<SVGCircleElement, Ponto>('circle')
-      .data(pontos)
+      .data(pontos, (d) => String((d as Ponto).ano))
       .join('circle')
       .attr('data-interactive', '')
       .attr('cx', (d) => x(d.preco))
       .attr('cy', (d) => y(d.assinantes))
+      .attr('r', raio)
       .attr('fill', (d) => corDoAno(d.ano))
       .attr('stroke', theme.bg)
       .attr('stroke-width', px(1))
-      .on('pointerenter', function () {
-        select(this).attr('r', raio * 1.4);
-      })
       .on('pointermove', (evento: PointerEvent, d) =>
         tooltip.show(`<strong>${d.ano}</strong><br>R$ ${d.preco.toFixed(1)}/mês · ${d.assinantes.toFixed(2)} mi assinantes`, evento)
       )
-      .on('pointerleave', function () {
-        select(this).attr('r', raio);
-        tooltip.hide();
-      });
+      .on('pointerleave', () => tooltip.hide());
 
     // -------------------------------------------------------------- rótulos
-    g.append('g')
-      .selectAll('text')
-      .data(pontos.filter((p) => anosRotulados.includes(p.ano)))
+    // Todo ano ganha um rótulo no DOM desde o início (não só os pré-selecionados
+    // em `anosRotulados`) -- clicar/passar o mouse num ponto sem rótulo próprio
+    // revela o ano dele também, via opacidade, sem precisar criar/remover nó.
+    const rotulos = g
+      .append('g')
+      .selectAll<SVGTextElement, Ponto>('text')
+      .data(pontos, (d) => String((d as Ponto).ano))
       .join('text')
       .attr('x', (d) => x(d.preco))
       .attr('y', (d) => y(d.assinantes) - px(10))
@@ -173,7 +173,38 @@ const chart: VizChart = {
       .attr('font-weight', 700)
       .attr('font-size', px(11.5))
       .attr('fill', theme.ink)
+      .attr('opacity', (d) => (anosRotulados.includes(d.ano) ? 1 : 0))
       .text((d) => String(d.ano));
+
+    // --------------------------------------------------------- realce/clique
+    // Passar o mouse (ou clicar pra fixar) num ano aumenta aquele ponto,
+    // esmaece os demais e o próprio traço, e garante o rótulo do ano visível
+    // mesmo quando ele não é um dos anos pré-rotulados do gráfico estático.
+    function aplicarRealce(anoFixo: number | null) {
+      pontosSel
+        .transition()
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('r', (d) => (anoFixo !== null && d.ano === anoFixo ? raio * 1.5 : raio))
+        .attr('opacity', (d) => (anoFixo === null || d.ano === anoFixo ? 1 : 0.35));
+      rotulos
+        .transition()
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('opacity', (d) => (anosRotulados.includes(d.ano) || d.ano === anoFixo ? 1 : 0));
+      caminho
+        .transition()
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('stroke-opacity', anoFixo === null ? 1 : 0.4);
+    }
+
+    tornarFixavel(
+      root,
+      { selecao: pontosSel, chaveDe: (d: Ponto) => String(d.ano) },
+      (anoStr) => aplicarRealce(Number(anoStr)),
+      () => aplicarRealce(null)
+    );
 
     if (meta.nota) {
       select(root).append('p').attr('class', 'viz-nota').text(meta.nota);
