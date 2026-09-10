@@ -79,7 +79,11 @@ uma distribuição uniforme entre -20% e +20%.
 **Na versão interativa**: os rótulos numéricos (`+17.2%`, `-16.8%`) ficam
 sempre do lado externo da ponta da barra, nunca sobre ela — a posição deles
 inverte com o sinal (à direita para barras positivas, à esquerda para
-negativas), calculado a cada desenho, não fixado num lado só.
+negativas), calculado a cada desenho, não fixado num lado só. Um botão
+"Ordenar por" alterna entre a ordem por variação (padrão, igual ao
+`output.png`) e ordem alfabética da categoria — as mesmas barras deslizam
+pra posição nova em vez de sumir e reaparecer, então dá pra seguir uma
+categoria específica com o olho durante a troca.
 
 ## Possíveis problemas pelo caminho
 
