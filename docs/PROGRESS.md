@@ -6,6 +6,7 @@ Log de todos os gráficos adicionados ao projeto. Atualize sempre que um gráfic
 
 | Data       | Categoria | Gráfico | Pasta | Fonte |
 |------------|-----------|---------|-------|-------|
+| 2026-09-10 | correlation | Hexbin de dispersão: tempo de tela x sono (D3) | [graficos/correlation/hexbin-tela-sono](../graficos/correlation/hexbin-tela-sono) | [r-graph-gallery.com/hexbin-map](https://r-graph-gallery.com/hexbin-map.html) (domínio bloqueado nesta sessão; URL não conferida) |
 | 2026-09-10 | part-of-whole | Icicle chart: uso de disco de um projeto de software (D3) | [graficos/part-of-whole/icicle-uso-disco-projeto](../graficos/part-of-whole/icicle-uso-disco-projeto) | [r-graph-gallery.com/hierarchical-icicle-plot](https://r-graph-gallery.com/hierarchical-icicle-plot.html) (domínio bloqueado nesta sessão; URL não conferida) |
 | 2026-09-09 | general | Candlestick: preço diário de uma ação fictícia (D3) | [graficos/general/candlestick-acao-ficticia](../graficos/general/candlestick-acao-ficticia) | [r-graph-gallery.com/candlestick-chart](https://r-graph-gallery.com/candlestick-chart.html) (domínio bloqueado nesta sessão; URL não conferida) |
 | 2026-09-09 | evolution | Linha com banda de confiança: previsão de receita (D3) | [graficos/evolution/previsao-receita-banda-confianca](../graficos/evolution/previsao-receita-banda-confianca) | [r-graph-gallery.com/104-plot-lines-with-error-envelopes-ggplot2](https://r-graph-gallery.com/104-plot-lines-with-error-envelopes-ggplot2.html) (domínio bloqueado nesta sessão; URL não conferida) |
