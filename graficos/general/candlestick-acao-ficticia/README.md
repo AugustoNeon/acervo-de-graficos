@@ -79,7 +79,11 @@ próprio corpo, o que quebraria a leitura.
 
 **Na versão interativa**: o `data.json` carrega os quatro valores brutos
 por pregão — o D3 calcula a posição do corpo e do pavio sozinho, mesmo
-princípio de sempre desta base (nunca geometria já pronta).
+princípio de sempre desta base (nunca geometria já pronta). Um botão
+"Média móvel" liga e desliga uma linha de médio prazo (média dos últimos
+5 pregões, calculada no próprio D3) sobreposta às velas — a leitura
+"forte numa direção" ou "indeciso" fica mais fácil de confirmar quando a
+linha e os corpos apontam para o mesmo lado.
 
 ## Possíveis problemas pelo caminho
 
@@ -92,8 +96,9 @@ princípio de sempre desta base (nunca geometria já pronta).
 
 ## Variações possíveis
 
-- Adicionar uma média móvel (linha suave sobre as velas) para destacar a
-  tendência de médio prazo por cima do ruído dia a dia.
+- Adicionar uma segunda média móvel (por exemplo, 20 pregões) para o
+  clássico cruzamento de médias curta/longa — a versão atual já tem uma
+  de 5 pregões, ligada pelo botão abaixo do gráfico.
 - Colorir o corpo por volume negociado em vez de só alta/baixa, usando
   opacidade ou um segundo canal de cor.
 - Agrupar vários pregões num só candle (semanal em vez de diário), mesma
