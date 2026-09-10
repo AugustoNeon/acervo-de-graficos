@@ -9,10 +9,18 @@
  * ponto de emenda repetindo o último mês realizado com banda de largura
  * zero -- o D3 desenha a mesma composição em cima dos mesmos pontos, sem
  * recalcular a banda.
+ *
+ * A banda exportada pelo R é tratada como a de 95% (±1,96 desvio-padrão,
+ * convenção comum em previsão de série temporal) -- o D3 deriva o próprio
+ * desvio-padrão implícito (`sigmaDe`) a partir dela e recalcula a banda de
+ * 68% (±1 desvio) sob demanda, nunca pedindo um segundo cálculo ao R. Um
+ * switcher liga as duas, com a mesma lógica de estado alternável já usada
+ * em outros gráficos desta base (ex: `part-of-whole/barplot-agrupado-
+ * empilhado`).
  */
 
 import { select, scaleLinear, axisBottom, axisLeft, line, area, curveMonotoneX } from 'd3';
-import { DURATION, EASE_ENTER, garantirEstadoFinal } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
 
@@ -86,14 +94,33 @@ const chart: VizChart = {
     estilarEixo(gEixoX, theme, px);
 
     // ------------------------------------------------------------- banda
-    const areaGen = area<Ponto>()
-      .defined((d) => d.bandaMin != null && d.bandaMax != null)
-      .x((d) => x(d.indice))
-      .y0((d) => y(d.bandaMin as number))
-      .y1((d) => y(d.bandaMax as number))
-      .curve(curveMonotoneX);
+    const Z_EXPORTADO = 1.959964; // z de 95% -- convenção da banda que o R exporta
+    const NIVEIS = [
+      { id: '68', z: 1, rotulo: '68%' },
+      { id: '95', z: Z_EXPORTADO, rotulo: '95%' },
+    ] as const;
+    const sigmaDe = (d: Ponto) =>
+      d.bandaMin != null && d.bandaMax != null ? (d.bandaMax - d.bandaMin) / 2 / Z_EXPORTADO : 0;
 
-    g.append('path').datum(previsto).attr('fill', meta.cores.Previsto).attr('opacity', 0.16).attr('d', areaGen);
+    function gerarArea(z: number) {
+      return area<Ponto>()
+        .defined((d) => d.bandaMin != null && d.bandaMax != null)
+        .x((d) => x(d.indice))
+        .y0((d) => y(d.receita - sigmaDe(d) * z))
+        .y1((d) => y(d.receita + sigmaDe(d) * z))
+        .curve(curveMonotoneX);
+    }
+
+    // O output.png mostra a banda de 95% -- a versão interativa nasce no
+    // mesmo nível, o switcher é um jeito de EXPLORAR a partir dali, nunca
+    // a leitura padrão diverge da imagem estática.
+    let nivelAtual: (typeof NIVEIS)[number] = NIVEIS[1];
+    const bandaPath = g
+      .append('path')
+      .datum(previsto)
+      .attr('fill', meta.cores.Previsto)
+      .attr('opacity', 0.16)
+      .attr('d', gerarArea(nivelAtual.z));
 
     // -------------------------------------------------------------- hoje
     const indiceCorte = meta.corteRealizado;
@@ -157,7 +184,13 @@ const chart: VizChart = {
       .attr('stroke-width', px(1));
 
     function mostrarTooltip(evento: PointerEvent, d: Ponto) {
-      const faixa = d.bandaMin != null ? `<br>faixa: R$ ${d.bandaMin}mil – R$ ${d.bandaMax}mil` : '';
+      let faixa = '';
+      if (d.bandaMin != null && d.bandaMax != null) {
+        const sigma = sigmaDe(d);
+        const min = (d.receita - sigma * nivelAtual.z).toFixed(1);
+        const max = (d.receita + sigma * nivelAtual.z).toFixed(1);
+        faixa = `<br>faixa (${nivelAtual.rotulo}): R$ ${min}mil – R$ ${max}mil`;
+      }
       tooltip.show(
         `<span class="viz-swatch" style="background:${meta.cores[d.fase]}"></span>` +
           `<strong>${d.mes}</strong> · ${d.fase}<br>R$ ${d.receita}mil${faixa}`,
@@ -165,6 +198,26 @@ const chart: VizChart = {
       );
     }
     todos.on('pointermove', mostrarTooltip).on('pointerleave', () => tooltip.hide());
+
+    // Switcher de nível de confiança: só a área da banda muda (as duas
+    // linhas -- a estimativa central -- ficam paradas), então basta uma
+    // transição no próprio `d` do path, sem recriar nada.
+    const controlesNivel = select(root).append('div').attr('class', 'viz-controles');
+    controlesNivel.append('span').attr('class', 'viz-controles-rotulo').text('Confiança');
+    const botoesNivel = controlesNivel
+      .selectAll<HTMLButtonElement, (typeof NIVEIS)[number]>('button')
+      .data(NIVEIS)
+      .join('button')
+      .attr('type', 'button')
+      .attr('data-interactive', '')
+      .attr('aria-pressed', (n) => String(n.id === nivelAtual.id))
+      .text((n) => n.rotulo)
+      .on('click', (_evento, n) => {
+        if (n.id === nivelAtual.id) return;
+        nivelAtual = n;
+        bandaPath.transition().duration(DURATION.base).ease(EASE_STATE).attr('d', gerarArea(n.z));
+        botoesNivel.attr('aria-pressed', (m) => String(m.id === n.id));
+      });
 
     if (animate) {
       let clipRectEl: SVGRectElement | null = null;
