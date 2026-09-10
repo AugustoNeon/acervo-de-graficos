@@ -12,7 +12,7 @@
  * valor absoluto sem olhar o eixo de cada um.
  */
 
-import { select, scaleUtc, scaleLinear, axisBottom, axisLeft } from 'd3';
+import { select, scaleUtc, scaleLinear, axisBottom, axisLeft, type ScaleLinear, type Selection } from 'd3';
 import { DURATION, EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
 import type { DrawContext, VizChart } from '../../types';
@@ -72,9 +72,39 @@ const chart: VizChart = {
 
     const svg = select(root).append('svg').attr('viewBox', `0 0 ${VB_W} ${VB_H}`).attr('aria-hidden', 'true');
 
-    function conteudoTooltip(categoria: string, mesIdx: number, valores: number[]): string {
+    // Painéis têm o MESMO eixo X (24 meses, todos compartilham `meses`/`xs`) --
+    // por isso dá pra ligar um crosshair entre eles: passar o mouse em
+    // qualquer painel acende o mesmo mês em TODOS, cada um na própria escala Y.
+    interface InfoPainel {
+      categoria: string;
+      cor: string;
+      valores: number[];
+      y: ScaleLinear<number, number>;
+      guiaLinha: Selection<SVGLineElement, unknown, null, undefined>;
+      guiaPonto: Selection<SVGCircleElement, unknown, null, undefined>;
+    }
+    const paineisInfo: InfoPainel[] = [];
+
+    function conteudoTooltipTodos(mesIdx: number): string {
       const dataFmt = meses[mesIdx].toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-      return `<strong>${categoria}</strong><br>${dataFmt} · R$ ${valores[mesIdx].toFixed(1)} mil`;
+      const linhas = paineisInfo
+        .map((p) => `<span class="viz-swatch" style="background:${p.cor}"></span>${p.categoria}: R$ ${p.valores[mesIdx].toFixed(1)} mil`)
+        .join('<br>');
+      return `<strong>${dataFmt}</strong><br>${linhas}`;
+    }
+
+    function destacarMes(mesIdx: number | null, evento?: PointerEvent) {
+      paineisInfo.forEach((p) => {
+        if (mesIdx === null) {
+          p.guiaLinha.attr('opacity', 0);
+          p.guiaPonto.attr('opacity', 0);
+        } else {
+          p.guiaLinha.attr('x1', xs[mesIdx]).attr('x2', xs[mesIdx]).attr('opacity', 1);
+          p.guiaPonto.attr('cx', xs[mesIdx]).attr('cy', p.y(p.valores[mesIdx])).attr('opacity', 1);
+        }
+      });
+      if (mesIdx !== null && evento) tooltip.show(conteudoTooltipTodos(mesIdx), evento);
+      else tooltip.hide();
     }
 
     series.forEach((s, i) => {
@@ -132,6 +162,28 @@ const chart: VizChart = {
         .attr('stroke', cor)
         .attr('stroke-width', px(1.5));
 
+      // Guia vertical + ponto: escondidos por padrão (opacity 0), acesos por
+      // `destacarMes` -- em TODOS os painéis ao mesmo tempo, não só neste.
+      const guiaLinha = g
+        .append('line')
+        .attr('y1', 0)
+        .attr('y2', alturaUtil)
+        .attr('stroke', theme.inkMuted)
+        .attr('stroke-width', px(1))
+        .attr('stroke-dasharray', `${px(2.5)} ${px(2.5)}`)
+        .attr('opacity', 0)
+        .attr('pointer-events', 'none');
+      const guiaPonto = g
+        .append('circle')
+        .attr('r', px(4))
+        .attr('fill', cor)
+        .attr('stroke', theme.bg)
+        .attr('stroke-width', px(1.2))
+        .attr('opacity', 0)
+        .attr('pointer-events', 'none');
+
+      paineisInfo.push({ categoria: s.categoria, cor, valores, y, guiaLinha, guiaPonto });
+
       const overlay = g
         .append('rect')
         .attr('data-interactive', '')
@@ -152,13 +204,9 @@ const chart: VizChart = {
               melhor = mi;
             }
           });
-          area.attr('fill-opacity', 0.92);
-          tooltip.show(conteudoTooltip(s.categoria, melhor, valores), evento);
+          destacarMes(melhor, evento);
         })
-        .on('pointerleave', () => {
-          area.attr('fill-opacity', 0.78);
-          tooltip.hide();
-        });
+        .on('pointerleave', () => destacarMes(null));
       overlay.raise();
 
       if (animate) {

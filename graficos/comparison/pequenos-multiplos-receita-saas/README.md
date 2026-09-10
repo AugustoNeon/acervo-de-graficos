@@ -75,6 +75,15 @@ deste acervo — de propósito, pra comparar lado a lado a mesma evolução lida
 das duas formas. Cada categoria segue uma tendência própria (uma em queda,
 duas em crescimento em ritmos diferentes, uma estável) mais ruído aleatório.
 
+**Na versão interativa**: os quatro painéis compartilham o mesmo eixo X (os
+mesmos 24 meses) mesmo escalando o Y de forma independente — isso permite
+um crosshair LIGADO entre eles: passar o mouse em qualquer painel acende o
+mesmo mês em todos os outros ao mesmo tempo (linha guia + ponto, cada um na
+própria escala Y), com um tooltip só listando a receita das quatro
+categorias juntas naquele mês. Sem essa ligação, comparar o mesmo mês entre
+painéis exigiria decorar a posição horizontal e ler cada eixo Y separado de
+cabeça.
+
 ## Possíveis problemas pelo caminho
 
 - **Problema**: esquecer `scale = "free_y"` (ou deixar o padrão `"fixed"`).
