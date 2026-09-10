@@ -91,7 +91,12 @@ tendência nenhuma, a espiral não teria nada para revelar além da cor.
 ponto — o D3 calcula ângulo e raio, e fecha cada laço duplicando o
 primeiro ponto no fim do caminho, mesma técnica do `script.R`. A entrada
 anima cada laço se desenhando (`stroke-dasharray`/`stroke-dashoffset`) na
-ordem cronológica, um ano de cada vez.
+ordem cronológica, um ano de cada vez. O realce funciona nas duas
+dimensões do cruzamento: passar o mouse (ou clicar) num laço ou na
+legenda acende aquele **ano** inteiro; passar o mouse (ou clicar) no
+**rótulo do mês**, na borda externa do círculo, acende o mesmo mês nos
+cinco laços ao mesmo tempo — a leitura "dezembro ficou mais caro ano a
+ano?" fica direta, em vez de precisar seguir cada laço na mão.
 
 ## Possíveis problemas pelo caminho
 
