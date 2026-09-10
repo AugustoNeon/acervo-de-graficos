@@ -172,6 +172,46 @@ const chart: VizChart = {
       .attr('stroke', theme.ink)
       .attr('stroke-width', px(2));
 
+    // Quartis (Q1–Q3) por nível, calculados aqui a partir dos MESMOS pontos
+    // brutos do enxame (interpolação linear entre postos, igual ao quantile
+    // "type 7" padrão do R) -- nunca um resumo pronto vindo do R, mesmo
+    // princípio de sempre desta base. Caixa só com contorno (sem
+    // preenchimento) pra não competir visualmente com a cor dos pontos por
+    // baixo -- ela é um GUIA que se soma ao enxame, não um gráfico por cima
+    // dele; nasce desligada, o [violino e boxplot](../violino-e-boxplot)
+    // desta categoria já é a versão em que o resumo estatístico é o
+    // protagonista.
+    function quantil(valoresOrd: number[], p: number): number {
+      const idx = (valoresOrd.length - 1) * p;
+      const lo = Math.floor(idx);
+      const hi = Math.ceil(idx);
+      if (lo === hi) return valoresOrd[lo];
+      const frac = idx - lo;
+      return valoresOrd[lo] * (1 - frac) + valoresOrd[hi] * frac;
+    }
+    const quartis = meta.niveis.map((nivel) => {
+      const salarios = pontos
+        .filter((p) => p.nivel === nivel)
+        .map((p) => p.salario)
+        .sort((a, b) => a - b);
+      return { nivel, q1: quantil(salarios, 0.25), q3: quantil(salarios, 0.75) };
+    });
+    const larguraCaixa = xBand.bandwidth() * 0.46;
+    const caixasSel = g
+      .selectAll<SVGRectElement, (typeof quartis)[number]>('rect.quartil')
+      .data(quartis, (d) => d.nivel)
+      .join('rect')
+      .attr('class', 'quartil')
+      .attr('x', (d) => (xBand(d.nivel) ?? 0) + xBand.bandwidth() / 2 - larguraCaixa / 2)
+      .attr('y', (d) => y(d.q3))
+      .attr('width', larguraCaixa)
+      .attr('height', (d) => Math.max(px(1), y(d.q1) - y(d.q3)))
+      .attr('fill', 'none')
+      .attr('stroke', theme.ink)
+      .attr('stroke-width', px(1.4))
+      .attr('pointer-events', 'none')
+      .attr('opacity', 0);
+
     function mostrarTooltip(evento: PointerEvent, d: Ponto) {
       tooltip.show(
         `<span class="viz-swatch" style="background:${meta.cores[d.nivel]}"></span>` +
@@ -205,6 +245,24 @@ const chart: VizChart = {
       .html((n) => `<span class="viz-swatch" style="background:${meta.cores[n]}"></span>${n}`)
       .on('pointerenter', (_e, n) => realcar(n))
       .on('pointerleave', limpar);
+
+    let quartisLigados = false;
+    const controlesQuartil = select(root).append('div').attr('class', 'viz-controles');
+    controlesQuartil.append('span').attr('class', 'viz-controles-rotulo').text('Guia');
+    controlesQuartil
+      .append('button')
+      .attr('type', 'button')
+      .attr('data-interactive', '')
+      .attr('aria-pressed', 'false')
+      .text('Quartis (Q1–Q3)')
+      .on('click', function () {
+        quartisLigados = !quartisLigados;
+        select(this).attr('aria-pressed', String(quartisLigados));
+        caixasSel
+          .transition()
+          .duration(DURATION.base)
+          .attr('opacity', quartisLigados ? 0.8 : 0);
+      });
 
     if (animate) {
       circulos.attr('r', 0);
