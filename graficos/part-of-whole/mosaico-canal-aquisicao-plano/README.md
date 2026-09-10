@@ -93,7 +93,12 @@ mostrar.
 
 **Na versão interativa**: o `data.json` carrega só as contagens brutas por
 combinação canal×plano — o D3 soma os totais e recalcula as duas
-normalizações sozinho, nunca a partir de coordenadas já prontas.
+normalizações sozinho, nunca a partir de coordenadas já prontas. O realce
+funciona nas duas direções do cruzamento: passar o mouse (ou clicar) numa
+célula ou na legenda acende aquele **plano** em todas as colunas; passar o
+mouse (ou clicar) no **nome do canal**, no cabeçalho, acende a coluna
+inteira — todos os planos daquele canal juntos, para comparar a composição
+completa de um canal contra o resto de uma vez.
 
 ## Possíveis problemas pelo caminho
 
