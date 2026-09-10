@@ -92,8 +92,8 @@ const chart: VizChart = {
 
     // ------------------------------------------------------------ meses
     const meses = meta.meses.map((mes, i) => ({ mes, mesNum: i + 1 }));
-    raiz
-      .selectAll('line.mes')
+    const raiosMes = raiz
+      .selectAll<SVGLineElement, (typeof meses)[number]>('line.mes')
       .data(meses)
       .join('line')
       .attr('class', 'mes')
@@ -105,11 +105,17 @@ const chart: VizChart = {
       .attr('stroke-width', px(0.5))
       .attr('stroke-opacity', 0.5);
 
-    raiz
-      .selectAll('text.mes')
+    // Rótulo do mês é interativo -- passar o mouse (ou clicar) compara o
+    // MESMO mês entre os cinco anos, em vez de um ano inteiro (o realce que
+    // já existe por cima do laço/legenda). Útil pra responder "dezembro
+    // ficou mais caro ano a ano?" sem precisar seguir cada laço na mão.
+    const rotulosMes = raiz
+      .selectAll<SVGTextElement, (typeof meses)[number]>('text.mes')
       .data(meses)
       .join('text')
       .attr('class', 'mes')
+      .attr('data-interactive', '')
+      .style('cursor', 'pointer')
       .attr('x', (d) => ponto(d.mesNum, R + px(22))[0])
       .attr('y', (d) => ponto(d.mesNum, R + px(22))[1])
       .attr('text-anchor', 'middle')
@@ -172,22 +178,42 @@ const chart: VizChart = {
     }
     todosPontos.on('pointermove', mostrarTooltip).on('pointerleave', () => tooltip.hide());
 
-    function realcar(ano: string) {
-      lacos.attr('opacity', (a) => (a === ano ? 1 : 0.15)).attr('stroke-width', (a) => (a === ano ? px(3.6) : px(2.6)));
-      todosPontos.attr('opacity', (d) => (d.ano === ano ? 1 : 0.15));
-      legenda.attr('opacity', (a: string) => (a === ano ? 1 : 0.4));
+    // Duas dimensões de realce, unificadas num só "fixado" (mesma técnica
+    // de chave prefixada já usada no diagrama de cordas e no mosaico desta
+    // base): realçar por ANO acende o laço inteiro daquele ano; realçar por
+    // MÊS acende o mesmo mês nos cinco laços ao mesmo tempo, pra comparar
+    // ponto a ponto em vez de laço a laço.
+    function realcar(chave: string) {
+      if (chave.startsWith('mes:')) {
+        const mesNum = Number(chave.slice(4));
+        lacos.attr('opacity', 0.2).attr('stroke-width', px(2.6));
+        todosPontos.attr('opacity', (d) => (d.mes === mesNum ? 1 : 0.12));
+        rotulosMes.attr('fill', (d) => (d.mesNum === mesNum ? meta.cores[meta.anos[meta.anos.length - 1]] : theme.ink));
+        raiosMes.attr('stroke-opacity', (d) => (d.mesNum === mesNum ? 1 : 0.5));
+        legenda.attr('opacity', 1);
+      } else {
+        const ano = chave.slice(4);
+        lacos.attr('opacity', (a) => (a === ano ? 1 : 0.15)).attr('stroke-width', (a) => (a === ano ? px(3.6) : px(2.6)));
+        todosPontos.attr('opacity', (d) => (d.ano === ano ? 1 : 0.15));
+        legenda.attr('opacity', (a: string) => (a === ano ? 1 : 0.4));
+        rotulosMes.attr('fill', theme.ink);
+        raiosMes.attr('stroke-opacity', 0.5);
+      }
     }
     function limpar() {
       lacos.attr('opacity', 1).attr('stroke-width', px(2.6));
       todosPontos.attr('opacity', 1);
       legenda.attr('opacity', 1);
+      rotulosMes.attr('fill', theme.ink);
+      raiosMes.attr('stroke-opacity', 0.5);
     }
 
     tornarFixavel(
       root,
       [
-        { selecao: lacos, chaveDe: (a: string) => a },
-        { selecao: todosPontos, chaveDe: (d: Ponto) => d.ano },
+        { selecao: lacos, chaveDe: (a: string) => `ano:${a}` },
+        { selecao: todosPontos, chaveDe: (d: Ponto) => `ano:${d.ano}` },
+        { selecao: rotulosMes, chaveDe: (d: (typeof meses)[number]) => `mes:${d.mesNum}` },
       ],
       realcar,
       limpar
@@ -202,7 +228,7 @@ const chart: VizChart = {
       .attr('type', 'button')
       .attr('data-interactive', '')
       .html((a) => `<span class="viz-swatch" style="background:${meta.cores[a]}"></span>${a}`)
-      .on('pointerenter', (_e, a) => realcar(a))
+      .on('pointerenter', (_e, a) => realcar(`ano:${a}`))
       .on('pointerleave', limpar);
 
     if (animate) {
