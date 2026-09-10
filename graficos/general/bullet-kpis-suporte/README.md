@@ -70,7 +70,10 @@ nomes dos KPIs ficam) é calculada medindo a largura real do rótulo mais
 longo, não um número fixo. Tooltip mostra o valor exato, a meta e a
 diferença entre eles (com seta pra cima/baixo). Entrada anima a barra
 crescendo da esquerda e o traço da meta aparecendo logo depois, reforçando
-a leitura "primeiro o valor, depois compare com a meta".
+a leitura "primeiro o valor, depois compare com a meta". Passar o mouse (ou
+clicar pra fixar) numa linha esmaece as outras cinco — útil pra isolar um
+KPI específico sem o ruído visual das outras faixas de contexto competindo
+por atenção ao mesmo tempo.
 
 ## Possíveis problemas pelo caminho
 

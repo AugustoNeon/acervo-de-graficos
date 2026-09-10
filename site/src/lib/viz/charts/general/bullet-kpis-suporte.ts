@@ -10,8 +10,9 @@
  */
 
 import { select, scaleLinear, axisBottom } from 'd3';
-import { DURATION, EASE_ENTER, garantirEstadoFinal, stagger } from '../../motion';
+import { DURATION, EASE_ENTER, EASE_STATE, garantirEstadoFinal, stagger } from '../../motion';
 import { estilarEixo } from '../../shared/cartesiano';
+import { tornarFixavel } from '../../shared/interacao';
 import type { DrawContext, VizChart } from '../../types';
 
 interface Kpi {
@@ -81,7 +82,12 @@ const chart: VizChart = {
     const gRaiz = svg.append('g').attr('transform', `translate(${MARGEM_ESQ},${MARGEM.topo})`);
 
     kpis.forEach((k, i) => {
-      const g = gRaiz.append('g').attr('transform', `translate(0,${i * passoLinha})`);
+      const g = gRaiz
+        .append('g')
+        .attr('class', 'kpi-linha')
+        .attr('data-interactive', '')
+        .datum(k)
+        .attr('transform', `translate(0,${i * passoLinha})`);
 
       const maiorValor = Math.max(k.fimBom, k.valor, k.meta) * 1.02;
       const x = scaleLinear().domain([0, maiorValor]).range([0, larguraUtil]);
@@ -165,6 +171,20 @@ const chart: VizChart = {
         });
       }
     });
+
+    // --------------------------------------------------------- realce/clique
+    // Passar o mouse (ou clicar pra fixar) numa linha esmaece as outras --
+    // útil pra comparar um KPI contra o resto do painel sem o ruído visual
+    // das outras 5 faixas coloridas competindo por atenção ao mesmo tempo.
+    const linhas = gRaiz.selectAll<SVGGElement, Kpi>('g.kpi-linha');
+    function realcar(kpiFixo: string | null) {
+      linhas
+        .transition()
+        .duration(DURATION.fast)
+        .ease(EASE_STATE)
+        .attr('opacity', (d) => (kpiFixo === null || d.kpi === kpiFixo ? 1 : 0.3));
+    }
+    tornarFixavel(root, { selecao: linhas, chaveDe: (d: Kpi) => d.kpi }, realcar, () => realcar(null));
   },
 };
 
