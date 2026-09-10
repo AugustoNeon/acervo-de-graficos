@@ -141,6 +141,8 @@ const chart: VizChart = {
       .data(meta.canais)
       .join('text')
       .attr('class', 'canal')
+      .attr('data-interactive', '')
+      .style('cursor', 'pointer')
       .attr('x', (canal) => {
         const r = retangulos.find((d) => d.canal === canal)!;
         return (xPx(r.x0) + xPx(r.x1)) / 2;
@@ -153,7 +155,8 @@ const chart: VizChart = {
       .attr('fill', theme.ink)
       .text((canal) => canal);
 
-    g.selectAll<SVGTextElement, string>('text.canal-pct')
+    const cabecalhosPct = g
+      .selectAll<SVGTextElement, string>('text.canal-pct')
       .data(meta.canais)
       .join('text')
       .attr('class', 'canal-pct')
@@ -178,16 +181,44 @@ const chart: VizChart = {
     }
     celulasSel.on('pointermove', mostrarTooltip).on('pointerleave', () => tooltip.hide());
 
-    function realcar(plano: string) {
-      celulasSel.attr('opacity', (d) => (d.plano === plano ? 1 : 0.22));
-      legenda.attr('opacity', (p: string) => (p === plano ? 1 : 0.45));
+    // Duas dimensões de realce sobre o mesmo mosaico, unificadas num só
+    // "fixado" (mesmo princípio do diagrama de cordas desta base: arco/nó
+    // e fita compartilham o estado de fixar por clique via chave
+    // prefixada) -- passar o mouse ou clicar num PLANO (célula ou legenda)
+    // acende aquele plano em todas as colunas; passar o mouse ou clicar no
+    // NOME DO CANAL (cabeçalho) acende a coluna inteira, todos os planos
+    // daquele canal juntos. Só um dos dois fica fixado por vez.
+    function realcar(chave: string) {
+      if (chave.startsWith('canal:')) {
+        const canal = chave.slice(6);
+        celulasSel.attr('opacity', (d) => (d.canal === canal ? 1 : 0.22));
+        cabecalhos.attr('opacity', (c) => (c === canal ? 1 : 0.4));
+        cabecalhosPct.attr('opacity', (c) => (c === canal ? 1 : 0.4));
+        legenda.attr('opacity', 1);
+      } else {
+        const plano = chave.slice(6);
+        celulasSel.attr('opacity', (d) => (d.plano === plano ? 1 : 0.22));
+        legenda.attr('opacity', (p: string) => (p === plano ? 1 : 0.45));
+        cabecalhos.attr('opacity', 1);
+        cabecalhosPct.attr('opacity', 1);
+      }
     }
     function limpar() {
       celulasSel.attr('opacity', 1);
       legenda.attr('opacity', 1);
+      cabecalhos.attr('opacity', 1);
+      cabecalhosPct.attr('opacity', 1);
     }
 
-    tornarFixavel(root, { selecao: celulasSel, chaveDe: (d: Retangulo) => d.plano }, realcar, limpar);
+    tornarFixavel(
+      root,
+      [
+        { selecao: celulasSel, chaveDe: (d: Retangulo) => `plano:${d.plano}` },
+        { selecao: cabecalhos, chaveDe: (canal: string) => `canal:${canal}` },
+      ],
+      realcar,
+      limpar
+    );
 
     const legenda = select(root)
       .append('div')
@@ -198,7 +229,7 @@ const chart: VizChart = {
       .attr('type', 'button')
       .attr('data-interactive', '')
       .html((p) => `<span class="viz-swatch" style="background:${meta.cores[p]}"></span>${p}`)
-      .on('pointerenter', (_e, p) => realcar(p))
+      .on('pointerenter', (_e, p) => realcar(`plano:${p}`))
       .on('pointerleave', limpar);
 
     if (animate) {
