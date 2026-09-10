@@ -80,7 +80,12 @@ na mesma proporção do horizonte.
 **Na versão interativa**: o `data.json` carrega os pontos crus (índice,
 fase, valor, banda mín/máx — `null` fora do trecho previsto) e o ponto de
 emenda, exatamente como o R gerou — o D3 monta a mesma composição de área
-e duas linhas em cima dos mesmos dados, sem recalcular a banda.
+e duas linhas em cima dos mesmos dados. A banda exportada é tratada como a
+de 95% (±1,96 desvio-padrão); um switcher "Confiança" deriva o próprio
+desvio-padrão implícito a partir dela e recalcula a banda de 68% (±1
+desvio) na hora, sem pedir um segundo cálculo ao R — só a área muda de
+largura, a linha central e o `hoje` ficam parados. O tooltip de cada mês
+previsto mostra a faixa numérica do nível selecionado no momento.
 
 ## Possíveis problemas pelo caminho
 
